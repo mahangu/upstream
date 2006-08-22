@@ -25,6 +25,7 @@ parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support mes
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('conf/list.conf'))
+(options, args) = parser.parse_args()
 
 
 for x in config.sections():
@@ -33,14 +34,12 @@ for x in config.sections():
 		command = config.get(x, "command")
 		help = config.get(x, "help")
 
-		print sflag
-		
 		parser.add_option(sflag, lflag, action="store_true", help=help, default=False)
-		dump = functions.get_dump(command)
-		response = functions.add_final(dump)
 		
-(options, args) = parser.parse_args()
-
+		if getattr(options, x, None):
+			dump = functions.get_dump(command)
+			response = functions.add_final(dump)
+				
 
 # Check to see if all mandatory arguments have been filled.
 
