@@ -31,8 +31,8 @@ for x in config.sections():
 		sflag = config.get(x, "sflag")
 		lflag = config.get(x, "lflag")
 		print sflag
-	
-		parser.add_option(sflag, lflag, action="store_true", help=help, default=False)
+
+		parser.add_option(sflag, lflag, action="store_true", help=config.get(x, "help"), default=False)
 
 
 (options, args) = parser.parse_args()
@@ -46,8 +46,8 @@ for x in options.__dict__.iteritems():
 		help = config.get(section, "help")
 		dump = functions.get_dump(command)
 		response = functions.add_final(dump)
-		
-		
+
+
 # Check to see if all mandatory arguments have been filled.
 
 
@@ -63,7 +63,7 @@ user_message = args[1]
 
 print user_message
 print user_email
-	
+
 user_logs = functions.get_final()
 
 response = functions.send_curl(user_logs, user_message, user_email)
