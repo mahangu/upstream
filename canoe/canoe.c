@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define NETWORK_FLAG "-n"
-#define STANDARD_FLAG "-h"
+#define STANDARD_FLAG "-s"
 
 /* Functions necessary for fetching the support composite.  Support composite
 returns -1 if user cancels */
@@ -28,7 +28,7 @@ gchar* get_support_message();
 GtkWidget* create_support_request_dialog();
 
 /* Management of the vector that the program should be executed with */
-gchar** generate_argv_vector(const gchar* email_msg,const char* support_msg);
+gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, const char* support_msg, const gint support_type);
 void free_argv_vector(gchar** argv_vect);
 
 /* Enumeration allowing all of the SupportModes to be specified */
@@ -39,12 +39,20 @@ enum SupportModes { standard = 1 << 0, network = 1 << 1, video = 1 << 2, sound =
 int main(int argc, char* argv[])
 {
 	
+	gint loop_control;
 	
 	gchar* prog_path;
 	gchar* prog_name;
 	gchar* email_addr;
 	gchar* support_msg;
-	gint support_composite;
+	gint support_composite = 0;
+	
+	gchar** argv_vector;
+	
+	GError* invocation_error = NULL;
+	
+	GError* stdout_pipe_read_error = NULL;
+	GError* stderr_pipe_read_error = NULL;
 	
 	if(!gtk_init_check(&argc, &argv))
 	{
@@ -88,47 +96,64 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	
+	argv_vector = generate_argv_vector(prog_name, email_addr, support_msg, support_composite);
+	g_free(prog_name);
+	g_free(email_addr);
+	g_free(support_msg);
 	
 	
 	
+	g_free(prog_path);
+	free_argv_vector(argv_vector);
 	return 0;
 }
 
 /* Note that after this function is invoked, email_msg and others may be free'd as this element "takes possession of the data"
 The returned vector should later be free'd by free argv_vector */
 
-gchar** generate_argv_vector(const gchar* email_msg, const char* support_msg )
+/* Setup the argv vector used for invoking upstream.py */
+gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, const char* support_msg, const gint support_type )
 {
-	/* Setup parameters for invoking upstream.py */
-	
-	if(support_composite & standard == standard)
-	{
-		num_argv++;
-	}
-	if(support_composite & network == network)
-	{
-		num_argv++;
-	}
-	if(support_composite & sound == sound)
-	{
-		num_argv++;
-	}
-	if(support_composite & video == video)
-	{
-		num_argv++;
-	}
-	/* The + 1 add support for the terminating NULL */
-	execute_argv  = g_malloc((num_argv * sizeof(char*)) + 1);
-	if(execute_argv == NULL)
-	{
-		g_print("Out of memory - aborting\n");
-		exit(1);
-	}
+	gchar** argv_store;
+	gint argv_access = 0;
+	gint num_argv = 3;
 
+	/* Parenthesis required due to order of operations or something wierd like that */
+	if((support_type & standard) == standard)
+	{
+		num_argv++;
+	}
+	if((support_type & network) == network)
+	{
+		num_argv++;
+	}
+	argv_store = g_malloc((num_argv * sizeof(gchar*)) + 1);
+	
+	argv_store[argv_access++] = g_strdup(prog_name);
+	argv_store[argv_access++] = g_strdup(email_addr);
+	argv_store[argv_access++] = g_strdup(support_msg);
+	
+	if((support_type & standard) == standard)
+	{
+		argv_store[argv_access++] = g_strdup(STANDARD_FLAG);
+	}
+	if((support_type & network) == network)
+	{
+		argv_store[argv_access++] = g_strdup(NETWORK_FLAG);
+	}
+	/* Finish off the vector with a NULL */
+	argv_store[argv_access++] = NULL;
+	return argv_store;
 }
 
 void free_argv_vector(gchar** argv_vect)
 {
+	gint argv_access = 0;
+	while(argv_vect[argv_access] != NULL)
+	{
+		g_free(argv_vect[argv_access++]);
+	}
+	g_free(argv_vect);
 }
 
 gchar* get_program_name(const gchar* input)
@@ -290,7 +315,8 @@ GtkWidget* create_support_type_dialog(int num_elems, GtkWidget** listing)
 	dialog = gtk_dialog_new_with_buttons("E-mail", NULL, GTK_DIALOG_MODAL, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, -1);
 	support_type_label = gtk_label_new("Mark all items that pertain to your issues.");
-	
+	gtk_widget_show(support_type_label);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), support_type_label, TRUE, FALSE, 5);
 	for(loop_control = 0; loop_control < num_elems; loop_control++)
 	{
 		gtk_widget_show(listing[loop_control]);
