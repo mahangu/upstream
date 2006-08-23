@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Upstream - log file aggregator and report tool for *nix systems.
+# Upstream 0.0.6 - log file aggregator and report tool for *nix systems.
 # Copyright (C) 2006  Mahangu Weerasinghe (mahangu@gmail.com)
 #
 # This program is free software; you can redistribute it and/or
@@ -23,25 +23,39 @@ import functions # our modules
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
+
 config = ConfigParser.ConfigParser()
 config.readfp(open('conf/list.conf'))
-(options, args) = parser.parse_args()
-
 
 for x in config.sections():
 		sflag = config.get(x, "sflag")
 		lflag = config.get(x, "lflag")
-		command = config.get(x, "command")
-		help = config.get(x, "help")
-
+		print sflag
+	
 		parser.add_option(sflag, lflag, action="store_true", help=help, default=False)
-		
-		if getattr(options, x, None):
-			dump = functions.get_dump(command)
-			response = functions.add_final(dump)
-				
 
+
+(options, args) = parser.parse_args()
+
+for x in options.__dict__.iteritems():
+	section = x[0]
+	boolean = x[1]
+
+	print section, boolean 
+
+	if boolean ==  1:
+		print section, boolean
+		print "foo"
+		command = config.get(section, "command")
+		help = config.get(section, "help")
+		print command
+		print help
+		dump = functions.get_dump(command)
+		response = functions.add_final(dump)
+		
+		
 # Check to see if all mandatory arguments have been filled.
+
 
 if len(args) != 2:
 	print "Please specify the required options. See help (-h) for more information."
