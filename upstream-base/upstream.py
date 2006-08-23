@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Upstream 0.0.6 - log file aggregator and report tool for *nix systems.
+# Upstream - log file aggregator and report tool for *nix systems.
 # Copyright (C) 2006  Mahangu Weerasinghe (mahangu@gmail.com)
 #
 # This program is free software; you can redistribute it and/or
@@ -41,15 +41,9 @@ for x in options.__dict__.iteritems():
 	section = x[0]
 	boolean = x[1]
 
-	print section, boolean 
-
 	if boolean ==  1:
-		print section, boolean
-		print "foo"
 		command = config.get(section, "command")
 		help = config.get(section, "help")
-		print command
-		print help
 		dump = functions.get_dump(command)
 		response = functions.add_final(dump)
 		
