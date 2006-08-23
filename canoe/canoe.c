@@ -49,62 +49,104 @@ int main(int argc, char* argv[])
 	
 	gchar** argv_vector;
 	
+	
+	GPid invocation_pid;
+	gint stdin_fd;
+	gint stdout_fd;
+	gint stderr_fd;
 	GError* invocation_error = NULL;
 	
+	GIOChannel* stdout_pipe;
+	GIOChannel* stderr_pipe;
 	GError* stdout_pipe_read_error = NULL;
 	GError* stderr_pipe_read_error = NULL;
-	
+
+	/* Temporary variables for sychnronous testing */
+	gchar* stdout_tmp;
+	gchar* stderr_tmp;
+	gint exit_status;
+	GError* sync_error = NULL;
+	/* Allow forking if gtk can't be enabled for some reason */
 	if(!gtk_init_check(&argc, &argv))
 	{
 		g_print("Could not initialize GTK/X\n");
 		g_print("This is a placeholder for switching to alternate mode of input\n");
-	}
-
-	if(argc == 2 && !strcmp(argv[1], "-h"))
-	{
-		g_print("Usage: canoe /path/to/upstream.py\nDo not include upstream.py in the actual string\n");
-		return 0;
-	}
-	
-	if(argc == 2)
-	{
-		prog_name = get_program_name(argv[1]);
-		prog_path = g_strup(argv[1]);	
 	}else
 	{
-		/* In future this might change to a default location, possibly /var/lib/ or some such */
-		g_print("A path to program is required\n");
-		return 0;
-	}
+		/* Print a help message */
+		if(argc == 2 && !strcmp(argv[1], "-h"))
+		{
+			g_print("Usage: canoe /path/to/upstream.py\nDo not include upstream.py in the actual string\n");
+			return 0;
+		}
+		
+		/* Deal with paths and the like */
+		if(argc == 2)
+		{
+			prog_name = get_program_name(argv[1]);
+			prog_path = g_strdup(argv[1]);	
+		}else
+		{
+			/* In future this might change to a default location, possibly /var/lib/ or some such */
+			g_print("A path to program is required\n");
+			return 0;
+		}
 
-	email_addr  = get_email_address();
-	if(email_addr == NULL)
-	{
-		return 0;
+		/* Get the users input email address */
+		email_addr  = get_email_address();
+		if(email_addr == NULL)
+		{
+			return 0;
+		}
+		
+		/* Get the users input support message */
+		support_msg = get_support_message();
+		if(support_msg == NULL)
+		{
+			return 0;
+		}
+		
+		/* Get an int containing the flags that represent the suppport category */
+		support_composite = get_support_composite();
+		if(support_composite == -1)
+		{
+			return 0;
+		}
+		
+		/* Generate the argument vector to be set to the program */
+		argv_vector = generate_argv_vector(prog_name, email_addr, support_msg, support_composite);
+		for(loop_control = 0; argv_vector[loop_control] != NULL; loop_control++)
+		{
+			g_print("%s ", argv_vector[loop_control]);
+		}
+		g_print("\n");
+		g_free(prog_name);
+		g_free(email_addr);
+		g_free(support_msg);
+		/* Execute the program in an asynchronous manner
+		if(!g_spawn_async_with_pipes(prog_path, argv_vector, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &invocation_pid, &stdin_fd, &stdout_fd, &stderr_fd, &invocation_error))
+		{
+			g_print("Unable to spawn upstream.py process\n");
+			g_print("Returned error was: %s\n", invocation_error->message);
+		}else
+		{
+			
+		}
+		*/
+		
+		if(!g_spawn_sync(prog_path, argv_vector, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout_tmp, &stderr_tmp, &exit_status, &sync_error))
+		{
+			g_print("Unable to spawn upstream.py process\n");
+			g_print("Returned error was: %s\n", sync_error->message);
+		}else
+		{
+			g_print("Standard out:\n%s\n", stdout_tmp);
+			g_print("Standard error:\n%s\n", stderr_tmp);
+			g_print("Exit status: %d\n", exit_status);
+		}
+		g_free(prog_path);
+		free_argv_vector(argv_vector);
 	}
-	
-	support_msg = get_support_message();
-	if(support_msg == NULL)
-	{
-		return 0;
-	}
-	
-
-	support_composite = get_support_composite();
-	if(support_composite == -1)
-	{
-		return 0;
-	}
-	
-	argv_vector = generate_argv_vector(prog_name, email_addr, support_msg, support_composite);
-	g_free(prog_name);
-	g_free(email_addr);
-	g_free(support_msg);
-	
-	
-	
-	g_free(prog_path);
-	free_argv_vector(argv_vector);
 	return 0;
 }
 
@@ -249,7 +291,7 @@ GtkWidget* create_support_request_dialog(GtkWidget** multiline)
 	GtkWidget* dialog;
 	GtkWidget* support_request_label;
 	
-	dialog = gtk_dialog_new_with_buttons("E-mail", NULL, GTK_DIALOG_MODAL, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
+	dialog = gtk_dialog_new_with_buttons("Support message", NULL, GTK_DIALOG_MODAL, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	gtk_window_set_default_size(GTK_WINDOW(dialog),  400, 200);
 	support_request_label = gtk_label_new("Enter your support request.");
 	*multiline = gtk_text_view_new();
@@ -312,7 +354,7 @@ GtkWidget* create_support_type_dialog(int num_elems, GtkWidget** listing)
 	GtkWidget* dialog;
 	GtkWidget* support_type_label;
 	gint loop_control;
-	dialog = gtk_dialog_new_with_buttons("E-mail", NULL, GTK_DIALOG_MODAL, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
+	dialog = gtk_dialog_new_with_buttons("Support categories", NULL, GTK_DIALOG_MODAL, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 400, -1);
 	support_type_label = gtk_label_new("Mark all items that pertain to your issues.");
 	gtk_widget_show(support_type_label);
