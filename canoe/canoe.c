@@ -9,6 +9,7 @@
 
 #define NETWORK_FLAG "-n"
 #define STANDARD_FLAG "-s"
+#define VIDEO_FLAG "-v"
 
 /* Functions necessary for fetching the support composite.  Support composite
 returns -1 if user cancels */
@@ -31,8 +32,16 @@ GtkWidget* create_support_request_dialog();
 gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, const char* support_msg, const gint support_type);
 void free_argv_vector(gchar** argv_vect);
 
+void handle_upstream_async_execution(GPID pid, gint stdin_fd, gint stdout_fd, gint stderr_fd);
+
 /* Enumeration allowing all of the SupportModes to be specified */
 enum SupportModes { standard = 1 << 0, network = 1 << 1, video = 1 << 2, sound = 1 << 3 };
+
+struct _ThreadParam
+{
+	GtkTextBuffer* buffer
+	GtkWidget* button;
+} ThreadParam;
 
 
 
@@ -55,17 +64,17 @@ int main(int argc, char* argv[])
 	gint stdout_fd;
 	gint stderr_fd;
 	GError* invocation_error = NULL;
-	
-	GIOChannel* stdout_pipe;
-	GIOChannel* stderr_pipe;
-	GError* stdout_pipe_read_error = NULL;
-	GError* stderr_pipe_read_error = NULL;
 
-	/* Temporary variables for sychnronous testing */
+	GtkWidget* error_dialog;
+	GtkWidget* error_label;
+
+	/* Temporary variables for sychnronous testing 
 	gchar* stdout_tmp;
 	gchar* stderr_tmp;
 	gint exit_status;
 	GError* sync_error = NULL;
+	*/
+	
 	/* Allow forking if gtk can't be enabled for some reason */
 	if(!gtk_init_check(&argc, &argv))
 	{
@@ -123,17 +132,26 @@ int main(int argc, char* argv[])
 		g_free(prog_name);
 		g_free(email_addr);
 		g_free(support_msg);
-		/* Execute the program in an asynchronous manner
+		/* Execute the program in an asynchronous manner */
+		
 		if(!g_spawn_async_with_pipes(prog_path, argv_vector, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &invocation_pid, &stdin_fd, &stdout_fd, &stderr_fd, &invocation_error))
 		{
-			g_print("Unable to spawn upstream.py process\n");
-			g_print("Returned error was: %s\n", invocation_error->message);
+			results_tmp_buffer = g_strconcat("Unable to spawn child process.\nThis is a bug in the program.\nThe resulting error was:\n", invocation_error->message, "\n", NULL);
+			error_dialog = gtk_dialog_new_with_buttons("Error!", NULL,  GTK_DIALOG_MODAL, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
+			error_label = gtk_label_new(results_tmp_buffer);
+			gtk_widget_show(error_label);
+			g_free(results_tmp_buffer);
+			gtk_box_pack_start(GTK_BOX(GTK_DIALOG(error_dialog)->vbox), error_label, TRUE, FALSE, 5);
+			gtk_dialog_run(GTK_DIALOG(error_dialog));
+			gtk_widget_destroy(error_dialog);			
+		
 		}else
 		{
-			
+			/* Program execution was successful */
+			handle_upstream_async_execution(invocation_pid, stdin_fd, stdout_fd, stderr_fd);
 		}
-		*/
-		
+		g_print("Finished running command\n");
+		/*
 		if(!g_spawn_sync(prog_path, argv_vector, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &stdout_tmp, &stderr_tmp, &exit_status, &sync_error))
 		{
 			g_print("Unable to spawn upstream.py process\n");
@@ -143,7 +161,9 @@ int main(int argc, char* argv[])
 			g_print("Standard out:\n%s\n", stdout_tmp);
 			g_print("Standard error:\n%s\n", stderr_tmp);
 			g_print("Exit status: %d\n", exit_status);
-		}
+		}*/
+		g_spawn_close_pid(invocation_pid);
+		g_error_free(invocation_error);
 		g_free(prog_path);
 		free_argv_vector(argv_vector);
 	}
@@ -169,6 +189,10 @@ gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, co
 	{
 		num_argv++;
 	}
+	if((support_type & video) == video)
+	{
+		num_argv++;
+	}
 	argv_store = g_malloc((num_argv * sizeof(gchar*)) + 1);
 	
 	argv_store[argv_access++] = g_strdup(prog_name);
@@ -182,6 +206,10 @@ gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, co
 	if((support_type & network) == network)
 	{
 		argv_store[argv_access++] = g_strdup(NETWORK_FLAG);
+	}
+	if((support_type & video) == video)
+	{
+		argv_store[argv_access++] = g_strdup(VIDEO_FLAG);
 	}
 	/* Finish off the vector with a NULL */
 	argv_store[argv_access++] = NULL;
@@ -367,3 +395,19 @@ GtkWidget* create_support_type_dialog(int num_elems, GtkWidget** listing)
 	return dialog;
 }
 
+/* This function blocks in GTK main until close is executed */
+void handle_upstream_async_execution(GPID pid, gint stdin_fd, gint stdout_fd, gint stderr_fd)
+{
+	GtkWidget* window;
+	GtkWindow* hbox;
+	GtkWidget* label;
+	GtkWidget* text_view;
+	
+	GtkTextBuffer* text_view_buffer;
+	
+	ThreadParams param;
+	
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size(GTK_WINDOW(window), 400, 400);
+	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
+}
