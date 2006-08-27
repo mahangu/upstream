@@ -66,12 +66,34 @@ def get_final():
 	global final
 	return final
 
-def send_curl (logs, message = message, email = email, server = server, path= path, port = port):
+def send_curl (logs, message = message, email = email):
 
 	logs = logs.replace("\"","")
-	curlstring = 'curl --form-string "message=%s" --form-string "email=%s" --form-string "logs=%s" %s'%(message,email,logs,url)
-	dump = os.popen(curlstring)	
-	clog = dump.read()
-	return clog
 
+	# Read the config file
+	from ConfigParser import ConfigParser
+	config = ConfigParser()
+	config.readfp(open('conf/main.conf'))
+	url = config.get("post", "url")
+	name_field = config.get("post", "name_field")
+	title_field = config.get("post", "title_field")
+	msg_field = config.get("post", "msg_field")
+	misc = config.get("post", "misc")
+	referer = config.get("post", "referer")
 
+	# Prepare Curl object
+	import pycurl
+	from urllib import urlencode
+	from StringIO import StringIO
+	c = pycurl.Curl()
+	c.setopt(pycurl.URL, url)
+	c.setopt(pycurl.POST, 1)
+	post_data = { name_field: "Upstream<%s>"%email, title_field: message, msg_field: logs }
+	c.setopt(pycurl.POSTFIELDS, urlencode(post_data)+misc)
+	c.setopt(pycurl.REFERER, referer)
+	clog = StringIO()
+	c.setopt(pycurl.WRITEFUNCTION, clog.write)
+	c.perform()
+
+	return clog.getvalue()
+	
