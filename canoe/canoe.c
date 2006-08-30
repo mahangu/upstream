@@ -32,16 +32,19 @@ GtkWidget* create_support_request_dialog();
 gchar** generate_argv_vector(const gchar* prog_name, const gchar* email_addr, const char* support_msg, const gint support_type);
 void free_argv_vector(gchar** argv_vect);
 
-void handle_upstream_async_execution(GPID pid, gint stdin_fd, gint stdout_fd, gint stderr_fd);
+void handle_upstream_async_execution(GPid pid, gint stdin_fd, gint stdout_fd, gint stderr_fd);
+
 
 /* Enumeration allowing all of the SupportModes to be specified */
 enum SupportModes { standard = 1 << 0, network = 1 << 1, video = 1 << 2, sound = 1 << 3 };
 
 struct _ThreadParam
 {
-	GtkTextBuffer* buffer
+	GtkTextBuffer* buffer;
 	GtkWidget* button;
-} ThreadParam;
+};
+
+typedef struct _ThreadParam ThreadParam;
 
 
 
@@ -58,6 +61,7 @@ int main(int argc, char* argv[])
 	
 	gchar** argv_vector;
 	
+	char* results_tmp_buffer;
 	
 	GPid invocation_pid;
 	gint stdin_fd;
@@ -396,7 +400,7 @@ GtkWidget* create_support_type_dialog(int num_elems, GtkWidget** listing)
 }
 
 /* This function blocks in GTK main until close is executed */
-void handle_upstream_async_execution(GPID pid, gint stdin_fd, gint stdout_fd, gint stderr_fd)
+void handle_upstream_async_execution(GPid pid, gint stdin_fd, gint stdout_fd, gint stderr_fd)
 {
 	GtkWidget* window;
 	GtkWindow* hbox;
@@ -405,7 +409,7 @@ void handle_upstream_async_execution(GPID pid, gint stdin_fd, gint stdout_fd, gi
 	
 	GtkTextBuffer* text_view_buffer;
 	
-	ThreadParams param;
+	ThreadParam param;
 	
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(window), 400, 400);
