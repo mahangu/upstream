@@ -22,7 +22,12 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import sys
+import time
+import threading
+
+
 import functions
+
 
 
 class Canoe:
@@ -45,22 +50,13 @@ class Canoe:
 	def submit(self):
 		print "Executing submit"
 		if self.request_object:
-			self.request_object.dump_info()
-			
-			gtkWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
-			gtkBox = gtk.VBox(False, 5);
-			gtkLabel = gtk.Label("Your request is being submitted, please be patient, this may take sometime")
-			gtkButtonBox = gtk.HButtonBox(False, 5);
-			gtkButton = gtk.Button("Close", gtk.STOCK_CLOSE);
-			
-			gtkWin.add(gtkBox);
-			gtkBox.pack_start(
-			 
-	def destroy_callback(self, widget, data = None):
+			self.request_object.dump_info()		
+			obs_thread = ObserverThread(self.request_object)
+			# After launching threads go into the main loop
+			obs_thread.start()
+			gtk.main()
+			print "Main has quit"
 	
-	
-	def delete_event_callback(self, widget, event, data=None):
-		return True
 		
 	def email_addr(self):
 		# Create the dialog
@@ -76,11 +72,9 @@ class Canoe:
 		dialog.show_all()
 		
 		if dialog.run() == gtk.RESPONSE_ACCEPT:
-			print "Debug MSG: Got email addr: %s" % text_entry.get_text()
 			dialog.destroy()
 			return text_entry.get_text()
 		else:
-			print "Debug MSG: Aborted on email addr:"
 			dialog.destroy()
 			return None
 		
@@ -101,7 +95,6 @@ class Canoe:
 			m_buffer_s_iter = m_buffer.get_start_iter()
 			m_buffer_e_iter = m_buffer.get_end_iter()
 			message = m_buffer.get_text(m_buffer_s_iter, m_buffer_e_iter)
-			print "Debug MSG: Got support message:\n%s" % message
 			dialog.destroy()
 			return message
 		else:
@@ -132,38 +125,87 @@ class Canoe:
 				support_list.append("video")
 		# Mask is initialized to 0, so we can safely return it
 		# if the user didn't enter anything, since we will get false
-		print "Debug MSG: Mask: ", support_list
 		dialog.destroy()
 		return support_list
+
+# This class is a thread that sits above a request object and
+# watches it for changes.  It also runs in its own thread so gtk_main doesn't block
+# it is responsible for all window modifications
+class ObserverThread(threading.Thread):
+	def __init__(self, request_obj):
+		threading.Thread.__init__(self)
+		self.request = request_obj
+		self.request_started = False
+	
+		# Set up all the variables like the need to be used later
+		self.gtkWin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.gtkBox = gtk.VBox(False, 5)
+		self.gtkLabel = gtk.Label("Your request is being submitted, please be patient, this may take sometime")
+		self.gtkButtonBox = gtk.HButtonBox()
+		self.gtkButton = gtk.Button("Close", gtk.STOCK_CLOSE)
 		
+		self.gtkWin.add(self.gtkBox);
+		self.gtkBox.pack_start(self.gtkLabel, True, False, 0)
+		self.gtkBox.pack_start(self.gtkButtonBox, False, False, 0)
+		self.gtkButtonBox.pack_end(self.gtkButton, False, False, 0)
+		print "Initialized observer thread"		
+			 
+	def destroy_callback(self, widget, data=None):
+		print "Destroying"
+		gtk.main_quit()
+	
+	def delete_event_callback(self, widget, event, data=None):
+		print "Delete event"
+		if self.request.isAlive() or not self.request_started:
+			return True
+		else:
+			return False
+		
+	def run(self):
+		print "Running ObserverThread object"
+		self.gtkWin.show_all()
+		self.gtkWin.connect("delete_event", self.delete_event_callback)
+		
+		self.request.start()
+		self.request_started = True
+		
+		while self.request.isAlive():
+			# Idle until the thread is done
+			time.sleep(0.01)
+		
+		result = self.request.get_response()
+		print result
+		
+		# At the end of the run method, we should attach a callback to the gtk.Button
+		# that enables the user to close the window		
+		self.gtkButton.connect("clicked", gtk.Widget.destroy, self.gtkWin);
 		
 class RequestObject(threading.Thread):
-	self._gtk_adjustment = 0
-	self._gtk_button = 0
-	self._gtk_label = 0
+	response = None
 	# Note: support_type should be a list
 	def __init__(self, email_addr, support_msg, support_type):
 		threading.Thread.__init__(self)
 		self._email_addr = email_addr
 		self._support_msg = support_msg
 		self._support_type = support_type
-		
-	
-	def set_gtk_adjustment(self, newValue):
-		self._gtk_adjustment = newValue	
-	
-	# Set the button that should be unlocked when this element is finished running
-	def set_gtk_button(self, newValue):
-		self._gtk_button = newValue
-		
-	def set_gtk_label(self, newValue):
-		self._gtk_label = newValue
+		print "Initialized support object"		
 	
 	def run(self):
-		pass
+		print "Running RequestObject thread"
+		# Execute all of the dumps
+		for section in self._support_type:
+			print "Using section: %s" % section
+			command = functions.config.get(section, "command")
+			dump = functions.get_dump(command)
+			functions.add_final(dump)
+		user_logs = functions.get_final()
+		self.response = functions.send_curl(user_logs, self._support_msg, self._email_addr)
+		
+	def get_response(self):
+		return self.response
 		
 	def dump_info(self):
-		print "%s\n%s\n%d" % (self._email_addr, self._support_msg, self._support_type)
+		print (self._email_addr, self._support_msg, self._support_type)
 		
 if __name__ == "__main__":
 	print "Executing Canoe PyGTK frontend"	
