@@ -33,7 +33,8 @@ def query():
 		support_msg = get_support_msg()
 		if support_msg:
 			support_type = get_support_type()
-			return RequestHandler(email_addr, support_msg, support_type)	
+			if support_type:
+				return RequestHandler(email_addr, support_msg, support_type)	
 	# If the user cancelled at any point return false
 	return None
 
@@ -47,21 +48,18 @@ def submit(request):
 		
 	global window
 	window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-	window.set_default_size(400, window.get_property("default-height"))
+	window.set_default_size(400, 80)
 	global label
 	label = gtk.Label("Your request is being submitted, please be patient")
 	global vbox
 	vbox = gtk.VBox(True)
 	global hbuttonbox
 	hbuttonbox = gtk.HBox(True)
-	global button
-	button = gtk.Button("Close", gtk.STOCK_CLOSE)	
-	
+		
 	window.add(vbox)
 	vbox.pack_start(label, True, False, 0)
 	vbox.pack_start(hbuttonbox, True, False, 0)
-	hbuttonbox.pack_end(button, True, False, 0)
-	
+		
 	obs = SubmitObserver(request)
 	window.connect("delete_event", window_delete_event, obs)
 	window.connect("destroy", window_destroy)
@@ -209,10 +207,16 @@ class SubmitObserver(threading.Thread):
 		# Once here, the request should be done
 		result_res = request.get_result()
 		global label
-		label.set_text("The server returned:\n" + result_res)
-		global button
+		label.set_text("The submission is complete")
+		print result_res
 		global window
+		global hbuttonbox
+		global button
+		button = gtk.Button("Close", gtk.STOCK_CLOSE);		
+		hbuttonbox.pack_end(button, False, False, 0)
 		button.connect_object("clicked", gtk.Widget.destroy, window)
+		button.show()
+		
 		
 	def isRun(self):
 		return self.request.isStarted() and not self.request.isAlive()
