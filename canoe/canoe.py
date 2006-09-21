@@ -21,7 +21,7 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-import sys, time, threading, string
+import sys, time, threading, string, ConfigParser
 
 import functions
 
@@ -51,15 +51,15 @@ def submit(request):
 	global label
 	label = gtk.Label("Your request is being submitted, please be patient")
 	global vbox
-	vbox = gtk.VBox(False, 5)
+	vbox = gtk.VBox(True)
 	global hbuttonbox
 	hbuttonbox = gtk.HBox(True)
 	global button
 	button = gtk.Button("Close", gtk.STOCK_CLOSE)	
 	
 	window.add(vbox)
-	vbox.pack_start(label, False, False, 0)
-	vbox.pack_start(hbuttonbox)
+	vbox.pack_start(label, True, False, 0)
+	vbox.pack_start(hbuttonbox, True, False, 0)
 	hbuttonbox.pack_end(button, True, False, 0)
 	
 	obs = SubmitObserver(request)
@@ -182,6 +182,14 @@ class RequestHandler(threading.Thread):
 		self.is_started = True
 		print "Submitting %s\n%s" % (self.email, self.support)
 		print self.support_type
+		config = ConfigParser.ConfigParser()
+		config.readfp(open('conf/list.conf'))
+		for section in self.support_type:
+			command = config.get(section, "command")
+			dump = functions.get_dump(command)
+			response = functions.add_final(dump)
+		user_logs = functions.get_final()
+		self.result = functions.send_curl(user_logs, self.support, self.email)
 		
 # Class to observe 
 class SubmitObserver(threading.Thread):
@@ -199,7 +207,9 @@ class SubmitObserver(threading.Thread):
 			print "Waiting for RequestHandler"
 			time.sleep(0.01)
 		# Once here, the request should be done
-		print request.get_result()
+		result_res = request.get_result()
+		global label
+		label.set_text("The server returned:\n" + result_res)
 		global button
 		global window
 		button.connect_object("clicked", gtk.Widget.destroy, window)
@@ -207,9 +217,11 @@ class SubmitObserver(threading.Thread):
 	def isRun(self):
 		return self.request.isStarted() and not self.request.isAlive()
 
-# Actual code
-# Initialize threading		
-gtk.threads_init()	
-request = query()
-if request:
-	submit(request)
+# Only execute if this was called directly
+if __name__ == "__main__":
+	# Actual code
+	# Initialize threading		
+	gtk.threads_init()	
+	request = query()
+	if request:
+		submit(request)
