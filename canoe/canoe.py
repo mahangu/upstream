@@ -41,10 +41,6 @@ def query():
 	
 	
 def submit(request):
-	print "Sending request of type: "
-	print request.email
-	print request.support
-	print request.support_type
 		
 	global window
 	window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -60,8 +56,8 @@ def submit(request):
 	vbox.pack_start(label, True, False, 0)
 	vbox.pack_start(hbuttonbox, True, False, 0)
 		
-	obs = SubmitObserver(request)
-	window.connect("delete_event", window_delete_event, obs)
+	#obs = SubmitObserver(request, on_submit_complete)
+	window.connect("delete_event", window_delete_event, request)
 	window.connect("destroy", window_destroy)
 	
 	window.show_all()
@@ -69,13 +65,14 @@ def submit(request):
 	
 		
 	
-	obs.start()
+	#obs.start()
+	request.set_complete_handler(on_submit_complete, None)
 	request.start()
 	gtk.main()
 	
 def window_delete_event(widget, event, obs=None):
 	# Data should be a reference to observer
-	if obs.isRun():
+	if request.isStarted() and not request.isAlive():
 		print "Delete event accepted"
 		return False
 	else:
@@ -166,6 +163,12 @@ class RequestHandler(threading.Thread):
 		# These store useful variables for the class
 		self.is_started = False
 		self.result = None
+		self.func_handler = None
+		self.func_handler_data = None
+	
+	def set_complete_handler(self, func_handler, func_handler_data=None):
+		self.func_handler = func_handler
+		self.func_handler_data = func_handler_data
 	
 	# Determine if the thread has started yet
 	def isStarted(self):
@@ -188,38 +191,47 @@ class RequestHandler(threading.Thread):
 			response = functions.add_final(dump)
 		user_logs = functions.get_final()
 		self.result = functions.send_curl(user_logs, self.support, self.email)
+		if self.func_handler:
+			self.func_handler(self.result, self.func_handler_data)
 		
 # Class to observe 
-class SubmitObserver(threading.Thread):
+#class SubmitObserver(threading.Thread):
 	# Initialize, we grab a reference to the RequestHandler thread
 	# so that we can spit out proper data
 	# This handles connecting the appropriate signals from the
 	# close button once the request thread terminates
-	def __init__(self, request):
-		threading.Thread.__init__(self)
-		self.request = request
-			
-	def run(self):
-		# Sleep until the request is done
-		while not request.isStarted() or request.isAlive():
-			print "Waiting for RequestHandler"
-			time.sleep(0.01)
-		# Once here, the request should be done
-		result_res = request.get_result()
-		global label
-		label.set_text("The submission is complete")
-		print result_res
-		global window
-		global hbuttonbox
-		global button
-		button = gtk.Button("Close", gtk.STOCK_CLOSE);		
-		hbuttonbox.pack_end(button, False, False, 0)
-		button.connect_object("clicked", gtk.Widget.destroy, window)
-		button.show()
+	# func_handler should be of the form func_handler(request_result, user_data)
+#	def __init__(self, request, func_handler, func_handler_data=None):
+#		threading.Thread.__init__(self)
+#		self.request = request
+#		self.func_handler = func_handler
+#		self.func_handler_data = func_handler_data
+#	def run(self):
+#		# Sleep until the request is done
+#		while not request.isStarted() or request.isAlive():
+#			time.sleep(0.01)
+#		result_res = request.get_result()
+#		self.func_handler(result_res, self.func_handler_data)
+#		
+#		
 		
-		
-	def isRun(self):
-		return self.request.isStarted() and not self.request.isAlive()
+#	def isRun(self):
+#		return self.request.isStarted() and not self.request.isAlive()
+
+def on_submit_complete(request_result, user_data=None):
+	# Once here, the request should be done
+	print request_result
+	global label
+	global window
+	global hbuttonbox
+	global button
+	gtk.threads_enter()	
+	label.set_text("The submission is complete")
+	button = gtk.Button("Close", gtk.STOCK_CLOSE);		
+	hbuttonbox.pack_end(button, False, False, 0)
+	button.connect_object("clicked", gtk.Widget.destroy, window)
+	button.show()
+	gtk.threads_leave()
 
 # Only execute if this was called directly
 if __name__ == "__main__":
