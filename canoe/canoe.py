@@ -131,22 +131,33 @@ def get_support_type():
 	label = gtk.Label("Select all boxes relevant to your problem: ")
 	dialog.vbox.pack_start(label, False, False, 5)
 	# Create some check buttons
-	network_check = gtk.CheckButton("Network", False)
-	video_check = gtk.CheckButton("Video", False)
+	# We scan the configuration so that everything works
+	
+	sections_dict = dict([(x, gtk.CheckButton(x, False)) for x in functions.get_conf_sections("list")])
+	# Standard should be checked by default
+	sections_dict["standard"].set_active(True)
+			
+	#network_check = gtk.CheckButton("Network", False)
+	#video_check = gtk.CheckButton("Video", False)
 	# Pack the check buttons into the vbox
-	dialog.vbox.pack_start(network_check, False, False, 5)
-	dialog.vbox.pack_start(video_check, False, False, 5)
+	#dialog.vbox.pack_start(network_check, False, False, 5)
+	#dialog.vbox.pack_start(video_check, False, False, 5)
+	for x in sections_dict:
+		dialog.vbox.pack_start(sections_dict[x])
 	
 	dialog.set_default_size(400, dialog.get_property("default-height"))
 	dialog.show_all()
 	
 	support_list = []
 	if dialog.run() == gtk.RESPONSE_ACCEPT:
-		support_list.append("standard")
-		if network_check.get_active():
-			support_list.append("network")
-		if video_check.get_active():
-			support_list.append("video")
+		#support_list.append("standard")
+		#if network_check.get_active():
+		#	support_list.append("network")
+		#if video_check.get_active():
+		#	support_list.append("video")
+		for x in sections_dict:
+			if sections_dict[x].get_active():
+				support_list.append(x)
 	# Mask is initialized to 0, so we can safely return it
 	# if the user didn't enter anything, since we will get false
 	dialog.destroy()
@@ -165,7 +176,8 @@ class RequestHandler(threading.Thread):
 		self.result = None
 		self.func_handler = None
 		self.func_handler_data = None
-	
+	# Func handler should be of the form func_handler(py_curl_result, user_data)
+	# func_handler_data will be passed into the function as user data
 	def set_complete_handler(self, func_handler, func_handler_data=None):
 		self.func_handler = func_handler
 		self.func_handler_data = func_handler_data
@@ -183,10 +195,8 @@ class RequestHandler(threading.Thread):
 		self.is_started = True
 		print "Submitting %s\n%s" % (self.email, self.support)
 		print self.support_type
-		config = ConfigParser.ConfigParser()
-		config.readfp(open('conf/list.conf'))
 		for section in self.support_type:
-			command = config.get(section, "command")
+			command = functions.get_conf_item("list", section, "command")
 			dump = functions.get_dump(command)
 			response = functions.add_final(dump)
 		user_logs = functions.get_final()
@@ -236,7 +246,8 @@ def on_submit_complete(request_result, user_data=None):
 # Only execute if this was called directly
 if __name__ == "__main__":
 	# Actual code
-	# Initialize threading		
+	# Initialize threading
+	functions.set_conf_dir("../upstream-base/conf/")		
 	gtk.threads_init()	
 	request = query()
 	if request:

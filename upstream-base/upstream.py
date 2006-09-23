@@ -20,19 +20,16 @@
 import sys, optparse, os, ConfigParser
 
 import functions # our modules
+functions.set_conf_dir("conf/")
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
-
-config = ConfigParser.ConfigParser()
-config.readfp(open('conf/list.conf'))
-
-for x in config.sections():
-		sflag = config.get(x, "sflag")
-		lflag = config.get(x, "lflag")
+for x in functions.get_conf_sections("list"):
+		sflag = functions.get_conf_item("list", x, "sflag")
+		lflag = functions.get_conf_item("list", x, "lflag")
 		print sflag
 
-		parser.add_option(sflag, lflag, action="store_true", help=config.get(x, "help"), default=False)
+		parser.add_option(sflag, lflag, action="store_true", help=functions.get_conf_item("list", x, "help"), default=False)
 
 
 (options, args) = parser.parse_args()
@@ -42,8 +39,8 @@ for x in options.__dict__.iteritems():
 	boolean = x[1]
 
 	if boolean ==  1:
-		command = config.get(section, "command")
-		help = config.get(section, "help")
+		command = functions.get_conf_item("list", section, "command")
+		help = functions.get_conf_item("list", section, "help")
 		dump = functions.get_dump(command)
 		response = functions.add_final(dump)
 
