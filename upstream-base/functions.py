@@ -88,8 +88,10 @@ def get_conf_item(which_conf, section, attr):
 	if conf_dir_set:
 		if which_conf == "main":
 			return main_config.get(section, attr)
-		else:
+		elif which_conf == "list":
 			return list_config.get(section, attr)
+		else:
+			raise NoSuchItemException
 	else:
 		raise ConfDirUnsetException
 		
@@ -99,8 +101,10 @@ def get_conf_sections(which_conf):
 	if conf_dir_set:
 		if which_conf == "main":
 			return main_config.sections()
-		else:
+		elif which_conf == "list":
 			return list_config.sections()
+		else:
+			raise NoSuchItemException
 	else:
 		raise ConfDirUnsetException
 		
