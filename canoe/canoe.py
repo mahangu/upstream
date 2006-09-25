@@ -23,7 +23,7 @@ pygtk.require('2.0')
 import gtk
 import sys, time, threading, string, ConfigParser
 
-import functions
+import functions, asyncsubmit
 
 
 
@@ -34,7 +34,7 @@ def query():
 		if support_msg:
 			support_type = get_support_type()
 			if support_type:
-				return RequestHandler(email_addr, support_msg, support_type)	
+				return asyncsubmit.ThreadSubmit(email_addr, support_msg, support_type)	
 	# If the user cancelled at any point return false
 	return None
 
@@ -56,16 +56,12 @@ def submit(request):
 	vbox.pack_start(label, True, False, 0)
 	vbox.pack_start(hbuttonbox, True, False, 0)
 		
-	#obs = SubmitObserver(request, on_submit_complete)
+	
 	window.connect("delete_event", window_delete_event, request)
 	window.connect("destroy", window_destroy)
 	
 	window.show_all()
-	print "Finished GUI setup"
-	
 		
-	
-	#obs.start()
 	request.set_complete_handler(on_submit_complete, None)
 	request.start()
 	gtk.main()
@@ -73,10 +69,8 @@ def submit(request):
 def window_delete_event(widget, event, obs=None):
 	# Data should be a reference to observer
 	if request.isStarted() and not request.isAlive():
-		print "Delete event accepted"
 		return False
 	else:
-		print "Submission not complete!"
 		return True
 		
 def window_destroy(widget, data=None):
@@ -164,72 +158,10 @@ def get_support_type():
 	return support_list
 
 
-# A class to handle running of requests
-class RequestHandler(threading.Thread):
-	def __init__(self, email, support, support_type):
-		threading.Thread.__init__(self)
-		self.email = email
-		self.support = support
-		self.support_type = support_type
-		# These store useful variables for the class
-		self.is_started = False
-		self.result = None
-		self.func_handler = None
-		self.func_handler_data = None
-	# Func handler should be of the form func_handler(py_curl_result, user_data)
-	# func_handler_data will be passed into the function as user data
-	def set_complete_handler(self, func_handler, func_handler_data=None):
-		self.func_handler = func_handler
-		self.func_handler_data = func_handler_data
-	
-	# Determine if the thread has started yet
-	def isStarted(self):
-		return self.is_started
-	
-	# Get the result returned by whatever the current submit method is
-	def get_result(self):
-		return self.result
-		
-	def run(self):
-		# First thing, we must start the thread
-		self.is_started = True
-		print "Submitting %s\n%s" % (self.email, self.support)
-		print self.support_type
-		for section in self.support_type:
-			command = functions.get_conf_item("list", section, "command")
-			dump = functions.get_dump(command)
-			response = functions.add_final(dump)
-		user_logs = functions.get_final()
-		self.result = functions.send_curl(user_logs, self.support, self.email)
-		if self.func_handler:
-			self.func_handler(self.result, self.func_handler_data)
-		
-# Class to observe 
-#class SubmitObserver(threading.Thread):
-	# Initialize, we grab a reference to the RequestHandler thread
-	# so that we can spit out proper data
-	# This handles connecting the appropriate signals from the
-	# close button once the request thread terminates
-	# func_handler should be of the form func_handler(request_result, user_data)
-#	def __init__(self, request, func_handler, func_handler_data=None):
-#		threading.Thread.__init__(self)
-#		self.request = request
-#		self.func_handler = func_handler
-#		self.func_handler_data = func_handler_data
-#	def run(self):
-#		# Sleep until the request is done
-#		while not request.isStarted() or request.isAlive():
-#			time.sleep(0.01)
-#		result_res = request.get_result()
-#		self.func_handler(result_res, self.func_handler_data)
-#		
-#		
-		
-#	def isRun(self):
-#		return self.request.isStarted() and not self.request.isAlive()
 
+		
 def on_submit_complete(request_result, user_data=None):
-	# Once here, the request should be done
+	print "Results"
 	print request_result
 	global label
 	global window
