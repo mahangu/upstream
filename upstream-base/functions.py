@@ -173,8 +173,7 @@ def get_log(path_to_file):
 	log = None
 	fileobj = open ( path_to_file, 'r' )
 	file = fileobj.read()
-	log = '<br /><em>%s</em><br />%s' % (file,log)
-	return log
+	return file
 
 def add_final(text):
 	global final
