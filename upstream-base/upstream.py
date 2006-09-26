@@ -50,9 +50,9 @@ for x in options.__dict__.iteritems():
 	boolean = x[1]
 
 	if boolean ==  1:
-		command = functions.get_conf_item("list", section, "command")
+		log_path = functions.get_conf_item("list", section, "file")
 		help = functions.get_conf_item("list", section, "help")
-		dump = functions.get_dump(command)
+		dump = functions.get_log(log_path)
 		response = functions.add_final(dump)
 
 

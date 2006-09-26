@@ -162,30 +162,18 @@ def get_conf_sections(which_conf):
 		raise ConfDirUnsetException
 		
 
-#def send_post(logs, message = message, email = email, server = server, path= path, port = port):
-# Depecrated for a while now, will kill after next commit.
+# Can I get a L-E-G-A-C-Y on this one? It dies in the next commit.
+#def get_path(path):
+	#location = open(path)
+	#log = location.read()
+	#log = '<br /><em>%s</em><br />%s' % (path,log)
+	#return log
 
-	#print logs #error catching, for now
-
-	#params = urllib.urlencode({'message': message, 'email': email, 'logs': logs})
-	#headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
-	#conn = httplib.HTTPConnection('%s:%s'%(server, port))
-	#conn.request("POST", path, params, headers)
-	#response = conn.getresponse()	
-	#return response.status # response.reason
-	#data = response.read()
-	#conn.close()
-
-def get_path(path):
-	location = open(path)
-	log = location.read()
-	log = '<br /><em>%s</em><br />%s' % (path,log)
-	return log
-
-def get_dump(dump):
-	location = os.popen(dump)
-	log = location.read()
-	log = '<br /><em>%s</em><br />%s' % (dump,log)
+def get_log(path_to_file):
+	log = None
+	fileobj = open ( path_to_file, 'r' )
+	file = fileobj.read()
+	log = '<br /><em>%s</em><br />%s' % (file,log)
 	return log
 
 def add_final(text):
