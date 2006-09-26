@@ -21,6 +21,8 @@ import sys, optparse, os, ConfigParser
 
 import functions # our modules
 functions.set_conf_dir("conf/")
+functions.set_modules_dir("modules/")
+
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
@@ -31,8 +33,17 @@ for x in functions.get_conf_sections("list"):
 
 		parser.add_option(sflag, lflag, action="store_true", help=functions.get_conf_item("list", x, "help"), default=False)
 
+parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin module to use.", default=False)
 
 (options, args) = parser.parse_args()
+
+if options.pastebin:
+	functions.read_module(options.pastebin)
+	
+else:
+	functions.read_module()
+	
+	
 
 for x in options.__dict__.iteritems():
 	section = x[0]

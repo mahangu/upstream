@@ -17,20 +17,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import httplib, urllib, os, ConfigParser
+import httplib, urllib, os, ConfigParser, glob, sys
 
 main_config = ConfigParser.ConfigParser()
 list_config = ConfigParser.ConfigParser()
 
-server = None
-path = None
-port = None
-message = None
+#server = None
+#path = None
+#port = None
+
 email = None
+module = None
+module_path = None
+message = None
 
-url = 'http://%s%s'%(server,path)
-
-final = "" #gotta find a better way to do this
+final = None
 
 
 
@@ -54,6 +55,57 @@ class NoSuchItemException(Exception):
 
 conf_dir = None
 conf_dir_set = False
+
+modules_dir = None
+modules_dir_set = False
+
+def set_modules_dir(path_to_dir):
+	global modules_dir
+	global modules_dir_set
+	
+	modules_dir = path_to_dir
+	modules_dir_set = True
+
+def read_module(which_module = None):
+	default_module = get_conf_item("main", "main", "default_module")
+	
+	if modules_dir_set:
+		if os.path.isfile("%s/%s.py"%(modules_dir,which_module)):
+			print which_module
+			global module
+			global module_path
+			
+			module = which_module
+			module_path = "%s%s.py"%(modules_dir,which_module)
+			
+			print module_path
+			
+			print "Looking good partner, your support request is on its way."
+			
+			return True
+					
+		else:
+			if os.path.isfile("%s/%s.py"%(modules_dir,default_module)):
+		
+				print "No module specified, using the default module."
+				
+				module_path = "%s%s.py"%(modules_dir,default_module)
+			
+				print module_path
+				
+					
+				return True
+		
+			else :	
+			
+			
+				print "No ouput module was found. Cannot continue."
+				sys.exit(1)
+				
+				return False
+	else:
+		print "Your Modules directory is not set. I don't know where to look for modules."
+
 def set_conf_dir(path_to_dir):
 	global conf_dir
 	global conf_dir_set	
@@ -66,21 +118,22 @@ def set_conf_dir(path_to_dir):
 	# List configurations
 	list_config.readfp(open(path_to_dir + "list.conf"))
 	# Actually perform the read
-	read_conf()
+	# read_conf()
 	
 	
-def read_conf():
-	global server
-	global path
-	global port
-	global message
-	global email
+#def read_conf():
+# Depecrated as of September 26th 2006. These variables are now loaded by individual /modules/.py modules.
+	#global server
+	#global path
+	#global port
+	#global message
+	#global email
 	
-	server = main_config.get("main","server")
-	path = main_config.get ("main", "path")
-	port = main_config.get("main","port")
-	message = main_config.get ("main", "message")
-	email = main_config.get ("main", "email")
+	#server = main_config.get("main","server")
+	#path = main_config.get ("main", "path")
+	#port = main_config.get("main","port")
+	#message = main_config.get ("main", "message")
+	#email = main_config.get ("main", "email")
 
 	
 # which_conf should be either main or list
@@ -109,18 +162,19 @@ def get_conf_sections(which_conf):
 		raise ConfDirUnsetException
 		
 
-def send_post(logs, message = message, email = email, server = server, path= path, port = port):
+#def send_post(logs, message = message, email = email, server = server, path= path, port = port):
+# Depecrated for a while now, will kill after next commit.
 
-	print logs #error catching, for now
+	#print logs #error catching, for now
 
-	params = urllib.urlencode({'message': message, 'email': email, 'logs': logs})
-	headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
-	conn = httplib.HTTPConnection('%s:%s'%(server, port))
-	conn.request("POST", path, params, headers)
-	response = conn.getresponse()	
-	return response.status # response.reason
-	data = response.read()
-	conn.close()
+	#params = urllib.urlencode({'message': message, 'email': email, 'logs': logs})
+	#headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
+	#conn = httplib.HTTPConnection('%s:%s'%(server, port))
+	#conn.request("POST", path, params, headers)
+	#response = conn.getresponse()	
+	#return response.status # response.reason
+	#data = response.read()
+	#conn.close()
 
 def get_path(path):
 	location = open(path)
@@ -146,33 +200,9 @@ def get_final():
 
 def send_curl (logs, message = message, email = email):
 
-	logs = logs.replace("\"","")
-
-	if not conf_dir_set:
-		raise ConfDirUnsetException
-	# Remove duplicate code, we should use only the global
-	#config = ConfigParser()
-	#main_config.readfp(open('conf/main.conf'))
-	url = main_config.get("post", "url")
-	name_field = main_config.get("post", "name_field")
-	title_field = main_config.get("post", "title_field")
-	msg_field = main_config.get("post", "msg_field")
-	misc = main_config.get("post", "misc")
-	referer = main_config.get("post", "referer")
-
-	# Prepare Curl object
-	import pycurl
-	from urllib import urlencode
-	from StringIO import StringIO
-	c = pycurl.Curl()
-	c.setopt(pycurl.URL, url)
-	c.setopt(pycurl.POST, 1)
-	post_data = { name_field: "Upstream<%s>"%email, title_field: message, msg_field: logs }
-	c.setopt(pycurl.POSTFIELDS, urlencode(post_data)+misc)
-	c.setopt(pycurl.REFERER, referer)
-	clog = StringIO()
-	c.setopt(pycurl.WRITEFUNCTION, clog.write)
-	c.perform()
-
-	return clog.getvalue()
+	if module_path == None:
+		print "send_curl : No output modules found, cannot continue."
+		sys.exit(1)
+	else:
+		execfile(module_path)
 	
