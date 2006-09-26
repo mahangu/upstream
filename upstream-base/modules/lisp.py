@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
+
+import webbrowser,os
 	
 logs = logs.replace("\"","")
 	
@@ -37,4 +39,14 @@ clog = StringIO()
 c.setopt(pycurl.WRITEFUNCTION, clog.write)
 c.perform()
 
-print clog.getvalue()
+file = open ( 'lisp.html', 'w' )
+
+foo = clog.getvalue()
+
+file.write ( "%s"%(foo) )
+
+file.close() 
+
+# print clog.getvalue()
+
+webbrowser.open_new("lisp.html")
