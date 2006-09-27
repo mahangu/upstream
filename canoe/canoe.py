@@ -54,14 +54,10 @@ def submit(request):
 		
 	window.add(vbox)
 	vbox.pack_start(label, True, False, 0)
-	vbox.pack_start(hbuttonbox, True, False, 0)
-		
-	
+	vbox.pack_start(hbuttonbox, True, False, 0)	
 	window.connect("delete_event", window_delete_event, request)
-	window.connect("destroy", window_destroy)
-	
-	window.show_all()
-		
+	window.connect("destroy", window_destroy)	
+	window.show_all()		
 	request.set_complete_handler(on_submit_complete, None)
 	request.start()
 	gtk.main()
