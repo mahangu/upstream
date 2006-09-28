@@ -22,21 +22,19 @@ import threading
 import functions
 
 class ThreadSubmit(threading.Thread):
-	def __init__(self, email, support, support_type):
+	# complete_handler should be of the form func_handler(SubmitModuleResult, user_data)
+	# user_data may be arbitrary
+	def __init__(self, submission_module, email, support_message, log_dict, complete_handler, complete_user_data):
 		threading.Thread.__init__(self)
+		self.submission_module = submission_module
 		self.email = email
-		self.support = support
-		self.support_type = support_type
-		# These store useful variables for the class
+		self.support_message = support_message
+		self.log_dict = log_dict
+		self.complete_handler = complete_handler
+		self.complete_user_data = complete_user_data
+		
 		self.is_started = False
 		self.result = None
-		self.func_handler = None
-		self.func_handler_data = None
-	# Func handler should be of the form func_handler(py_curl_result, user_data)
-	# func_handler_data will be passed into the function as user data
-	def set_complete_handler(self, func_handler, func_handler_data=None):
-		self.func_handler = func_handler
-		self.func_handler_data = func_handler_data
 	
 	# Determine if the thread has started yet
 	def isStarted(self):
@@ -49,11 +47,6 @@ class ThreadSubmit(threading.Thread):
 	def run(self):
 		# First thing, we must start the thread
 		self.is_started = True
-		for section in self.support_type:
-			command = functions.get_conf_item("list", section, "command")
-			dump = functions.get_dump(command)
-			response = functions.add_final(dump)
-		user_logs = functions.get_final()
-		self.result = functions.send_curl(user_logs, self.support, self.email)
-		if self.func_handler:
-			self.func_handler(self.result, self.func_handler_data)
+		self.result = self.submission_module.execute(email, support_message, log_dict)
+		self.complete_handler(self.result, self.complete_user_data)
+				

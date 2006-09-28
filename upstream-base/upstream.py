@@ -48,7 +48,7 @@ else:
 	module = loader.get_module_by_name(functions.get_conf_item("main", "main", "default_module"))
 	
 	
-
+log_dict = None
 for x in options.__dict__.iteritems():
 	section = x[0]
 	boolean = x[1]
@@ -56,8 +56,9 @@ for x in options.__dict__.iteritems():
 	if boolean ==  1:
 		log_path = functions.get_conf_item("list", section, "file")
 		help = functions.get_conf_item("list", section, "help")
-		dump = functions.get_log(log_path)
-		response = functions.add_final(dump)
+		log_dict = functions.append_log(log_dict, log_path, section)
+		#dump = functions.get_log(log_path)
+		#response = functions.add_final(dump)
 
 
 # Check to see if all mandatory arguments have been filled.
@@ -76,7 +77,7 @@ user_message = args[1]
 print user_message
 print user_email
 
-user_logs = functions.get_final()
+#user_logs = functions.get_final()
 
-module.execute(user_email, user_message, user_logs)
+module.execute(user_email, user_message, log_dict)
 
