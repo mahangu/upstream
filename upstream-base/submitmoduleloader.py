@@ -91,6 +91,7 @@ class SubmitModule:
 	def execute(self, email, support, dict_of_log):
 		try:
 			res =  self.module.execute(email, support, dict_of_log)
+			return res
 		except:
 			print "Error in execution of %s" % self.module_name
 			print sys.exc_info()[0]
@@ -99,6 +100,7 @@ class SubmitModule:
 				return SubmitModuleResult(False, False, None, formatted_str)
 			else:
 				raise
+				
 	
 
 # Class that handles the loading of submission modules
