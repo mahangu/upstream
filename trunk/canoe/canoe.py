@@ -23,7 +23,7 @@ pygtk.require('2.0')
 import gtk
 import sys, time, threading, string, ConfigParser
 
-import functions, asyncsubmit
+import functions, asyncsubmit, submitmoduleloader
 
 
 
@@ -32,9 +32,12 @@ def query():
 	if email_addr:
 		support_msg = get_support_msg()
 		if support_msg:
-			support_type = get_support_type()
-			if support_type:
-				return asyncsubmit.ThreadSubmit(email_addr, support_msg, support_type)	
+			support_logs = get_support_type()
+			if support_logs:
+				module_loader = submitmoduleloader.SubmitModuleLoader()
+				module_loader.add_search_path("../upstream-base/modules")
+				module = module_loader.get_module_by_name("red")
+				return asyncsubmit.ThreadSubmit(module, email_addr, support_msg, support_logs, on_submit_complete, None)	
 	# If the user cancelled at any point return false
 	return None
 
@@ -58,7 +61,6 @@ def submit(request):
 	window.connect("delete_event", window_delete_event, request)
 	window.connect("destroy", window_destroy)	
 	window.show_all()		
-	request.set_complete_handler(on_submit_complete, None)
 	request.start()
 	gtk.main()
 	
@@ -124,8 +126,7 @@ def get_support_type():
 	# We scan the configuration so that everything works
 	
 	sections_dict = dict([(x, gtk.CheckButton(x, False)) for x in functions.get_conf_sections("list")])
-	# Standard should be checked by default
-	sections_dict["standard"].set_active(True)
+
 			
 	#network_check = gtk.CheckButton("Network", False)
 	#video_check = gtk.CheckButton("Video", False)
@@ -138,7 +139,7 @@ def get_support_type():
 	dialog.set_default_size(400, dialog.get_property("default-height"))
 	dialog.show_all()
 	
-	support_list = []
+	log_dict = None
 	if dialog.run() == gtk.RESPONSE_ACCEPT:
 		#support_list.append("standard")
 		#if network_check.get_active():
@@ -147,18 +148,17 @@ def get_support_type():
 		#	support_list.append("video")
 		for x in sections_dict:
 			if sections_dict[x].get_active():
-				support_list.append(x)
+				log_path = functions.get_conf_item("list", x, "file")
+				log_dict = functions.append_log(log_dict, log_path, x)
 	# Mask is initialized to 0, so we can safely return it
 	# if the user didn't enter anything, since we will get false
 	dialog.destroy()
-	return support_list
+	return log_dict
 
 
 
 		
 def on_submit_complete(request_result, user_data=None):
-	print "Results"
-	print request_result
 	global label
 	global window
 	global hbuttonbox
