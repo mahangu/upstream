@@ -65,26 +65,54 @@ class ModuleDirIterator:
 			# The fullname should be the proper_module_name + .py that was removed
 			return {"path":self.parent.path , "name":proper_module_name, "fullname":proper_module_name + ".py"}
 
+
+exception_template = """<html>
+				<head>
+					<title>Error Page!</title>
+				</head>
+				<body>
+					<h3>An exception occured</h3><br />
+					<p>The following exception: %s<br />
+					occured while processing in module %s
+					</p>
+				</body>
+			</html>"""
+		
 # A class that wraps around a loaded submit module
 # it assumes that the module it is given is correctly formed	
 class SubmitModule:
-	def __init__(self, module):
+	def __init__(self, fault_tolerance, module):
+		self.fault_tolerance = fault_tolerance
 		self.module = module
 		self.module_name = module.module_name
 		self.module_description = module.module_description
 		self.module_submit_url = module.module_submit_url
 		
 	def execute(self, email, support, dict_of_log):
-		return self.module.execute(email, support, dict_of_log)
+		try:
+			res =  self.module.execute(email, support, dict_of_log)
+		except:
+			print "Error in execution of %s" % self.module_name
+			print sys.exc_info()[0]
+			if self.fault_tolerance
+				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
+				return SubmitModuleResult(False, False, None, formatted_str)
+			else:
+				raise
 	
 
 # Class that handles the loading of submission modules
 class SubmitModuleLoader:
 	# Intialize the full search path as empty
-	def __init__(self):
+	# If fault_tolerance = False, any exception raised by
+	# this submit module loader or any SubmitModules retreived
+	# by it will be handled, information printed, and then then exceptions
+	# will be reraised
+	def __init__(self, fault_tolerance=True):
 		self.search_paths = []
 		self.search_path_descriptor = []
 		self.loaded_submit_modules = []
+		self.fault_tolerance = fault_tolerance
 		
 	# Add a search  path to look for submission modules
 	def add_search_path(self, path):
@@ -114,7 +142,7 @@ class SubmitModuleLoader:
 					print "Attempting to load module: %s" % module["name"]
 					loaded_module = imp.load_module(module["name"], module_desc[CONST_FILE_IND], module_desc[CONST_PATH_IND], module_desc[CONST_DESC_IND])
 					if self.validate_module(loaded_module):
-						new_mod = SubmitModule(loaded_module)
+						new_mod = SubmitModule(self.fault_tolerance,loaded_module)
 						self.loaded_submit_modules.append(new_mod)
 						print "Successfully loaded module: %s" % module["name"]
 					else:
@@ -123,7 +151,7 @@ class SubmitModuleLoader:
 					print "Module loading threw exception: %s" % module["name"]
 					print sys.exc_info()[0]
 					# Stub should always be valid
-					if module["name"] == "stub":
+					if not self.fault_tolerance
 						raise
 				
 	# Perform the work necessary to validate a module as correctly formed
