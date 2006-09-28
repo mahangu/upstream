@@ -174,13 +174,23 @@ def get_log(path_to_file):
 	fileobj = open ( path_to_file, 'r' )
 	file = fileobj.read()
 	return file
+	
+def append_log(log_dict, file_path, log_name):
+	log_contents = get_log(file_path)
+	if log_contents:
+		if log_dict:
+			log_dict[log_name] = log_contents
+		else:
+			log_dict = {log_name:log_contents}
+	return log_dict
 
+# Deprecated, use append_log
 def add_final(text):
 	global final
 	finale = final
 	final = '%s\n\n%s'%(finale,text)
 	return final
-
+# Deprecated use append_log
 def get_final():
 	global final
 	return final

@@ -31,7 +31,13 @@ def execute(submit_email, submit_message, dict_of_logs):
 	
 	
 	print "Executing"
-	dict_of_logs = dict_of_logs.replace("\"","")
+	# Handle the dict
+	flat_log_type = ""
+	for x in dict_of_logs:
+		# Put all the elements into one log
+		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (x, dict_of_logs[x])
+		
+	flat_log_type = flat_log_type.replace("\"","")
 	
 	referer= "http://pastebin.redkrieg.com"
 	# misc= "&channel=none&colorize=none"
@@ -43,7 +49,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	c = pycurl.Curl()
 	c.setopt(pycurl.URL, module_submit_url)
 	c.setopt(pycurl.POST, 1)
-	post_data = { 'subject': "Upstream<%s>"%submit_email, 'language': "1", 'code': submit_message + dict_of_logs, 'nickname': "Upstream" }
+	post_data = { 'subject': "Upstream<%s>"%submit_email, 'language': "1", 'code': submit_message + flat_log_type, 'nickname': "Upstream" }
 	c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
 	c.setopt(pycurl.REFERER, referer)
 	clog = StringIO()
