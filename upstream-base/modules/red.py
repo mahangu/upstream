@@ -51,13 +51,14 @@ def execute(submit_email, submit_message, dict_of_logs):
 	c.perform()
 	
 	#Do we need to generate this file anymore? --RedKrieg
-	file = open ( 'red.html', 'w' )
+	#No, killing it off
+	#file = open ( 'red.html', 'w' )
 	
 	foo = clog.getvalue()
 	
-	file.write ( "%s"%(foo) )
+	#file.write ( "%s"%(foo) )
 	
-	file.close() 
+	#file.close() 
 	#End question --RedKrieg
 	
 	response_url = "http://pastebin.redkrieg.com/?page=view&id="+foo[foo.find("&id=")+4:foo.find("&id=")+14]	#get url of paste
@@ -67,7 +68,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	# print clog.getvalue()
 	
 	# no, no error checking yet.
-	return submitmoduleloader.SubmitModuleResult(True, True, response_url)
+	return submitmoduleloader.SubmitModuleResult(True, True, response_url, foo)
 
 
 
