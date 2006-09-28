@@ -60,10 +60,8 @@ def execute(submit_email, submit_message, dict_of_logs):
 	
 	# print clog.getvalue()
 	
-	webbrowser.open_new("red.html")
-
 	# no, no error checking yet.
-	return submitmoduleloader.SubmitModuleResult(True, True)
+	return submitmoduleloader.SubmitModuleResult(True, True, "red.html")
 
 
 
