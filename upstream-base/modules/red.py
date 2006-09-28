@@ -17,36 +17,57 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
+
+import submitmoduleloader
 import webbrowser,os
+
+module_name = "red"
+module_description = """Module for Redkrieg's pastebin. Much <3 to him for hosting us."""
+module_submit_url = "http://pastebin.redkrieg.com?page=submit"
+
+
+def execute(submit_email, submit_message, dict_of_logs):
+	global module_submit_url
 	
-logs = logs.replace("\"","")
 	
-url= "http://pastebin.redkrieg.com?page=submit"
-referer= "http://pastebin.redkrieg.com"
-# misc= "&channel=none&colorize=none"
+	print "Executing"
+	dict_of_logs = dict_of_logs.replace("\"","")
+	
+	referer= "http://pastebin.redkrieg.com"
+	# misc= "&channel=none&colorize=none"
+	
+	# Prepare Curl object
+	import pycurl
+	from urllib import urlencode
+	from StringIO import StringIO
+	c = pycurl.Curl()
+	c.setopt(pycurl.URL, module_submit_url)
+	c.setopt(pycurl.POST, 1)
+	post_data = { 'subject': "Upstream<%s>"%submit_email, 'title': "title", 'code': submit_message + dict_of_logs }
+	c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
+	c.setopt(pycurl.REFERER, referer)
+	clog = StringIO()
+	c.setopt(pycurl.WRITEFUNCTION, clog.write)
+	c.perform()
+	
+	file = open ( 'red.html', 'w' )
+	
+	foo = clog.getvalue()
+	
+	file.write ( "%s"%(foo) )
+	
+	file.close() 
+	
+	# print clog.getvalue()
+	
+	webbrowser.open_new("red.html")
 
-# Prepare Curl object
-import pycurl
-from urllib import urlencode
-from StringIO import StringIO
-c = pycurl.Curl()
-c.setopt(pycurl.URL, url)
-c.setopt(pycurl.POST, 1)
-post_data = { 'subject': "Upstream<%s>"%email, 'title': "title", 'code': message + logs }
-c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
-c.setopt(pycurl.REFERER, referer)
-clog = StringIO()
-c.setopt(pycurl.WRITEFUNCTION, clog.write)
-c.perform()
+	# no, no error checking yet.
+	return submitmoduleloader.SubmitModuleResult(True, True)
 
-file = open ( 'red.html', 'w' )
 
-foo = clog.getvalue()
 
-file.write ( "%s"%(foo) )
 
-file.close() 
 
-# print clog.getvalue()
+	
 
-webbrowser.open_new("red.html")
