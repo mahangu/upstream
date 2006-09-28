@@ -17,9 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import submitmoduleloader
 
-
-module_name = "Module Stub"
+module_name = "Stub"
 module_description = """This is a stub module to provide an example and
 			to test the functioning of the SubmitModuleLoader
 			This module always reports a failure"""
@@ -28,4 +28,4 @@ module_submit_url = "http://null"
 
 def execute(email, submit_message, dict_of_logs):
 	print "Executing"
-	return SubmitModuleResult(False, False)
+	return submitmoduleloader.SubmitModuleResult(False, False)

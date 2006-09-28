@@ -17,16 +17,25 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import glob, imp
+import glob, imp, sys
+
+class SubmitModuleResult:
+	def __init__(self, bool_ispaste, bool_success, result_url=None, result_xml=None):
+		self.bool_ispaste = bool_ispaste
+		self.bool_success = bool_success
+		self.result_url = result_url
+		self.result_xml = result_xml
+		
 
 class ModuleDirDescription:
 	def __init__(self, path):
-		self.found_modules = []
+		# We need to add the module to the searchpath apparently
 		self.path = path
+		sys.path.append(self.path)
+		self.found_modules = []		
 		self.scan()
 	def __iter__(self):
-		return ModuleDirIterator(self)
-		
+		return ModuleDirIterator(self)		
 	def scan(self):
 		print "Scanning: Single path"
 		if self.path[len(self.path) - 1] == '/':
@@ -53,7 +62,20 @@ class ModuleDirIterator:
 			# The found modules should always end in .py so no big deal here
 			# We are getting from the frnot of the found module name until the .py
 			proper_module_name = self.parent.found_modules[self.ind][0:self.parent.found_modules[self.ind].rfind(".py")]
-			return {"path":self.parent.path , "name":proper_module_name}
+			# The fullname should be the proper_module_name + .py that was removed
+			return {"path":self.parent.path , "name":proper_module_name, "fullname":proper_module_name + ".py"}
+
+# A class that wraps around a loaded submit module
+# it assumes that the module it is given is correctly formed	
+class SubmitModule:
+	def __init__(self, module):
+		self.module = module
+		self.module_name = module.module_name
+		self.module_description = module.module_description
+		self.module_submit_url = module.module_submit_url
+		
+	def execute(self, email, support, dict_of_log):
+		return self.module.execute(email, support, dict_of_log)
 	
 
 # Class that handles the loading of submission modules
@@ -80,10 +102,45 @@ class SubmitModuleLoader:
 	# scan, this could be used to force reloading all modules that
 	# are already found
 	def load(self):
-		print "Loading"
+		CONST_FILE_IND = 0;
+		CONST_PATH_IND = 1
+		CONST_DESC_IND = 2
+		self.loaded_submit_modules = []
 		for mod_path in self.search_path_descriptor:
-			print "mod_path: %s" % (mod_path.path)
 			for module in mod_path:
-				print "module: %s" % module
-				print "Loading module at: %s %s" % (module["path"], module["name"])
+				module_desc = imp.find_module(module["name"])
+				# Catch any exceptions thrown by loading the module
+				try:
+					print "Attempting to load module: %s" % module["name"]
+					loaded_module = imp.load_module(module["name"], module_desc[CONST_FILE_IND], module_desc[CONST_PATH_IND], module_desc[CONST_DESC_IND])
+					if self.validate_module(loaded_module):
+						new_mod = SubmitModule(loaded_module)
+						self.loaded_submit_modules.append(new_mod)
+						print "Successfully loaded module: %s" % module["name"]
+					else:
+						print "Skipping malformed module: %s" % module["name"]
+				except:
+					print "Module loading threw exception: %s" % module["name"]
+					print sys.exc_info()[0]
+					# Stub should always be valid
+					if module["name"] == "stub":
+						raise
+				
+	# Perform the work necessary to validate a module as correctly formed
+	def validate_module(self, module):
+		if "module_name" in dir(module) and "module_description" in dir(module) and "module_submit_url" in dir(module) and "execute" in dir(module):
+			return True
+		else:
+			return False
+			
+	def get_all_submit_modules(self):
+		return [mod for mod in self.loaded_submit_modules]
+		
+	def get_module_by_name(self, name):
+		for mod_object in self.loaded_submit_modules:
+			print mod_object.module_name
+			print mod_object.module.__name__
+			if mod_object.module_name == name or mod_object.module.__name__ == name:
+				return mod_object
+		return None
 	
