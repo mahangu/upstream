@@ -94,7 +94,7 @@ class SubmitModule:
 		except:
 			print "Error in execution of %s" % self.module_name
 			print sys.exc_info()[0]
-			if self.fault_tolerance
+			if self.fault_tolerance:
 				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
 				return SubmitModuleResult(False, False, None, formatted_str)
 			else:
@@ -151,7 +151,7 @@ class SubmitModuleLoader:
 					print "Module loading threw exception: %s" % module["name"]
 					print sys.exc_info()[0]
 					# Stub should always be valid
-					if not self.fault_tolerance
+					if not self.fault_tolerance:
 						raise
 				
 	# Perform the work necessary to validate a module as correctly formed
