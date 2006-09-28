@@ -43,7 +43,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	c = pycurl.Curl()
 	c.setopt(pycurl.URL, module_submit_url)
 	c.setopt(pycurl.POST, 1)
-	post_data = { 'subject': "Upstream<%s>"%submit_email, 'title': "title", 'code': submit_message + dict_of_logs }
+	post_data = { 'subject': "Upstream<%s>"%submit_email, 'title': "title", 'code': submit_message + dict_of_logs, 'nickname': "Upstream" }
 	c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
 	c.setopt(pycurl.REFERER, referer)
 	clog = StringIO()
