@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import sys, optparse, os, ConfigParser
+import submitmoduleloader
 
 import functions # our modules
 functions.set_conf_dir("conf/")
@@ -37,11 +38,14 @@ parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin mo
 
 (options, args) = parser.parse_args()
 
+loader = submitmoduleloader.SubmitModuleLoader()
+loader.add_search_path("./modules")
+	
 if options.pastebin:
-	functions.read_module(options.pastebin)
+	module = loader.get_module_by_name(options.pastebin)
 	
 else:
-	functions.read_module()
+	module = loader.get_module_by_name(functions.get_conf_item("main", "main", "default_module"))
 	
 	
 
@@ -74,6 +78,5 @@ print user_email
 
 user_logs = functions.get_final()
 
-response = functions.send_curl(user_logs, user_message, user_email)
+module.execute(user_email, user_message, user_logs)
 
-print response
