@@ -204,6 +204,7 @@ class UpstreamWizard(QWizard):
 			self.categoryLogs(),
 			threadCompleteHandler,
 			None)
+		return request
 
 	def accept(self):
 		# Submit the stuff
