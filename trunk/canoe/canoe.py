@@ -27,17 +27,17 @@ import functions, asyncsubmit, submitmoduleloader
 
 
 
+
 def query():
 	email_addr = get_email_addr()
 	if email_addr:
 		support_msg = get_support_msg()
 		if support_msg:
 			support_logs = get_support_type()
-			if support_logs:
-				module_loader = submitmoduleloader.SubmitModuleLoader()
-				module_loader.add_search_path("../upstream-base/modules")
-				module = module_loader.get_module_by_name("red")
-				return asyncsubmit.ThreadSubmit(module, email_addr, support_msg, support_logs, on_submit_complete, None)	
+			if support_logs:				
+				module = get_submit_module()
+				if module:
+					return asyncsubmit.ThreadSubmit(module, email_addr, support_msg, support_logs, on_submit_complete, None)	
 	# If the user cancelled at any point return false
 	return None
 
@@ -60,6 +60,7 @@ def submit(request):
 	vbox.pack_start(hbuttonbox, True, False, 0)	
 	window.connect("delete_event", window_delete_event, request)
 	window.connect("destroy", window_destroy)	
+	window.set_title("Completing...")
 	window.show_all()		
 	request.start()
 	gtk.main()
@@ -155,8 +156,43 @@ def get_support_type():
 	dialog.destroy()
 	return log_dict
 
+def get_submit_module():
+	dialog = gtk.Dialog("Upload Server", None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+	label = gtk.Label("Select a server to upload your data to")
+	dialog.vbox.pack_start(label, False, False, 5)
+	
+	combobox = gtk.combo_box_new_text()
+	server_list = module_loader.get_all_submit_modules()
+	for mod in server_list:
+		combobox.append_text(mod.module_name)
+	dialog.vbox.pack_start(combobox, False, False, 5)		
+	if server_list:
+		text_list = [gtk.Label(server_list[0].module_name), gtk.Label(server_list[0].module_description), gtk.Label(server_list[0].module_submit_url)] 
+	else:
+		text_list = [gtk.Label(""), gtk.Label(""), gtk.Label("")]
+		
+	for x in text_list:
+		dialog.vbox.pack_start(x, False, False, 10)
+		
+	combobox.connect("changed", submit_select_changed, text_list)
+	
+	dialog.show_all()
+	if dialog.run() == gtk.RESPONSE_ACCEPT:
+		module = module_loader.get_module_by_name(combobox.get_active_text())
+		dialog.destroy()
+		return module
+	else:
+		return None
+		
+	
+	
 
-
+def submit_select_changed(widget, text_list):
+	mod_name = widget.get_active_text()
+	module = module_loader.get_module_by_name(mod_name)
+	text_list[0].set_text(module.module_name)
+	text_list[1].set_text(module.module_description)
+	text_list[2].set_text(module.module_submit_url)
 		
 def on_submit_complete(request_result, user_data=None):
 	global label
@@ -169,13 +205,16 @@ def on_submit_complete(request_result, user_data=None):
 	hbuttonbox.pack_end(button, False, False, 0)
 	button.connect_object("clicked", gtk.Widget.destroy, window)
 	button.show()
+	window.set_title("Finished")
 	gtk.threads_leave()
 
 # Only execute if this was called directly
 if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
-	functions.set_conf_dir("../upstream-base/conf/")		
+	functions.set_conf_dir("../upstream-base/conf/")
+	module_loader = submitmoduleloader.SubmitModuleLoader()
+	module_loader.add_search_path("../upstream-base/modules")		
 	gtk.threads_init()	
 	request = query()
 	if request:
