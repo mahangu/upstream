@@ -47,6 +47,6 @@ class ThreadSubmit(threading.Thread):
 	def run(self):
 		# First thing, we must start the thread
 		self.is_started = True
-		self.result = self.submission_module.execute(email, support_message, log_dict)
+		self.result = self.submission_module.execute(self.email, self.support_message, self.log_dict)
 		self.complete_handler(self.result, self.complete_user_data)
 				
