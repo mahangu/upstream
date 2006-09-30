@@ -1,9 +1,6 @@
 #!/usr/bin/python
 #
-# Kanoe - Qt frontend for the upstream (BTW for the love of god pick a better
-# name for this please, Kanoe is just Canoe with a K, it's not 1998 anymore :)
-#
-# log file aggregator and report tool for *nix systems.
+# Kayak frontend for the upstream log file aggregator and report tool for *nix systems.
 # Copyright (C) 2006  Ryan Zeigler (zeiglerr@gmail.com) (Canoe)
 # Copyright (C) 2006  Michael Pyne (michael.pyne@kdemail.net)
 #
@@ -68,7 +65,7 @@ class WizardPage(QWidget):
 
 class IntroPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Kanoe Introduction")
+		WizardPage.__init__(self, wizard, "Kayak Introduction")
 
 		self.body = QLabel("""<qt><center>This program will assist you in
 		sending troubleshooting data to aid support personnel in diagnosing
@@ -190,7 +187,7 @@ class UpstreamWizard(QWizard):
 		return logs
 			
 	def submitDone(self):
-		QMessageBox.information(self, "Kanoe", "Submission complete")
+		QMessageBox.information(self, "Kayak", "Submission complete")
 		self.done(0)
 
 	def makeRequest(self):
@@ -212,7 +209,7 @@ class UpstreamWizard(QWizard):
 		global wizardDialog
 
 		wizardDialog = self
-		self.setCaption("Kanoe - Submitting Report")
+		self.setCaption("Kayak - Submitting Report")
 		self.setEnabled(False)
 
 		request = self.makeRequest()
@@ -220,7 +217,7 @@ class UpstreamWizard(QWizard):
 		if request:
 			request.start()
 		else:
-			QMessageBox.critical(self, "Kanoe",
+			QMessageBox.critical(self, "Kayak",
 			    "Unable to submit report (unable to create the request)")
 			QWizard.accept(self)
 
