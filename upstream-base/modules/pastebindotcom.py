@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Upstream paste.ubuntu-nl.org  module.
+# Upstream pastebin.com  module.
 # Copyright (C) 2006  Jason Ribeiro <jason.ribeiro@gmail.com>
 #
 # This program is free software; you can redistribute it and/or
