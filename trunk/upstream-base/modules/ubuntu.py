@@ -20,6 +20,7 @@
 
 import submitmoduleloader
 from urllib import urlopen, urlencode
+from textwrap import fill
 
 module_name = "ubuntu"
 module_description = """Module for paste.ubuntu-nl.org"""
@@ -39,7 +40,8 @@ def execute(submit_email, submit_message, dict_of_logs):
 	#flat_log_type = flat_log_type.replace("\"","") 
 
 	# 'poster' cannot exceed 21 characters for paste.ubuntu-nl.org
-	post_data = { 'content': submit_email + "\n" + submit_message + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
+	# wrapping submit_message only at the moment to the default characters
+	post_data = { 'content': submit_email + "\n" + fill(submit_message) + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
 
 	# Send the data
 	paste = urlopen(module_submit_url, urlencode(post_data))
