@@ -40,18 +40,21 @@ DEBUG_ALL = 1
 
 class InvalidMLoadPropException(Exception):
 	def __init__(self, err_type):
-		Exception.__init__(self):
+		Exception.__init__(self)
 		self.err_type = err_type
 		
 
 class LoadedModule:
 	fault_tolerance = True
 	debug_output = DEBUG_NONE
+	# This expects the module fields to already exist
 	def __init__(self, module, fault_tolerance, debug_output):
-		pass
-	def execute(self, paramter)
-		pass
-
+		self.fault_tolerance = fault_tolerance
+		self.debug_output = debug_output
+		self.module = module
+		self.module_name = self.module.module_name
+		self.module_description = self.module.module_description
+	
 class ModuleLoader:
 	# Necessary attributes for a generic module
 	# Subclasses may override this to provide for different required attributes
@@ -66,35 +69,36 @@ class ModuleLoader:
 		self.valid_modules = []
 		self.execute_load()
 		
+	def __iter__(self):
+		return ModuleLoaderIterator(self)	
 		
-		
-	def execute_load(self)
+	def execute_load(self):
 		# Perform validation to ensure that we didn't end up invalid
 		# parameters
-		if self.path_list is not list:
+		if type(self.path_list) is not list:
 			raise InvalidMLoadPropException(MLOAD_NOT_LIST)
 			
 		# Only perform an actual import if we have a non-zero list
 		if len(self.path_list) is not 0:
 			# Perform validation of the content of the path_list					
-			for p in range(0,len(self.path_list)):
-				if self.path_list[p] is not str:
-					# Prune from list if not a string
+			for p in self.path_list:
+				if type(p) is not str:
+				# Prune from list if not a string
 					if self.fault_tolerance:
-						del self.path_list[p]
+						self.path_list.remove(p)
 					else:
 						raise InvalidMLoadPropException(MLOAD_HAS_NONSTR)
-						
+					
 			
 			for path_name in self.path_list:
 				loaded_directory = ModuleDirectoryScanner(path_name, self.fault_tolerance, self.debug_output)
 				for loaded_module in loaded_directory:
 					if self.validate_module(loaded_module):
-						self.valid_module.append(ModuleWrapper(loaded_module, self.fault_tolerance, self.debug_output))
+						self.valid_modules.append(self.ModuleWrapper(loaded_module, self.fault_tolerance, self.debug_output))
 								
-	else:
-		if not self.fault_tolerance:
-			raise InvalidMLoadPropException(MLOAD_EMPTY_LIST)
+		else:
+			if not self.fault_tolerance:
+				raise InvalidMLoadPropException(MLOAD_EMPTY_LIST)
 				
 	# Provide a string method
 	def __str__(self):
@@ -108,16 +112,20 @@ class ModuleLoader:
 	# Determine if the module has the necessary fields to be a valid module
 	# Subclasses should probably not have to override this method, and
 	# instead, they should rely on overriding the "necessary_attributes" field
-	def self.validate_fields(self, module):
-		if self.debug_output >= DEBUG_ALL:
-			print "Validating fields: %s" % True
+	def validate_fields(self, module):
+		for field in self.necessary_attributes:
+			if self.debug_output >= DEBUG_ALL:
+				print "Validating fields %s : %s" % (field, hasattr(module, field))
+			if not hasattr(module, field):
+				return False
+		# If we get to the end, we were successful
 		return True
 	# Determine if the module has the necessary activation hooks to be
 	# a module.  Subclasses will probably have to reimplement this method
 	# from scratch, since a default module provides no activation hooks
 	# and simply returns true.  DEBUG output can be retrieved by simply chaining
 	# up, since there is no
-	def self.validate_hook(self, module):
+	def validate_hook(self, module):
 		if self.debug_output >= DEBUG_ALL:
 			print "Validating execution hooks: %s" % True
 		return True
@@ -133,7 +141,7 @@ class ModuleLoaderIterator:
 		if self.ind == len(self.parent.valid_modules):
 			raise StopIteration
 		else:
-			return self.parent.valid_module[self.ind]
+			return self.parent.valid_modules[self.ind]
 
 class ModuleDirectoryScanner:
 	def __init__(self, path, fault_tolerance, debug_output):
@@ -142,15 +150,14 @@ class ModuleDirectoryScanner:
 		self.debug_output = debug_output
 		self.path = path
 		
-		is self.path not in sys.path:
+		if self.path not in sys.path:
 			sys.path.append(self.path)
 		else:
 			self.duplicate_path = True
 		
 		self.dir_modules = []
-		if debug_output >= DEBUG_ALL
+		if debug_output >= DEBUG_ALL:
 			print "Scanning directory: %s" % self.path
-		sys.path.append(self.path)
 		self.scan()
 		self.load()
 			
@@ -186,21 +193,25 @@ class ModuleDirectoryScanner:
 				try:
 					loaded_module = imp.load_module(stripped_modname, file_handle, modname, description)
 				except:
+					# Close our file handle
+					file_handle.close()
 					# If we are not using fault tolerance, reraise
 					if not self.fault_tolerance:
 						raise
 					else:
-						if self.debug_output >= DEBUG_ALL
-							print "Load failed on module: %s, attempting recovery"
+						if self.debug_output >= DEBUG_ALL:
+							print "Load failed on module: %s, attempting recovery" % stripped_modname
 							print sys.exc_info()[0]
-				finally:
-					file_handle.close()
+							
+				file_handle.close()
+
+				
 			# If loaded module is None, something went wrong
 			if loaded_module:
 				self.dir_modules.append(loaded_module)
 		# Remove from path if it wasn't already there
 		if not self.duplicate_path:
-			sys.path.pop(self.path)
+			sys.path.remove(self.path)
 			
 class ModuleDirectoryScannerIterator:
 	def __init__(self, parent):
