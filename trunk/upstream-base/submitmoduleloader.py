@@ -17,7 +17,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import moduleloader
+import moduleloader, sys
+
+unknown_response = """<html>
+				<head>
+					<title>Error Page!</title>
+				</head>
+				<body>
+					<h3>The module returned an unreconized type</h3><br />
+					<p>This is usually due to an incorrectly designed
+					submission module.  You request may have succeeded,
+					but the program has no way of determining this</p>
+				</body>
+			</html>"""
 
 exception_template = """<html>
 				<head>
@@ -31,6 +43,9 @@ exception_template = """<html>
 				</body>
 			</html>"""
 
+# This a type object that must be returned by all valid modules,
+# we attempt to insulate the program code from errors such as this if said
+# client code requests fault_tolerance, which is default
 class SubmitModuleResult:
 	def __init__(self, bool_ispaste, bool_success, result_xml=None, result_url=None):
 		self.bool_ispaste = bool_ispaste
@@ -43,14 +58,23 @@ class SubmitModule(moduleloader.LoadedModule):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.module_submit_url = self.module.module_submit_url
 		
-	def execute(email, message, log_dict):
+	def execute(self, email, message, log_dict):
 		try:
    			res =  self.module.execute(email, message, log_dict)
-   			return res
+   			if type(res) == SubmitModuleResult:
+   				return res
+   			else:
+   				if self.fault_tolerance:
+   				 # We are using fault tolerance so try and send back a message to the user
+   				 	return SubmitModuleResult(False, False, unknown_response)
+   				 else:
+   				 	raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
+   			
     		except:
     			if self.debug_output >= moduleloader.DEBUG_ALL:
     				print "Error in execution of %s" % self.module_name
     				print sys.exc_info()[0]
+    				
     			if self.fault_tolerance:
    				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
    				return SubmitModuleResult(False, False, formatted_str)
@@ -64,8 +88,8 @@ class SubmitModuleLoader(moduleloader.ModuleLoader):
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
 		
-	def validate_hook(self, module):
-		return hasattr(module, "execute") and hasattr(module.execute, "func_code") and module.execute.func_code.co_argcount is 3
+	def validate_additional(self, module):
+		return self.validate_execution_hook(module, "execute", 3)
 		
 		
 

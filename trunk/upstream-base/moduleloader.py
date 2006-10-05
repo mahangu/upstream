@@ -38,10 +38,32 @@ MLOAD_HAS_NONSTR = 2
 DEBUG_NONE = 0
 DEBUG_ALL = 1
 
-class InvalidMLoadPropException(Exception):
+class ModuleLoaderInitException(Exception):
 	def __init__(self, err_type):
 		Exception.__init__(self)
 		self.err_type = err_type
+	def __repr__(self):
+		return "raised ModuleLoaderInitException(" + self.err_type + ")"
+	def __str__(self):
+		if self.err_type == MLOAD_NOT_LIST:
+			return "Error: Module path list was not a list"
+		else if self.err_type == MLOAD_EMPTY_LIST:
+			return "Error: Module path list was empty"
+		else if self.err_type == MLOAD_HAS_NONSTR:
+			return "Error: Module path list contained non-string paths"
+		else:
+			return "Error: unknown?"
+			
+			
+class IncorrectModuleReturnType(Exception):
+	def __init__(self, found_type, expected_type):
+		Exception.__init__(self)
+		self.found_type = found_type
+		self.expected_type = expected_type
+	def __repr__(self):
+		return "raised IncorrectModuleReturnType(" + self.found_type + "," + self.expected_type + ")"
+	def __str__(self):
+		return "Found type: " + self.found_type + " Expected type: " + self.expected_type
 		
 
 class LoadedModule:
@@ -55,6 +77,8 @@ class LoadedModule:
 		self.module = module
 		self.module_name = self.module.module_name
 		self.module_description = self.module.module_description
+	def __repr__(self):
+		return "< loaded module with name : %s >" % module_name
 	
 class ModuleLoader:
 	# Necessary attributes for a generic module
@@ -69,6 +93,12 @@ class ModuleLoader:
 		self.fault_tolerance = fault_tolerance
 		self.valid_modules = []
 		self.execute_load()
+	
+	def __repr__(self):
+		return "ModuleLoader(" + self.path_list + ", " + self.fault_tolerance + ", " + self.debug_output ")"
+		
+	def __str__(self):		
+		return "Module Loader:\nWrapper Type: " + type(self.ModuleWrapper) + "\nNecessary Attributes: " + self.necessary_attributes + "\nSearch Paths: " + self.path_list + "\nLoaded modules: " + self.valid_modules + "\nUsing fault tolerance: " + self.fault_tolerance + "\nDebug Level: " + self.debug_output
 		
 	def __iter__(self):
 		return ModuleLoaderIterator(self)	
@@ -77,7 +107,7 @@ class ModuleLoader:
 		# Perform validation to ensure that we didn't end up invalid
 		# parameters
 		if type(self.path_list) is not list:
-			raise InvalidMLoadPropException(MLOAD_NOT_LIST)
+			raise ModuleLoaderInitException(MLOAD_NOT_LIST)
 			
 		# Only perform an actual import if we have a non-zero list
 		if len(self.path_list) is not 0:
@@ -88,7 +118,7 @@ class ModuleLoader:
 					if self.fault_tolerance:
 						self.path_list.remove(p)
 					else:
-						raise InvalidMLoadPropException(MLOAD_HAS_NONSTR)
+						raise ModuleLoaderInitException(MLOAD_HAS_NONSTR)
 					
 			
 			for path_name in self.path_list:
@@ -99,7 +129,7 @@ class ModuleLoader:
 								
 		else:
 			if not self.fault_tolerance:
-				raise InvalidMLoadPropException(MLOAD_EMPTY_LIST)
+				raise ModuleLoaderInitException(MLOAD_EMPTY_LIST)
 				
 	# Provide a string method
 	def __str__(self):
@@ -109,7 +139,7 @@ class ModuleLoader:
 	def validate_module(self, module):
 		if self.debug_output >= DEBUG_ALL:
 			print "Validating module: %s" % module.__name__
-		return self.validate_fields(module) and self.validate_hook(module)
+		return self.validate_fields(module) and self.validate_additional(module)
 	# Determine if the module has the necessary fields to be a valid module
 	# Subclasses should probably not have to override this method, and
 	# instead, they should rely on overriding the "necessary_attributes" field
@@ -123,17 +153,23 @@ class ModuleLoader:
 		return True
 	# Determine if the module has the necessary activation hooks to be
 	# a module.  Subclasses will probably have to reimplement this method
-	# from scratch, since a default module provides no activation hooks
+	# from scratch, since a default module provides no hooks into the module
 	# and simply returns true.  DEBUG output can be retrieved by simply chaining
 	# up, since there is no
-	def validate_hook(self, module):
+	def validate_additional(self, module):
 		if self.debug_output >= DEBUG_ALL:
 			print "Validating execution hooks: %s" % True
 		return True
 		
-	def module(mod_name):
+	# This is not actually used by default, but is provided as a convenience,
+	# so that base classes do not have to reimplement it
+	def validate_execution_hook(self, module, name, num_args):
+		return hasattr(module, name) and hasattr(module.__dict__[name], "func_code") and module.__dict__[name].func_code.co_argcount is num_args
+	
+		
+	def module(self, mod_name):
 		for x in self:
-			if x.module_name = mod_name:
+			if x.module_name == mod_name:
 				return x
 		return None
 
