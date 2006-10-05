@@ -53,4 +53,4 @@ def execute(submit_email, submit_message, dict_of_logs):
 
 	# TODO implement some error checking before reporting success
 
-	return submitmoduleloader.SubmitModuleResult(True, True, result_url, result_xml)
+	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)

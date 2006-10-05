@@ -24,6 +24,8 @@ import functions # our modules
 functions.set_conf_dir("conf/")
 functions.set_modules_dir("modules/")
 
+# Hoorah! for ridiculous namespacings :-)
+loader = submitmoduleloader.SubmitModuleLoader(["./modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
@@ -38,14 +40,13 @@ parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin mo
 
 (options, args) = parser.parse_args()
 
-loader = submitmoduleloader.SubmitModuleLoader()
-loader.add_search_path("./modules")
+
 	
 if options.pastebin:
-	module = loader.get_module_by_name(options.pastebin)
+	module = loader.module(options.pastebin)
 	
 else:
-	module = loader.get_module_by_name(functions.get_conf_item("main", "main", "default_module"))
+	module = loader.module(functions.get_conf_item("main", "main", "default_module"))
 	
 	
 log_dict = None

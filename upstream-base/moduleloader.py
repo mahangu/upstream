@@ -48,6 +48,7 @@ class LoadedModule:
 	fault_tolerance = True
 	debug_output = DEBUG_NONE
 	# This expects the module fields to already exist
+	# Note: any new module wrappers must have this exact argument list
 	def __init__(self, module, fault_tolerance, debug_output):
 		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
@@ -129,6 +130,12 @@ class ModuleLoader:
 		if self.debug_output >= DEBUG_ALL:
 			print "Validating execution hooks: %s" % True
 		return True
+		
+	def module(mod_name):
+		for x in self:
+			if x.module_name = mod_name:
+				return x
+		return None
 
 
 class ModuleLoaderIterator:
