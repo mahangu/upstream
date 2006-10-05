@@ -61,15 +61,16 @@ class SubmitModule(moduleloader.LoadedModule):
 	def execute(self, email, message, log_dict):
 		try:
    			res =  self.module.execute(email, message, log_dict)
+   			# We are expecting a submit module result, take action if not found
    			if type(res) == SubmitModuleResult:
    				return res
    			else:
    				if self.fault_tolerance:
    				 # We are using fault tolerance so try and send back a message to the user
    				 	return SubmitModuleResult(False, False, unknown_response)
-   				 else:
+   				else:
    				 	raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
-   			
+   		# Attempt to handle exceptions if we get one
     		except:
     			if self.debug_output >= moduleloader.DEBUG_ALL:
     				print "Error in execution of %s" % self.module_name
