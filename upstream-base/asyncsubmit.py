@@ -20,11 +20,12 @@
 
 import threading
 import functions
+import submitmoduleloader
 
 class ThreadSubmit(threading.Thread):
 	# complete_handler should be of the form func_handler(SubmitModuleResult, user_data)
 	# user_data may be arbitrary
-	def __init__(self, submission_module, email, support_message, log_dict, complete_handler, complete_user_data):
+	def __init__(self, submission_module, email, support_message, log_dict, complete_handler, complete_user_data=None):
 		threading.Thread.__init__(self)
 		self.submission_module = submission_module
 		self.email = email
@@ -47,6 +48,9 @@ class ThreadSubmit(threading.Thread):
 	def run(self):
 		# First thing, we must start the thread
 		self.is_started = True
-		self.result = self.submission_module.execute(self.email, self.support_message, self.log_dict)
-		self.complete_handler(self.result, self.complete_user_data)
+		if self.submission_module.module:
+			self.result = self.submission_module.execute(self.email, self.support_message, self.log_dict)
+			self.complete_handler(self.result, self.complete_user_data)
+		else:
+			self.result = submitmoduleloader.SubmitModuleResult(False, False)
 				
