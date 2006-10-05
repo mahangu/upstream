@@ -157,13 +157,15 @@ class ModuleLoader:
 	# and simply returns true.  DEBUG output can be retrieved by simply chaining
 	# up, since there is no
 	def validate_additional(self, module):
-		if self.debug_output >= DEBUG_ALL:
-			print "Validating execution hooks: %s" % True
 		return True
 		
 	# This is not actually used by default, but is provided as a convenience,
 	# so that base classes do not have to reimplement it
 	def validate_execution_hook(self, module, name, num_args):
+		if self.debug_output >= DEBUG_ALL:
+			print "Module %s has attribute %s: " % (module, name, hasattr(module, name))
+			print "Module attribute %s is of type 'func_code': %s" % (name, hasattr(module.__dict__[name], "func_code"))
+			print "Module function %s has %d args: %s" % (name, num_args, module.__dict__[name].func_code.co_argcount is num_args)
 		return hasattr(module, name) and hasattr(module.__dict__[name], "func_code") and module.__dict__[name].func_code.co_argcount is num_args
 	
 		
