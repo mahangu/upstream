@@ -162,7 +162,7 @@ def get_submit_module():
 	dialog.vbox.pack_start(label, False, False, 5)
 	
 	combobox = gtk.combo_box_new_text()
-	server_list = module_loader.get_all_submit_modules()
+	server_list = [module for module in module_loader]
 	for mod in server_list:
 		combobox.append_text(mod.module_name)
 	dialog.vbox.pack_start(combobox, False, False, 5)		
@@ -178,7 +178,7 @@ def get_submit_module():
 	
 	dialog.show_all()
 	if dialog.run() == gtk.RESPONSE_ACCEPT:
-		module = module_loader.get_module_by_name(combobox.get_active_text())
+		module = module_loader.module(combobox.get_active_text())
 		dialog.destroy()
 		return module
 	else:
@@ -189,7 +189,7 @@ def get_submit_module():
 
 def submit_select_changed(widget, text_list):
 	mod_name = widget.get_active_text()
-	module = module_loader.get_module_by_name(mod_name)
+	module = module_loader.module(mod_name)
 	text_list[0].set_text(module.module_name)
 	text_list[1].set_text(module.module_description)
 	text_list[2].set_text(module.module_submit_url)
@@ -213,8 +213,7 @@ if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
 	functions.set_conf_dir("../upstream-base/conf/")
-	module_loader = submitmoduleloader.SubmitModuleLoader()
-	module_loader.add_search_path("../upstream-base/modules")		
+	module_loader = submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"], False, submitmoduleloader.moduleloader.DEBUG_ALL)
 	gtk.threads_init()	
 	request = query()
 	if request:

@@ -22,7 +22,7 @@ import submitmoduleloader
 
 import functions # our modules
 functions.set_conf_dir("conf/")
-functions.set_modules_dir("modules/")
+functions.set_modules_dir("submit-modules/")
 
 # Hoorah! for ridiculous namespacings :-)
 loader = submitmoduleloader.SubmitModuleLoader(["./modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
