@@ -20,9 +20,7 @@
 import submitmoduleloader
 
 module_name = "Stub"
-module_description = """This is a stub module to provide an example and
-			to test the functioning of the SubmitModuleLoader
-			This module always reports a failure"""
+module_description = """This is a stub module to provide an example"""
 module_submit_url = "http://null"
 
 
