@@ -25,7 +25,7 @@ functions.set_conf_dir("conf/")
 functions.set_modules_dir("submit-modules/")
 
 # Hoorah! for ridiculous namespacings :-)
-loader = submitmoduleloader.SubmitModuleLoader(["./modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
+loader = submitmoduleloader.SubmitModuleLoader(["./submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 

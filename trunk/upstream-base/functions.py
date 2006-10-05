@@ -59,13 +59,14 @@ conf_dir_set = False
 modules_dir = None
 modules_dir_set = False
 
+# deprecated - should be killed
 def set_modules_dir(path_to_dir):
 	global modules_dir
 	global modules_dir_set
 	
 	modules_dir = path_to_dir
 	modules_dir_set = True
-
+# deprecated - should be killed soon
 def read_module(which_module = None):
 	default_module = get_conf_item("main", "main", "default_module")
 	

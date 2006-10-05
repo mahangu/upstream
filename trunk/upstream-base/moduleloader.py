@@ -47,9 +47,9 @@ class ModuleLoaderInitException(Exception):
 	def __str__(self):
 		if self.err_type == MLOAD_NOT_LIST:
 			return "Error: Module path list was not a list"
-		else if self.err_type == MLOAD_EMPTY_LIST:
+		elif self.err_type == MLOAD_EMPTY_LIST:
 			return "Error: Module path list was empty"
-		else if self.err_type == MLOAD_HAS_NONSTR:
+		elif self.err_type == MLOAD_HAS_NONSTR:
 			return "Error: Module path list contained non-string paths"
 		else:
 			return "Error: unknown?"
@@ -78,7 +78,7 @@ class LoadedModule:
 		self.module_name = self.module.module_name
 		self.module_description = self.module.module_description
 	def __repr__(self):
-		return "< loaded module with name : %s >" % module_name
+		return "< loaded module with name : %s >" % self.module_name
 	
 class ModuleLoader:
 	# Necessary attributes for a generic module
@@ -95,7 +95,7 @@ class ModuleLoader:
 		self.execute_load()
 	
 	def __repr__(self):
-		return "ModuleLoader(" + self.path_list + ", " + self.fault_tolerance + ", " + self.debug_output ")"
+		return "ModuleLoader(" + self.path_list + ", " + self.fault_tolerance + ", " + self.debug_output + ")"
 		
 	def __str__(self):		
 		return "Module Loader:\nWrapper Type: " + type(self.ModuleWrapper) + "\nNecessary Attributes: " + self.necessary_attributes + "\nSearch Paths: " + self.path_list + "\nLoaded modules: " + self.valid_modules + "\nUsing fault tolerance: " + self.fault_tolerance + "\nDebug Level: " + self.debug_output
@@ -167,9 +167,13 @@ class ModuleLoader:
 		return hasattr(module, name) and hasattr(module.__dict__[name], "func_code") and module.__dict__[name].func_code.co_argcount is num_args
 	
 		
-	def module(self, mod_name):
-		for x in self:
-			if x.module_name == mod_name:
+	def module(self, mod_name):	
+		if self.debug_output >= DEBUG_ALL:
+			print "Searching for module: %s" % mod_name	
+		for x in self.valid_modules:
+			if self.debug_output >= DEBUG_ALL:
+				print "Looking at module: %s trying to find: %s" % (x, mod_name)
+			if x.module_name == mod_name or x.module.__name__ == mod_name:
 				return x
 		return None
 

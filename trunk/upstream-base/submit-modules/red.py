@@ -74,7 +74,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	# print clog.getvalue()
 	
 	# no, no error checking yet.
-	return submitmoduleloader.SubmitModuleResult(True, True, foo, result_url)
+	return submitmoduleloader.SubmitModuleResult(True, True, foo, response_url)
 
 
 
