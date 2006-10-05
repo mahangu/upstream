@@ -45,6 +45,8 @@ class InvalidMLoadPropException(Exception):
 		
 
 class LoadedModule:
+	fault_tolerance = True
+	debug_output = DEBUG_NONE
 	def __init__(self, module, fault_tolerance, debug_output):
 		pass
 	def execute(self, paramter)
@@ -120,14 +122,30 @@ class ModuleLoader:
 			print "Validating execution hooks: %s" % True
 		return True
 
+
+class ModuleLoaderIterator:
+	def __init__(self, parent):
+		self.parent = parent
+		self.ind = -1
+		
+	def next(self):
+		self.ind = self.ind + 1
+		if self.ind == len(self.parent.valid_modules):
+			raise StopIteration
+		else:
+			return self.parent.valid_module[self.ind]
+
 class ModuleDirectoryScanner:
 	def __init__(self, path, fault_tolerance, debug_output):
+		self.duplicate_path =  False
 		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
 		self.path = path
 		
 		is self.path not in sys.path:
 			sys.path.append(self.path)
+		else:
+			self.duplicate_path = True
 		
 		self.dir_modules = []
 		if debug_output >= DEBUG_ALL
@@ -162,7 +180,7 @@ class ModuleDirectoryScanner:
 			file_handle, filename, description = imp.find_module(stripped_modname)
 			loaded_module = None
 			if not file_handle:
-				if self.debug_output:
+				if self.debug_output >= DEBUG_ALL:
 					print "Failed 'finding' module (programming error): %s" % modname
 			else:
 				try:
@@ -171,11 +189,18 @@ class ModuleDirectoryScanner:
 					# If we are not using fault tolerance, reraise
 					if not self.fault_tolerance:
 						raise
+					else:
+						if self.debug_output >= DEBUG_ALL
+							print "Load failed on module: %s, attempting recovery"
+							print sys.exc_info()[0]
 				finally:
 					file_handle.close()
 			# If loaded module is None, something went wrong
 			if loaded_module:
 				self.dir_modules.append(loaded_module)
+		# Remove from path if it wasn't already there
+		if not self.duplicate_path:
+			sys.path.pop(self.path)
 			
 class ModuleDirectoryScannerIterator:
 	def __init__(self, parent):
