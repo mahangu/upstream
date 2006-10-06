@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.0.2 on Thu Oct  5 23:01:15 2006 by jasonr@luso-->
+<!--Generated with glade3 3.0.2 on Thu Oct  5 23:55:57 2006 by jasonr@luso-->
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
@@ -13,6 +13,7 @@
           <widget class="GtkNotebook" id="MainNotebook">
             <property name="visible">True</property>
             <property name="border_width">8</property>
+            <property name="show_tabs">False</property>
             <property name="show_border">False</property>
             <child>
               <widget class="GtkVBox" id="vbox1">
@@ -280,6 +281,7 @@
             <child>
               <widget class="GtkButton" id="btnBack">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="label" translatable="yes">gtk-go-back</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnBack_clicked"/>
