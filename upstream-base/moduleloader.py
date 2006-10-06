@@ -168,7 +168,7 @@ class ModuleLoader:
 				
 	# Provide a string method
 	def __str__(self):
-		pass		
+		return "Module loader:\n" + repr(self.valid_modules	)
 		
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
@@ -198,12 +198,12 @@ class ModuleLoader:
 	# so that base classes do not have to reimplement it
 	def validate_execution_hook(self, module, name, num_args):
 		if self.debug_output >= DEBUG_ALL:
-			print "Module %s has attribute %s: " % (module, name, hasattr(module, name))
+			print "Module %s has attribute %s: %s " % (module, name, hasattr(module, name))
 			print "Module attribute %s is of type 'func_code': %s" % (name, hasattr(module.__dict__[name], "func_code"))
 			print "Module function %s has %d args: %s" % (name, num_args, module.__dict__[name].func_code.co_argcount is num_args)
 		return hasattr(module, name) and hasattr(module.__dict__[name], "func_code") and module.__dict__[name].func_code.co_argcount is num_args
 	
-		
+	# Deprecated: Use mappings instead	
 	def module(self, mod_name):	
 		if self.debug_output >= DEBUG_ALL:
 			print "Searching for module: %s" % mod_name	
@@ -236,7 +236,15 @@ class ModuleDirectoryScanner:
 		
 		if self.path not in sys.path:
 			sys.path.append(self.path)
+			if self.debug_output >= DEBUG_ALL:
+				print "Adding %s to path list" % self.path
+				print sys.path
+				
+			
 		else:
+			if self.debug_output >= DEBUG_ALL:
+				print "Not adding %s to path list" % self.path
+				print sys.path
 			self.duplicate_path = True
 		
 		self.dir_modules = []
@@ -244,6 +252,18 @@ class ModuleDirectoryScanner:
 			print "Scanning directory: %s" % self.path
 		self.scan()
 		self.load()
+		# Remove from path if it wasn't already there
+		if not self.duplicate_path:
+			if self.debug_output >= DEBUG_ALL:
+				print "Removing %s from path list" % self.path				
+				print sys.path
+			
+		else:
+			if self.debug_output >= DEBUG_ALL:
+				print "Note removing %s from path list" % self.path
+				print sys.path
+		sys.path.remove(self.path)
+			
 			
 	def __iter__(self):
 		return ModuleDirectoryScannerIterator(self)		
@@ -263,6 +283,8 @@ class ModuleDirectoryScanner:
 		
 	# Load modules			
 	def load(self):
+		if self.debug_output >= DEBUG_ALL:
+			print "Located all modules: %s" % self.found_modules
 		for modname in self.found_modules:
 			if self.debug_output >= DEBUG_ALL:
 				print "Attempting to 'find' module: %s" % modname
@@ -272,7 +294,7 @@ class ModuleDirectoryScanner:
 			loaded_module = None
 			if not file_handle:
 				if self.debug_output >= DEBUG_ALL:
-					print "Failed 'finding' module (programming error): %s" % modname
+					print "Failed 'finding' module (programming error or possible collision with builtin module): %s" % stripped_modname
 			else:
 				try:
 					loaded_module = imp.load_module(stripped_modname, file_handle, modname, description)
@@ -293,10 +315,7 @@ class ModuleDirectoryScanner:
 			# If loaded module is None, something went wrong
 			if loaded_module:
 				self.dir_modules.append(loaded_module)
-		# Remove from path if it wasn't already there
-		if not self.duplicate_path:
-			sys.path.remove(self.path)
-			
+					
 class ModuleDirectoryScannerIterator:
 	def __init__(self, parent):
 		self.parent = parent
