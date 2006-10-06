@@ -44,13 +44,19 @@ def execute(submit_email, submit_message, dict_of_logs):
 	post_data = { 'content': submit_email + "\n" + fill(submit_message) + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
 
 	# Send the data
-	paste = urlopen(module_submit_url, urlencode(post_data))
+	try:
+		paste = urlopen(module_submit_url, urlencode(post_data))
+	except IOError:
+		return submitmoduleloader.SubmitModuleResult(True, False)
+	
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
 
 	print result_url
 
-	# TODO implement some error checking before reporting success
+	# TODO implement some error checking before reporting success.
+	# Now partially implemented, see above.  We still have to do more
+	# parsing to see if we actually got a paste in
 
 	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
