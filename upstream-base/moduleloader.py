@@ -84,6 +84,7 @@ class ModuleLoader:
 	# Necessary attributes for a generic module
 	# Subclasses may override this to provide for different required attributes
 	necessary_attributes = ["module_name", "module_description"]
+	necessary_attr_types = [str, str]
 	# New classes should override the ModuleWrapper item
 	ModuleWrapper = LoadedModule
 	def __init__(self, path_list, fault_tolerance=True, debug_output=DEBUG_NONE):
@@ -184,6 +185,19 @@ class ModuleLoader:
 				print "Validating fields %s : %s" % (field, hasattr(module, field))
 			if not hasattr(module, field):
 				return False
+				
+			
+			
+			ind = self.necessary_attributes.index(field)
+			# This only runs when we have actually specified out to that
+			# type
+			if ind < self.necessary_attr_types:
+				# Ahh ye olde debugging output, you take up so much space
+				if self.debug_output >= DEBUG_ALL:
+					print "Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None)
+				
+				if not type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None:
+					return False
 		# If we get to the end, we were successful
 		return True
 	# Determine if the module has the necessary activation hooks to be
