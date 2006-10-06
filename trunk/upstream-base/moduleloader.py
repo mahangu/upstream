@@ -116,6 +116,22 @@ class ModuleLoader:
 					return mod
 			raise KeyError
 		
+	def __delitem(self, modid):
+		if type(modid) is not str and type(modid) is not int:
+			raise TypeError
+		# Find at index
+		if type(modid) is int:
+			if modid >= len(self.valid_modules) or modid < 0:
+				raise IndexError
+			else:
+				self.valid_modules.remove(self.valid_modules[modid])
+		# Find at id
+		if type(modid) is str:		
+			# This will already raise an exception if necessary
+			mod = self.__getitem__(modid):
+			self.valid_modules.remove(mod)
+			
+					
 	def __len__(self):
 		return len(self,valid_modules)
 			
