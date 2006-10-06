@@ -290,17 +290,6 @@ class ModuleDirectoryScanner:
 			print "Scanning directory: %s" % self.path
 		self.scan()
 		self.load()
-		# Remove from path if it wasn't already there
-		if not self.duplicate_path:
-			if self.debug_output >= DEBUG_ALL:
-				print "Removing %s from path list" % self.path				
-				print sys.path
-			
-		else:
-			if self.debug_output >= DEBUG_ALL:
-				print "Note removing %s from path list" % self.path
-				print sys.path
-		sys.path.remove(self.path)
 			
 			
 	def __iter__(self):
