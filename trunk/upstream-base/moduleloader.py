@@ -99,7 +99,26 @@ class ModuleLoader:
 		
 	def __str__(self):		
 		return "Module Loader:\nWrapper Type: " + type(self.ModuleWrapper) + "\nNecessary Attributes: " + self.necessary_attributes + "\nSearch Paths: " + self.path_list + "\nLoaded modules: " + self.valid_modules + "\nUsing fault tolerance: " + self.fault_tolerance + "\nDebug Level: " + self.debug_output
+	
+	def __getitem__(self, modid):
+		if type(modid) is not str and type(modid) is not int:
+			raise TypeError
+		# Find at index
+		if type(modid) is int:
+			if modid >= len(self.valid_modules) or modid < 0:
+				raise IndexError
+			else:
+				return self.valid_modules[modid]
+		# Find at id
+		if type(modid) is str:		
+			for mod in self.valid_modules:
+				if mod.module_name == modname:
+					return mod
+			raise KeyError
 		
+	def __len__(self):
+		return len(self,valid_modules)
+			
 	def __iter__(self):
 		return ModuleLoaderIterator(self)	
 		
