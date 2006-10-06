@@ -65,6 +65,8 @@ class SubmitModule(moduleloader.LoadedModule):
    			if type(res) == SubmitModuleResult:
    				return res
    			else:
+   				if self.debug_output >= moduleloader.DEBUG_ALL:
+   					print "Module execute returned type %s expected %s" % (type(res), SubmitModuleResult)
    				if self.fault_tolerance:
    				 # We are using fault tolerance so try and send back a message to the user
    				 	return SubmitModuleResult(False, False, unknown_response)
@@ -85,12 +87,14 @@ class SubmitModule(moduleloader.LoadedModule):
 				
 class SubmitModuleLoader(moduleloader.ModuleLoader):
 	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["module_submit_url"]
+	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str]
 	ModuleWrapper = SubmitModule
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
 		
 	def validate_additional(self, module):
-		return self.validate_execution_hook(module, "execute", 3)
+		valid_hook = self.validate_execution_hook(module, "execute", 3)
+		return valid_hook
 		
 		
 
