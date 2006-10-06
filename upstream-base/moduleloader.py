@@ -112,7 +112,7 @@ class ModuleLoader:
 		# Find at id
 		if type(modid) is str:		
 			for mod in self.valid_modules:
-				if mod.module_name == modname:
+				if mod.module_name == modid:
 					return mod
 			raise KeyError
 		
