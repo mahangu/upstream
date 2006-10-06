@@ -19,6 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
+# TODO Fix spacing between widgets
+
 import sys
 import functions
 import submitmoduleloader
@@ -70,10 +72,14 @@ class CanoeGTK:
 		vbox = self.wTree.get_widget("vbox_modules")
 		combobox = gtk.combo_box_new_text()
 		vbox.pack_start(combobox)
-		for mod in module_loader:
-			combobox.append_text(mod.module_name)
-		#self.submit_select_changed(module_loader[0].module_name)
+		for module in module_loader:
+			combobox.append_text(module.module_name)
 		vbox.reorder_child(combobox, 1)
+
+		# Set default value
+		combobox.set_active(0)
+		self.submit_select_changed(combobox)
+
 		combobox.connect("changed", self.submit_select_changed)
 		vbox.show_all()
 		return combobox
@@ -119,10 +125,10 @@ class CanoeGTK:
 			support_msg = self.get_support_msg()
 			module = self.get_module()
 			print email, support_logs, support_msg, module  # debug print 
-			# We need to update this to use threading and asyncsubmit like canoe.py
-			#module.execute(email, support_msg, support_logs)
-			# We are exiting for now but we should give the user some confirmation beforehand
-			#sys.exit(0)
+			# TODO We need to update this to use threading and asyncsubmit like canoe.py
+			module.execute(email, support_msg, support_logs)
+			# TODO We are exiting for now but we should give the user some confirmation beforehand
+			sys.exit(0)
 
 		# Go to the next page if we aren't on the last page
 		else:
@@ -148,7 +154,7 @@ class CanoeGTK:
 				log_path = functions.get_conf_item("list", section, "file")
 				log_dict = functions.append_log(log_dict, log_path, section)
 		# See comment in canoe.py about returning None
-		# Currently, returning None causes an error :)
+		# TODO Currently, returning None causes an error :)
 		return log_dict 
 
 	def get_support_msg(self):
@@ -171,8 +177,10 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	functions.set_conf_dir("../upstream-base/conf/")
-	module_loader = submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"])
+	submit_modules = ["../upstream-base/submit-modules"]
+	conf = "../upstream-base/conf/"
+	functions.set_conf_dir(conf)
+	module_loader = submitmoduleloader.SubmitModuleLoader(submit_modules)
 
 	# Load the GUI
 	canoe = CanoeGTK(module_loader)
