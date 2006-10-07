@@ -62,7 +62,11 @@ class SubmitModule(moduleloader.LoadedModule):
 		try:
    			res =  self.module.execute(email, message, log_dict)
    			# We are expecting a submit module result, take action if not found
-   			if type(res) == SubmitModuleResult:
+			## We should consider:
+			## http://www.python.org/download/releases/2.2.3/descrintro/
+			## http://docs.python.org/ref/node33.html
+   			#if type(res) == SubmitModuleResult:
+   			if res.__class__ == SubmitModuleResult:
    				return res
    			else:
    				if self.debug_output >= moduleloader.DEBUG_ALL:
@@ -71,7 +75,7 @@ class SubmitModule(moduleloader.LoadedModule):
    				 # We are using fault tolerance so try and send back a message to the user
    				 	return SubmitModuleResult(False, False, unknown_response)
    				else:
-   				 	raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
+   				 	raise moduleloader.IncorrectModuleReturnType(type(res), type(SubmitModuleResult))
    		# Attempt to handle exceptions if we get one
     		except:
     			if self.debug_output >= moduleloader.DEBUG_ALL:

@@ -109,7 +109,7 @@ class ModuleLoader:
 		return "ModuleLoader(" + self.path_list + ", " + self.fault_tolerance + ", " + self.debug_output + ")"
 		
 	def __str__(self):		
-		return "Module Loader:\nWrapper Type: " + type(self.ModuleWrapper) + "\nNecessary Attributes: " + self.necessary_attributes + "\nSearch Paths: " + self.path_list + "\nLoaded modules: " + self.valid_modules + "\nUsing fault tolerance: " + self.fault_tolerance + "\nDebug Level: " + self.debug_output
+		return "Module Loader:\nWrapper Type: " + str(type(self.ModuleWrapper)) + "\nNecessary Attributes: " + str(self.necessary_attributes) + "\nSearch Paths: " + str(self.path_list) + "\nLoaded modules: " + str(self.valid_modules) + "\nUsing fault tolerance: " + str(self.fault_tolerance) + "\nDebug Level: " + str(self.debug_output)
 	
 	def __getitem__(self, modid):
 		if type(modid) is not str and type(modid) is not int:
@@ -178,8 +178,9 @@ class ModuleLoader:
 				raise ModuleLoaderInitException(MLOAD_EMPTY_LIST)
 				
 	# Provide a string method
-	def __str__(self):
-		return "Module loader:\n" + repr(self.valid_modules	)
+	# Using the first definition for now, more complete and I am getting errors :)
+	#def __str__(self):
+	#	return "Module loader:\n" + repr(self.valid_modules	)
 		
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
@@ -240,6 +241,8 @@ class ModuleLoader:
 			raise ModuleUnloadeableException(module.__name__, "Module attribute %s was not a function" % name)
 		if not func_has_correct_param and not self.fault_tolerance:
 			raise ModuleUnloadeableException(module.__name__, "Module function %s did not have %d arguments" % (name, num_args))
+		# Ryan: Is this ok? 
+		return True
 	
 	# Deprecated: Use mappings instead	
 	def module(self, mod_name):	
