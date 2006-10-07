@@ -67,17 +67,6 @@ class IncorrectModuleReturnType(Exception):
 	def __str__(self):
 		return "Found type: " + self.found_type + " Expected type: " + self.expected_type
 		
-# Raised when a module was unloadable for some reason
-class ModuleUnloadeableException(Exception):
-	def __init__(self, module_name, reason):
-		Exception.__init__(self)
-		self.reason = reason
-		self.module_name = module_name
-	def __repr__(self):
-		return "rasied ModuleUnloadeableException(" + self.reason + ")"
-	def __str__(self):
-		return "Module %s unloadeable: %s" % ( self.module_name, self.reason)
-
 class LoadedModule:
 	fault_tolerance = True
 	debug_output = DEBUG_NONE
@@ -199,10 +188,7 @@ class ModuleLoader:
 			if self.debug_output >= DEBUG_ALL:
 				print "Validating fields %s : %s" % (field, hasattr(module, field))
 			if not hasattr(module, field):
-				if not self.fault_tolerance:
-					raise ModuleUnloadeableException(module.__name__, "Module does not have field %s" % field)
-				else:
-					return False
+				return False
 			ind = self.necessary_attributes.index(field)
 			# This only runs when we have actually specified out to that
 			# type
@@ -212,10 +198,7 @@ class ModuleLoader:
 					print "Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None)
 				
 				if not type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None:
-					if not self.fault_tolerance:
-						raise ModuleUnloadeableException(module.__name__, "Module field %s was not of type %s" % ( field, self.necessary_attr_types[ind]))
-					else:
-						return False
+					return False
 		# If we get to the end, we were successful
 		return True
 	# Determine if the module has the necessary activation hooks to be
@@ -236,15 +219,9 @@ class ModuleLoader:
 		hasfunc = hasattr(module, name) 
 		func_is_func = hasattr(module.__dict__[name], "func_code")
 		func_has_correct_param = module.__dict__[name].func_code.co_argcount is num_args
-		
-		if not hasfunc and not self.fault_tolerance:
-			raise ModuleUnloadeableException(module.__name__, "Module did not have attribute named %s" % name)
-		if not func_is_func and not self.fault_tolerance:
-			raise ModuleUnloadeableException(module.__name__, "Module attribute %s was not a function" % name)
-		if not func_has_correct_param and not self.fault_tolerance:
-			raise ModuleUnloadeableException(module.__name__, "Module function %s did not have %d arguments" % (name, num_args))
 		# Ryan: Is this ok? 
-		return True
+		# Fixed, good spot
+		return hasfunc and func_is_func and func_has_correct_param
 	
 	# Deprecated: Use mappings instead	
 	def module(self, mod_name):	
@@ -327,8 +304,6 @@ class ModuleDirectoryScanner:
 			if not file_handle:
 				if self.debug_output >= DEBUG_ALL:
 					print "Failed 'finding' module (programming error or possible collision with builtin module): %s" % stripped_modname
-				if not self.fault_tolerance:
-					raise ModuleUnloadeableException(stripped_modname, "Module could not be found by imp.find_module()")
 			else:
 				try:
 					loaded_module = imp.load_module(stripped_modname, file_handle, modname, description)
