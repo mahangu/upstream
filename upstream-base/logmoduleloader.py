@@ -84,7 +84,7 @@ class LogModule(moduleloader.LoadedModule):
 
 class LogModuleLoader(moduleloader.ModuleLoader):
 	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["log_path", "short_flag", "long_flag"]
-	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str, str, 
+	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str, str, str]
 	ModuleWrapper = LogModule
 	used_short_flags = []
 	used_long_flags = []

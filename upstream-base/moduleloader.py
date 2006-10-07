@@ -107,9 +107,10 @@ class ModuleLoader:
 	
 	def __repr__(self):
 		return "ModuleLoader(" + self.path_list + ", " + self.fault_tolerance + ", " + self.debug_output + ")"
-		
-	def __str__(self):		
-		return "Module Loader:\nWrapper Type: " + str(type(self.ModuleWrapper)) + "\nNecessary Attributes: " + str(self.necessary_attributes) + "\nSearch Paths: " + str(self.path_list) + "\nLoaded modules: " + str(self.valid_modules) + "\nUsing fault tolerance: " + str(self.fault_tolerance) + "\nDebug Level: " + str(self.debug_output)
+	
+	# There is another definition later.  Which do we want?
+	#def __str__(self):		
+	#	return "Module Loader:\nWrapper Type: " + str(type(self.ModuleWrapper)) + "\nNecessary Attributes: " + str(self.necessary_attributes) + "\nSearch Paths: " + str(self.path_list) + "\nLoaded modules: " + str(self.valid_modules) + "\nUsing fault tolerance: " + str(self.fault_tolerance) + "\nDebug Level: " + str(self.debug_output)
 	
 	def __getitem__(self, modid):
 		if type(modid) is not str and type(modid) is not int:
@@ -178,9 +179,8 @@ class ModuleLoader:
 				raise ModuleLoaderInitException(MLOAD_EMPTY_LIST)
 				
 	# Provide a string method
-	# Using the first definition for now, more complete and I am getting errors :)
-	#def __str__(self):
-	#	return "Module loader:\n" + repr(self.valid_modules	)
+	def __str__(self):
+		return "Module loader:\n" + repr(self.valid_modules	)
 		
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
