@@ -23,7 +23,7 @@
 
 import sys
 import functions
-import submitmoduleloader
+import logmoduleloader, submitmoduleloader
 from getpass import getuser
 
 import moduleloader
@@ -42,7 +42,8 @@ except:
 class CanoeGTK:
 	"""This is the canoe frontend for Upstream"""
 
-	def __init__(self, submit_modules):
+	def __init__(self, log_modules, submit_modules):
+		self.log_modules = log_modules
 		self.submit_modules = submit_modules
 
 		# Set the Glade file
@@ -50,7 +51,7 @@ class CanoeGTK:
 		self.wTree = gtk.glade.XML(self.gladefile) 
 
 		self.sections_dict = self.__gui_add_logs()
-		self.module_combobox = self.__gui_add_modules()
+		self.submits_combobox = self.__gui_add_submits()
 
 		# Set the username as the default nickname
 		self.wTree.get_widget("entry_email").set_text(getuser())
@@ -67,13 +68,13 @@ class CanoeGTK:
 		"""Create the checkboxes for selecting logs"""
 
 		vbox = self.wTree.get_widget("vbox_problems")
-		sections_dict = dict([(section, gtk.CheckButton(section, False)) for section in functions.get_conf_sections("list")])
+		sections_dict = dict([(section.module_name, gtk.CheckButton(section.module_name, False)) for section in log_modules])
 		for section in sections_dict:
 			vbox.pack_start(sections_dict[section])
 		vbox.show_all()
 		return sections_dict
 
-	def __gui_add_modules(self):
+	def __gui_add_submits(self):
 		"""Create the combobox for the pastebin modules"""
 
 		vbox = self.wTree.get_widget("vbox_modules")
@@ -84,6 +85,7 @@ class CanoeGTK:
 		vbox.reorder_child(combobox, 1)
 
 		# Set default value
+		# TODO Read the conf file and use it to select the default
 		combobox.set_active(0)
 		self.submit_select_changed(combobox)
 
@@ -155,11 +157,12 @@ class CanoeGTK:
 		return self.wTree.get_widget("entry_email").get_text()
 
 	def get_support_logs(self):
-		log_dict = None
+		log_dict = {}
 		for section in self.sections_dict:
 			if self.sections_dict[section].get_active():
-				log_path = functions.get_conf_item("list", section, "file")
-				log_dict = functions.append_log(log_dict, log_path, section)
+				module = log_modules[section]
+				name, contents = module.execute()
+				log_dict[name] = contents 
 		# See comment in canoe.py about returning None
 		# TODO Currently, returning None causes an error :)
 		return log_dict 
@@ -173,7 +176,7 @@ class CanoeGTK:
 		return message
 
 	def get_module(self):
-		module = self.submit_modules[self.module_combobox.get_active_text()]
+		module = self.submit_modules[self.submits_combobox.get_active_text()]
 		return module
 
 
@@ -185,10 +188,14 @@ class CanoeGTK:
 if __name__ == "__main__":
 	# Initialize
 	submit_mod_loc = ["../upstream-base/submit-modules"]
+	log_mod_loc = ["../upstream-base/log-modules"]
 	conf = "../upstream-base/conf/"
+
 	functions.set_conf_dir(conf)
+
 	submit_modules = submitmoduleloader.SubmitModuleLoader(submit_mod_loc, False, moduleloader.DEBUG_ALL)
+	log_modules = logmoduleloader.LogModuleLoader(log_mod_loc, False, moduleloader.DEBUG_ALL)
 
 	# Load the GUI
-	canoe = CanoeGTK(submit_modules)
+	canoe = CanoeGTK(log_modules, submit_modules)
 	canoe.main()
