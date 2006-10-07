@@ -44,4 +44,5 @@ def execute():
 
 		# Is this ok instead?
 		content = fp.read()
+		fp.close()
 		return module_name, content

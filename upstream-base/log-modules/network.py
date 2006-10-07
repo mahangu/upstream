@@ -32,4 +32,5 @@ def execute():
 		return module_name, "Could not open this log file!"
 	else:
 		content = fp.read()
+		fp.close()
 		return module_name, content
