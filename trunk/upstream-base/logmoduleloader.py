@@ -55,7 +55,7 @@ class LogModule(moduleloader.LoadedModule):
    				if self.debug_output >= moduleloader.DEBUG_ALL:
    					print "Incorrect returned object, expected tuple"
    				if self.fault_tolerance:
-   					return "Error in module loader %s : %s " % (self.module_name, self.module_log_path), "Error"
+   					return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
    				else:
    					raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
    			elif len(res) != 2:
@@ -68,7 +68,7 @@ class LogModule(moduleloader.LoadedModule):
    					raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
    			else:
    				if self.debug_output >= moduleloader.DEBUG_ALL:
-   					print "Sucess loading log"
+					print "Success loading log %s: %s" % (self.module_name, self.log_path)
    				return res
    			
     		except:
@@ -78,7 +78,7 @@ class LogModule(moduleloader.LoadedModule):
     				
     			if self.fault_tolerance:
    				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
-   				return "Error in module loader %s : %s " % (self.module_name, self.module_log_path), "Error"
+   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
    			else:
    				raise
 

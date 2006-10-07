@@ -26,8 +26,6 @@ import functions
 import logmoduleloader, submitmoduleloader
 from getpass import getuser
 
-import moduleloader
-
 try:
 	import pygtk
 	pygtk.require("2.0")
@@ -161,7 +159,7 @@ class CanoeGTK:
 		for section in self.sections_dict:
 			if self.sections_dict[section].get_active():
 				module = log_modules[section]
-				name, contents = module.execute()
+				(name, contents) = module.execute()
 				log_dict[name] = contents 
 		# See comment in canoe.py about returning None
 		# TODO Currently, returning None causes an error :)
@@ -193,8 +191,8 @@ if __name__ == "__main__":
 
 	functions.set_conf_dir(conf)
 
-	submit_modules = submitmoduleloader.SubmitModuleLoader(submit_mod_loc, False, moduleloader.DEBUG_ALL)
-	log_modules = logmoduleloader.LogModuleLoader(log_mod_loc, False, moduleloader.DEBUG_ALL)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(submit_mod_loc, False, logmoduleloader.moduleloader.DEBUG_ALL)
+	log_modules = logmoduleloader.LogModuleLoader(log_mod_loc, False, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 	# Load the GUI
 	canoe = CanoeGTK(log_modules, submit_modules)

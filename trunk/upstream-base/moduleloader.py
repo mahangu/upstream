@@ -25,6 +25,8 @@
 # details
 
 
+# TODO some of the __repr__ seem to try to concatenate strings with non-strings
+
 import glob, imp, sys
 
 #  This module was built with the goal of maximum fault tolerance for
