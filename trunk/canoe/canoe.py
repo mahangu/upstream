@@ -24,6 +24,10 @@
 import sys
 import functions
 import submitmoduleloader
+from getpass import getuser
+
+import moduleloader
+
 try:
 	import pygtk
 	pygtk.require("2.0")
@@ -38,8 +42,8 @@ except:
 class CanoeGTK:
 	"""This is the canoe frontend for Upstream"""
 
-	def __init__(self, module_loader):
-		self.module_loader = module_loader
+	def __init__(self, submit_modules):
+		self.submit_modules = submit_modules
 
 		# Set the Glade file
 		self.gladefile = "canoe.glade"  
@@ -47,6 +51,9 @@ class CanoeGTK:
 
 		self.sections_dict = self.__gui_add_logs()
 		self.module_combobox = self.__gui_add_modules()
+
+		# Set the username as the default nickname
+		self.wTree.get_widget("entry_email").set_text(getuser())
 
 		# Create our dictionay and connect it
 		dic = { "on_btnNext_clicked" : self.btnNext_clicked,
@@ -72,7 +79,7 @@ class CanoeGTK:
 		vbox = self.wTree.get_widget("vbox_modules")
 		combobox = gtk.combo_box_new_text()
 		vbox.pack_start(combobox)
-		for module in module_loader:
+		for module in self.submit_modules:
 			combobox.append_text(module.module_name)
 		vbox.reorder_child(combobox, 1)
 
@@ -92,7 +99,7 @@ class CanoeGTK:
 		label_url = self.wTree.get_widget("label_submit_url")
 
 		name = widget.get_active_text()
-		module = module_loader[name]
+		module = self.submit_modules[name]
 
 		label_name.set_text(module.module_name)
 		label_description.set_text(module.module_description)
@@ -166,7 +173,7 @@ class CanoeGTK:
 		return message
 
 	def get_module(self):
-		module = self.module_loader[self.module_combobox.get_active_text()]
+		module = self.submit_modules[self.module_combobox.get_active_text()]
 		return module
 
 
@@ -177,11 +184,11 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	submit_modules = ["../upstream-base/submit-modules"]
+	submit_mod_loc = ["../upstream-base/submit-modules"]
 	conf = "../upstream-base/conf/"
 	functions.set_conf_dir(conf)
-	module_loader = submitmoduleloader.SubmitModuleLoader(submit_modules)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(submit_mod_loc, False, moduleloader.DEBUG_ALL)
 
 	# Load the GUI
-	canoe = CanoeGTK(module_loader)
+	canoe = CanoeGTK(submit_modules)
 	canoe.main()
