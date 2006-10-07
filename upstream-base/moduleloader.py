@@ -210,7 +210,7 @@ class ModuleLoader:
 				
 				if not type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None:
 					if not self.fault_tolerance:
-						raise ModuleUnloadeableException(module.__name__, "Module field %s was not of type %s" % ( field, self.necessary_attr_types[ind])
+						raise ModuleUnloadeableException(module.__name__, "Module field %s was not of type %s" % ( field, self.necessary_attr_types[ind]))
 					else:
 						return False
 		# If we get to the end, we were successful
@@ -239,7 +239,7 @@ class ModuleLoader:
 		if not func_is_func and not self.fault_tolerance:
 			raise ModuleUnloadeableException(module.__name__, "Module attribute %s was not a function" % name)
 		if not func_has_correct_param and not self.fault_tolerance:
-			raise ModuleUnloadeableException(module.__name__, "Module function %s did not have %d arguments" % (name, num_args)
+			raise ModuleUnloadeableException(module.__name__, "Module function %s did not have %d arguments" % (name, num_args))
 	
 	# Deprecated: Use mappings instead	
 	def module(self, mod_name):	
