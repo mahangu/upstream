@@ -18,23 +18,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import sys, optparse, os, ConfigParser
-import submitmoduleloader
+import logmoduleloader, submitmoduleloader
 
 import functions # our modules
 functions.set_conf_dir("conf/")
-functions.set_modules_dir("submit-modules/")
+# Deprecated?
+#functions.set_modules_dir("submit-modules/")
 
 # Hoorah! for ridiculous namespacings :-)
-loader = submitmoduleloader.SubmitModuleLoader(["./submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
+log_modules = logmoduleloader.LogModuleLoader(["./log-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
+submit_modules = submitmoduleloader.SubmitModuleLoader(["./submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
-for x in functions.get_conf_sections("list"):
-		sflag = functions.get_conf_item("list", x, "sflag")
-		lflag = functions.get_conf_item("list", x, "lflag")
+for log_module in log_modules:
+		sflag = log_module.short_flag
+		lflag = log_module.long_flag
 		print sflag
 
-		parser.add_option(sflag, lflag, action="store_true", help=functions.get_conf_item("list", x, "help"), default=False)
+		parser.add_option(sflag, lflag, action="store_true", help=log_module.module_description, default=False)
 
 parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin module to use.", default=False)
 
@@ -43,23 +45,30 @@ parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin mo
 
 	
 if options.pastebin:
-	module = loader.module(options.pastebin)
+	submit_module = submit_modules[options.pastebin]
 	
 else:
-	module = loader.module(functions.get_conf_item("main", "main", "default_module"))
+	submit_module = submit_modules[functions.get_conf_item("main", "main", "default_module")]
 	
 	
-log_dict = None
+log_dict = {}
 for x in options.__dict__.iteritems():
-	section = x[0]
-	boolean = x[1]
+	log_module = x[0]
+	on = x[1]
 
-	if boolean ==  1:
-		log_path = functions.get_conf_item("list", section, "file")
-		help = functions.get_conf_item("list", section, "help")
-		log_dict = functions.append_log(log_dict, log_path, section)
-		#dump = functions.get_log(log_path)
-		#response = functions.add_final(dump)
+	# Is there a nicer way to do this?
+	if on and log_module != "pastebin":
+		module = log_modules[log_module]
+		(name, contents) = module.execute()
+		log_dict[name] = contents	
+		
+		# Deprecated with new log module loader
+		# Do we need to do anything relating to "help" below?
+		#log_path = functions.get_conf_item("list", section, "file")
+		#help = functions.get_conf_item("list", section, "help")
+		#log_dict = functions.append_log(log_dict, log_path, section)
+		##dump = functions.get_log(log_path)
+		##response = functions.add_final(dump)
 
 
 # Check to see if all mandatory arguments have been filled.
@@ -80,5 +89,5 @@ print user_email
 
 #user_logs = functions.get_final()
 
-module.execute(user_email, user_message, log_dict)
+submit_module.execute(user_email, user_message, log_dict)
 
