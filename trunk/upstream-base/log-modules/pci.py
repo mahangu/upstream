@@ -17,9 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# This module has to be sourceslist.py otherwise it will conflict with the builtin
-# debian module called apt
-
 # Required by Generic Module
 module_name = "pci"
 module_description = "Read PCI related log files"
