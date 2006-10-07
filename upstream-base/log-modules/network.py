@@ -21,12 +21,12 @@
 # debian module called apt
 
 # Required by Generic Module
-module_name = "apt"
-module_description = "Read the file used to control software repositories in Debian based systems"
+module_name = "network"
+module_description = "Read the log that contains network information"
 # Required by Log Module
-short_flag = "-a"
-long_flag = "--apt"
-log_path = "/etc/apt/sources.list"
+short_flag = "-n"
+long_flag = "--network"
+log_path = "/var/log/daemon.log"
 
 def execute():
 	try:
@@ -34,14 +34,5 @@ def execute():
 	except IOError:
 		return module_name, "Could not open this log file!"
 	else:
-		#content = fp.readlines()
-		#singlecontent = ""
-		#for line in content:
-		#	print line
-		#	print singlecontent
-		#	singlecontent = singlecontent + line
-		#return module_name, singlecontent
-
-		# Is this ok instead?
 		content = fp.read()
 		return module_name, content

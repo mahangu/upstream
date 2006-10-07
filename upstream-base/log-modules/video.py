@@ -31,10 +31,14 @@ def execute():
 	except IOError:
 		return module_name, "Could not open this log file!"
 	else:
-		content = fp.readlines()
-		singlecontent = ""
-		for line in content:
-			print line
-			print singlecontent
-			singlecontent = singlecontent + line
-		return module_name, singlecontent
+		#content = fp.readlines()
+		#singlecontent = ""
+		#for line in content:
+		#	print line
+		#	print singlecontent
+		#	singlecontent = singlecontent + line
+		#return module_name, singlecontent
+	
+		# Is this ok instead?
+		content = fp.read()
+		return module_name, content
