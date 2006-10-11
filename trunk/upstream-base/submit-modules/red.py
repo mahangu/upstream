@@ -75,10 +75,3 @@ def execute(submit_email, submit_message, dict_of_logs):
 	
 	# no, no error checking yet.
 	return submitmoduleloader.SubmitModuleResult(True, True, foo, response_url)
-
-
-
-
-
-	
-
