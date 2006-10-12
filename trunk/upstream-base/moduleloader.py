@@ -27,7 +27,7 @@
 
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 
-import glob, imp, sys
+import glob, imp, sys, os
 
 #  This module was built with the goal of maximum fault tolerance for
 #  any imported modules.  If there is a discovered case in which
@@ -282,9 +282,7 @@ class ModuleDirectoryScanner:
 		found_modules = glob.glob(glob_pattern)
 		# Remove the remaining path names from the module, since 
 		# We also have to add 1 to the index of the /
-		stripped_modules = [mod[mod.rfind("/") + 1:] for mod in found_modules if mod.rfind("/") != -1]
-		non_stripped_modules = [mod for mod in found_modules if mod.rfind("/") == -1]
-		self.found_modules = stripped_modules + non_stripped_modules
+		self.found_modules = [os.path.basename(mod) for mod in found_modules]
 		
 	# Load modules			
 	def load(self):
