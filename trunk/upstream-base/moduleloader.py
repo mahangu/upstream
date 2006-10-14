@@ -274,15 +274,59 @@ class ModuleDirectoryScanner:
 		return ModuleDirectoryScannerIterator(self)		
 	
 	# Scan for possible modules that can be loaded	
-	def scan(self):
-		if self.path[len(self.path) - 1] == '/':
-			glob_pattern = self.path + "*.py"
-		else:
-			glob_pattern = self.path + "/*.py"
-		found_modules = glob.glob(glob_pattern)
+	#def scan(self):
+		#if self.path[len(self.path) - 1] == '/':
+		#	glob_pattern = self.path + "*.py"
+		#else:
+		#	glob_pattern = self.path + "/*.py"
+		#found_modules = glob.glob(glob_pattern)
 		# Remove the remaining path names from the module, since 
 		# We also have to add 1 to the index of the /
-		self.found_modules = [os.path.basename(mod) for mod in found_modules]
+		#self.found_modules = [os.path.basename(mod) for mod in found_modules]
+		
+	def scan(self):
+		if self.path[len(self.path) - 1] == '/':
+			py_pattern = self.path + "*.py"
+			pyc_pattern = self.path = "*.pyc"
+			pyo_pattern = self.path = "*.pyo"
+		else:
+			py_pattern = self.path + "/*.py"
+			pyc_pattern = self.path + "/*.pyc"
+			pyo_pattern = self.path + "/*.pyo"
+			
+		# Get globs
+		found_py = glob.glob(py_pattern)
+		found_pyc = glob.glob(pyc_pattern)
+		found_pyo = glob.glob(pyo_pattern)
+		
+		# Convert to basename
+		base_py = [os.path.basename(mod) for mod in found_py]
+		base_pyc = [os.path.basename(mod) for mod in found_pyc]
+		base_pyo = [os.path.basename(mod) for mod in found_pyo]
+		
+		stripped_py = [mod[0:mod.rfind(".py")] for mod in base_py]
+		stripped_pyc = [mod[0:mod.rfind(".pyc")] for mod in base_pyc]
+		stripped_pyo = [mod[0:mod.rfind(".pyo")] for mod in base_pyo]
+		
+		
+		# Remove the remaining path names from the module, since 
+		# We also have to add 1 to the index of the /
+		self.found_modules = stripped_py
+		for mod in stripped_pyc:
+			if mod not in self.found_modules:
+				if self.debug_output >= DEBUG_ALL:
+					print "Module %s does not have a corresponding source file" % mod
+				self.found_modules.append(mod)
+			elif self.debug_output >= DEBUG_ALL:
+				print "Module %s has a bytecode file" % mod
+				
+		for mod in stripped_pyo:
+			if mod not in self.found_modules:
+				if self.debug_output >= DEBUG_ALL:
+					print "Module %s does not have a corresponding source file or standard bytecode file" % mod
+				self.found_modules.append(mod)
+			elif self.debug_output >= DEBUG_ALL:
+				print "Module %s has a bytecode file" % mode
 		
 	# Load modules			
 	def load(self):
@@ -291,26 +335,23 @@ class ModuleDirectoryScanner:
 		for modname in self.found_modules:
 			if self.debug_output >= DEBUG_ALL:
 				print "Attempting to 'find' module: %s" % modname
-			# This assumes that we always have .py extension.  Is this correct?
-			stripped_modname = modname[0:modname.rfind(".py")]
-			file_handle, filename, description = imp.find_module(stripped_modname)
+			file_handle, filename, description = imp.find_module(modname)
 			loaded_module = None
 			if not file_handle:
 				if self.debug_output >= DEBUG_ALL:
 					print "Failed 'finding' module (programming error or possible collision with builtin module): %s" % stripped_modname
 			else:
 				try:
-					loaded_module = imp.load_module(stripped_modname, file_handle, modname, description)
+					loaded_module = imp.load_module(modname, file_handle, modname, description)
 				except:
 					# Close our file handle
 					file_handle.close()
 					# If we are not using fault tolerance, reraise
+					if self.debug_output >= DEBUG_ALL:
+						print "Load failed on module: %s, attempting recovery" % modname
+						print sys.exc_info()[0]
 					if not self.fault_tolerance:
 						raise
-					else:
-						if self.debug_output >= DEBUG_ALL:
-							print "Load failed on module: %s, attempting recovery" % stripped_modname
-							print sys.exc_info()[0]
 							
 				file_handle.close()
 
