@@ -23,7 +23,7 @@
 from qt import *
 import sys, time, threading, string, ConfigParser, re
 
-import functions, asyncsubmit, submitmoduleloader
+import functions, asyncsubmit, submitmoduleloader, logmoduleloader
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
@@ -90,9 +90,8 @@ class SupportPage(WizardPage):
 		self.group = QVGroupBox("Please select categories this problem affects", self.child)
 		self.types = { }
 
-		types = functions.get_conf_sections("list")
-		for x in types:
-			typeBox = QCheckBox(x, self.group)
+		for x in log_loader:
+			typeBox = QCheckBox(x.module_name, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
 		self.label = QLabel("Please enter a description of the problem as well", self.child)
@@ -124,7 +123,7 @@ class SubmitPage(WizardPage):
 
 		self.label = QLabel("Please select the server to submit troubleshooting data to.", self.child)
 		self.serverBox = QComboBox(False, self.child)
-		self.servers = module_loader.get_all_submit_modules()
+		self.servers = [mod for mod in submit_loader]
 		for server in self.servers:
 			self.serverBox.insertItem(server.module_name)
 
@@ -145,7 +144,7 @@ class SubmitPage(WizardPage):
 		self.description.setText(description)
 		self.url.setText(self.servers[index].module_submit_url)
 
-		module = module_loader.get_module_by_name(self.servers[index].module_name)
+		module = submit_loader[self.servers[index].module_name]
 		self.wizard.setModule(module)
 	
 def threadCompleteHandler(result, userData = None):
@@ -181,9 +180,11 @@ class UpstreamWizard(QWizard):
 	def categoryLogs(self):
 		logs = None
 		for x in self.categories:
-			logPath = functions.get_conf_item("list", x, "file")
-			logs = functions.append_log(logs, logPath, x)
-
+			name, contents = log_loader[x].execute()
+			if not logs:
+				logs = { name: contents }
+			else:
+				logs[name] = contents
 		return logs
 			
 	def submitDone(self):
@@ -242,9 +243,17 @@ if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
 	functions.set_conf_dir("../upstream-base/conf/")
-	module_loader = submitmoduleloader.SubmitModuleLoader()
-	module_loader.add_search_path("../upstream-base/modules")		
 
+	log_path = functions.get_conf_item("main", "plugins", "log_path")
+	print log_path
+	print log_path == "../upstream-base/log-modules"
+	log_loader = logmoduleloader.LogModuleLoader([log_path], True, 1)
+
+	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
+	print submit_path
+	print submit_path == "../upstream-base/submit-modules"
+	submit_loader = submitmoduleloader.SubmitModuleLoader([log_path], True, 1)
+	
 	main(sys.argv)
 
 # vim: set noet sw=4 ts=4 tw=0:

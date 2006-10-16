@@ -132,7 +132,7 @@ class ModuleLoader:
 			
 					
 	def __len__(self):
-		return len(self,valid_modules)
+		return len(self.valid_modules)
 			
 	def __iter__(self):
 		return ModuleLoaderIterator(self)	
