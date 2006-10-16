@@ -248,6 +248,7 @@ class ModuleDirectoryScanner:
 		self.duplicate_path =  False
 		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
+		
 		self.path = path
 		
 		if self.path not in sys.path:

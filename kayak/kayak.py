@@ -252,7 +252,7 @@ if __name__ == "__main__":
 	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
 	print submit_path
 	print submit_path == "../upstream-base/submit-modules"
-	submit_loader = submitmoduleloader.SubmitModuleLoader([log_path], True, 1)
+	submit_loader = submitmoduleloader.SubmitModuleLoader([submit_path], True, 1)
 	
 	main(sys.argv)
 
