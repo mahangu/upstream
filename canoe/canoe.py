@@ -20,16 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
 # TODO Fix spacing between widgets
-# TODO text box spacing inside frame
 
 import sys
-import gobject
-import threading
 import functions
 import logmoduleloader, submitmoduleloader
 from getpass import getuser
-
-import time # for debugging; not needed...
 
 try:
 	import pygtk
@@ -109,7 +104,6 @@ class CanoeGTK:
 		label_name.set_text(module.module_name)
 		label_description.set_text(module.module_description)
 		label_url.set_text(module.module_submit_url)
-		return True
 
 	def btnBack_clicked(self, widget):
 		nb = self.wTree.get_widget("MainNotebook")
@@ -125,72 +119,35 @@ class CanoeGTK:
 			next.set_label("gtk-go-forward")
 
 		nb.prev_page()
-		return True
 
 	def btnNext_clicked(self, widget):
 		nb = self.wTree.get_widget("MainNotebook")
 		back = self.wTree.get_widget("btnBack")
 		next = self.wTree.get_widget("btnNext")
 
+		# Run the submit code if we are on the last page
 		if nb.get_current_page() is nb.get_n_pages()-1:
-			self.submit(widget)
-			#while gtk.events_pending():
-			#    gtk.main_iteration(False)
-
-			#task = self.submit(widget)
-			#gobject.idle_add(task.next)
-			# Eventually, we shouldn't get here...
-			#sys.exit(0)
+			email = self.get_email()
+			support_logs = self.get_support_logs()
+			support_msg = self.get_support_msg()
+			module = self.get_module()
+			print email, support_logs, support_msg, module  # debug print 
+			# TODO We need to update this to use threading and asyncsubmit like canoe.py
+			module.execute(email, support_msg, support_logs)
+			# TODO We are exiting for now but we should give the user some confirmation beforehand
+			sys.exit(0)
 
 		# Go to the next page if we aren't on the last page
 		else:
 			# Make the "back" button active if we are coming from the first page
 			if nb.get_current_page() is 0:
 				back.set_sensitive(True)
-		
+
 			# Change the "next" button to a "finish" button if we are going to the last page
 			if nb.get_current_page() is nb.get_n_pages()-2:
 				next.set_label("gtk-ok")
 
 			nb.next_page()
-
-		return True
-
-
-	def submit(self, widget):
-		"""Submit user information to the selected log module"""
-
-		print "starting"
-		#gtk.gdk.threads_enter()
-		self.wTree.get_widget('MainWindow').set_sensitive(False)
-		self.wTree.get_widget('SubmitDialog').show_all()
-		#gtk.gdk.threads_leave()
-			
-		progress = self.wTree.get_widget('progressbar')
-
-		# Getting user input
-		email = self.get_email()
-		support_msg = self.get_support_msg()
-		module = self.get_module()
-		time.sleep(2)
-		print "entering..."
-		gtk.gdk.threads_enter()
-		print "inside"
-		progress.set_fraction(.33)
-		gtk.gdk.threads_leave()
-		print "leaving..."
-
-		# Reading selected log files
-		support_logs = self.get_support_logs()
-		time.sleep(2)
-		progress.set_fraction(.66)
-
-		print email, support_logs, support_msg, module  # debug print 
-
-		# Uploading information to pastebin
-		#module.execute(email, support_msg, support_logs)
-		time.sleep(2)
-		progress.set_fraction(1)
 
 
 	# Helper functions
@@ -204,6 +161,8 @@ class CanoeGTK:
 				module = log_modules[section]
 				(name, contents) = module.execute()
 				log_dict[name] = contents 
+		# See comment in canoe.py about returning None
+		# TODO Currently, returning None causes an error :)
 		return log_dict 
 
 	def get_support_msg(self):
@@ -237,7 +196,4 @@ if __name__ == "__main__":
 
 	# Load the GUI
 	canoe = CanoeGTK(log_modules, submit_modules)
-	gtk.gdk.threads_init()
-	gtk.gdk.threads_enter()
 	canoe.main()
-	gtk.gdk.threads_leave()
