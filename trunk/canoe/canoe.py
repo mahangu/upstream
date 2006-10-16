@@ -185,14 +185,14 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	submit_mod_loc = ["../upstream-base/submit-modules"]
-	log_mod_loc = ["../upstream-base/log-modules"]
 	conf = "../upstream-base/conf/"
-
 	functions.set_conf_dir(conf)
 
-	submit_modules = submitmoduleloader.SubmitModuleLoader(submit_mod_loc, False, logmoduleloader.moduleloader.DEBUG_ALL)
-	log_modules = logmoduleloader.LogModuleLoader(log_mod_loc, False, submitmoduleloader.moduleloader.DEBUG_ALL)
+	log_path = functions.get_conf_item("main", "plugins", "log_path")
+	log_modules = logmoduleloader.LogModuleLoader([log_path], False, submitmoduleloader.moduleloader.DEBUG_ALL)
+
+	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
+	submit_modules = submitmoduleloader.SubmitModuleLoader([submit_path], False, logmoduleloader.moduleloader.DEBUG_ALL)
 
 	# Load the GUI
 	canoe = CanoeGTK(log_modules, submit_modules)
