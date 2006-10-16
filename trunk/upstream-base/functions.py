@@ -169,13 +169,15 @@ def get_conf_sections(which_conf):
 	#log = location.read()
 	#log = '<br /><em>%s</em><br />%s' % (path,log)
 	#return log
-
+	
+# Deprecated
 def get_log(path_to_file):
 	log = None
 	fileobj = open ( path_to_file, 'r' )
 	file = fileobj.read()
 	return file
 	
+# Deprecated
 def append_log(log_dict, file_path, log_name):
 	log_contents = get_log(file_path)
 	if log_contents:
