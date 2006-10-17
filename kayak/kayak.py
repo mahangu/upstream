@@ -149,6 +149,7 @@ class SubmitPage(WizardPage):
 	
 def threadCompleteHandler(result, userData = None):
 	global wizardDialog
+	wizardDialog.result = result
 	QTimer.singleShot(0, wizardDialog.submitDone)
 
 class UpstreamWizard(QWizard):
@@ -188,7 +189,10 @@ class UpstreamWizard(QWizard):
 		return logs
 			
 	def submitDone(self):
-		QMessageBox.information(self, "Kayak", "Submission complete")
+		if self.result and self.result.bool_success:
+			QMessageBox.information(self, "Kayak", "Submission completed successfull and is located at <br />" + self.result.result_url)
+		else:
+			QMessageBox.information(self, "Kayak", "Submission failed :-(")
 		self.done(0)
 
 	def makeRequest(self):
@@ -245,13 +249,9 @@ if __name__ == "__main__":
 	functions.set_conf_dir("../upstream-base/conf/")
 
 	log_path = functions.get_conf_item("main", "plugins", "log_path")
-	print log_path
-	print log_path == "../upstream-base/log-modules"
 	log_loader = logmoduleloader.LogModuleLoader([log_path], True, 1)
 
 	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
-	print submit_path
-	print submit_path == "../upstream-base/submit-modules"
 	submit_loader = submitmoduleloader.SubmitModuleLoader([submit_path], True, 1)
 	
 	main(sys.argv)
