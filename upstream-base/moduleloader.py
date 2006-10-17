@@ -27,7 +27,7 @@
 
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 
-import glob, imp, sys, os
+import glob, imp, sys, os, threading
 
 #  This module was built with the goal of maximum fault tolerance for
 #  any imported modules.  If there is a discovered case in which
@@ -66,8 +66,9 @@ class IncorrectModuleReturnType(Exception):
 		return "raised IncorrectModuleReturnType(" + self.found_type + "," + self.expected_type + ")"
 	def __str__(self):
 		return "Found type: " + self.found_type + " Expected type: " + self.expected_type
-		
-class LoadedModule:
+
+# LoadedModule now extends from Thread type
+class LoadedModule(threading.Thread):
 	fault_tolerance = True
 	debug_output = DEBUG_NONE
 	# This expects the module fields to already exist
@@ -80,21 +81,29 @@ class LoadedModule:
 		self.module_description = self.module.module_description
 	def __repr__(self):
 		return "< loaded module with name : %s >" % self.module_name
-	
-class ModuleLoader:
+
+# ModuleLoader now extends from Thread type
+class ModuleLoader(threading.Thread):
 	# Necessary attributes for a generic module
 	# Subclasses may override this to provide for different required attributes
 	necessary_attributes = ["module_name", "module_description"]
 	necessary_attr_types = [str, str]
+	load_status = -1
+	validation_status = -1
 	# New classes should override the ModuleWrapper item
 	ModuleWrapper = LoadedModule
-	def __init__(self, path_list, fault_tolerance=True, debug_output=DEBUG_NONE):
-	
+	def __init__(self, path_list, use_threading = True, fault_tolerance=True, debug_output=DEBUG_NONE):
+		# Chain up
+		threading.Thread.__init__(self)
+		
 		self.path_list = path_list
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
 		self.valid_modules = []
-		self.execute_load()
+		if use_threading:
+			self.start()
+		else:
+			self.execute_load()
 	
 	def __repr__(self):
 		return "ModuleLoader(" + str(self.path_list) + ", " + self.fault_tolerance + ", " + self.debug_output + ")"
@@ -135,7 +144,11 @@ class ModuleLoader:
 		return len(self.valid_modules)
 			
 	def __iter__(self):
-		return ModuleLoaderIterator(self)	
+		return ModuleLoaderIterator(self)
+	# Methods utilized by the thread class
+	def run(self):
+		print "Running"
+		self.execute_load()
 		
 	def execute_load(self):
 		# Perform validation to ensure that we didn't end up invalid
@@ -154,17 +167,111 @@ class ModuleLoader:
 					else:
 						raise ModuleLoaderInitException(MLOAD_HAS_NONSTR)
 					
-			
+			# Find all modules
 			for path_name in self.path_list:
-				loaded_directory = ModuleDirectoryScanner(path_name, self.fault_tolerance, self.debug_output)
-				for loaded_module in loaded_directory:
-					if self.validate_module(loaded_module):
-						self.valid_modules.append(self.ModuleWrapper(loaded_module, self.fault_tolerance, self.debug_output))
+				if path_name not in sys.path:
+					sys.path.append(path_name)
+					
+				candidate_modules = []
+				candidate_modules = candidate_modules + self.scan_directory(path_name)
+
+			# Load modules
+			self.load_status = 0.0
+			loaded_modules = []
+			for x in range(0, len(candidate_modules)):
+				tmp_module = self.load_module(candidate_modules[x])
+				if tmp_module:
+					loaded_modules.append(tmp_module)
+				self.load_status = ((x + 0.0)/(len(candidate_modules) - 1)) 
+
+			# Validate modules
+			self.validation_status = 0.0
+			for x in range(0, len(loaded_modules)):
+				if self.validate_module(loaded_modules[x]):
+					self.valid_modules.append(self.ModuleWrapper(loaded_modules[x], self.fault_tolerance, self.debug_output))
+				self.validation_status = ((x + 0.0)/(len(loaded_modules) - 1))
 								
 		else:
 			if not self.fault_tolerance:
 				raise ModuleLoaderInitException(MLOAD_EMPTY_LIST)
 				
+
+	# Helper function.  This function scans a directory and returns
+	# all of the *.py things it globs.  It returns a whole bunch of
+	# truncated module names
+	def scan_directory(self, path):
+		if self.debug_output >= DEBUG_ALL:
+			print "Scanning directory: %s" % self.path
+		if path[len(path) - 1] == '/':
+			py_pattern = path + "*.py"
+			pyc_pattern = path = "*.pyc"
+			pyo_pattern = path = "*.pyo"
+		else:
+			py_pattern = path + "/*.py"
+			pyc_pattern = path + "/*.pyc"
+			pyo_pattern = path + "/*.pyo"
+			
+		# Get globs
+		found_py = glob.glob(py_pattern)
+		found_pyc = glob.glob(pyc_pattern)
+		found_pyo = glob.glob(pyo_pattern)
+		
+		# Convert to basename
+		base_py = [os.path.basename(mod) for mod in found_py]
+		base_pyc = [os.path.basename(mod) for mod in found_pyc]
+		base_pyo = [os.path.basename(mod) for mod in found_pyo]
+		
+		stripped_py = [mod[0:mod.rfind(".py")] for mod in base_py]
+		stripped_pyc = [mod[0:mod.rfind(".pyc")] for mod in base_pyc]
+		stripped_pyo = [mod[0:mod.rfind(".pyo")] for mod in base_pyo]
+		
+		
+		# Remove the remaining path names from the module, since 
+		# We also have to add 1 to the index of the /
+		found_modules = stripped_py
+		for mod in stripped_pyc:
+			if mod not in self.found_modules:
+				if self.debug_output >= DEBUG_ALL:
+					print "Module %s does not have a corresponding source file" % mod
+				self.found_modules.append(mod)
+			elif self.debug_output >= DEBUG_ALL:
+				print "Module %s has a bytecode file" % mod
+				
+		for mod in stripped_pyo:
+			if mod not in self.found_modules:
+				if self.debug_output >= DEBUG_ALL:
+					print "Module %s does not have a corresponding source file or standard bytecode file" % mod
+				self.found_modules.append(mod)
+			elif self.debug_output >= DEBUG_ALL:
+				print "Module %s has a bytecode file" % mode
+		# Return the found modules
+		return found_modules
+		
+	def load_module(self, modname):
+		if self.debug_output >= DEBUG_ALL:
+			print "Attempting to 'find' module: %s" % modname
+		file_handle, filename, description = imp.find_module(modname)
+		loaded_module = None
+		if not file_handle:
+			if self.debug_output >= DEBUG_ALL:
+				print "Failed 'finding' module (programming error or possible collision with builtin module): %s" % stripped_modname
+		else:
+			try:
+				loaded_module = imp.load_module(modname, file_handle, modname, description)
+			except:
+				# Close our file handle
+				file_handle.close()
+				# If we are not using fault tolerance, reraise
+				if self.debug_output >= DEBUG_ALL:
+					print "Load failed on module: %s, attempting recovery" % modname
+					print sys.exc_info()[0]
+				if not self.fault_tolerance:
+					raise
+
+			file_handle.close()
+		return loaded_module
+		
+	
 	# Provide a string method
 	def __str__(self):
 		return "Module loader:\n" + repr(self.valid_modules	)
@@ -243,6 +350,11 @@ class ModuleLoaderIterator:
 		else:
 			return self.parent.valid_modules[self.ind]
 
+
+########################################################
+# All classes/functions below this marker are deprecated,
+# and will be removed soon
+########################################################
 class ModuleDirectoryScanner:
 	def __init__(self, path, fault_tolerance, debug_output):
 		self.duplicate_path =  False
