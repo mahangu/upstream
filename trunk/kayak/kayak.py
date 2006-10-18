@@ -90,6 +90,8 @@ class SupportPage(WizardPage):
 		self.group = QVGroupBox("Please select categories this problem affects", self.child)
 		self.types = { }
 
+		if log_loader.threaded:
+			log_loader.join()
 		for x in log_loader:
 			typeBox = QCheckBox(x.module_name, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
@@ -123,6 +125,8 @@ class SubmitPage(WizardPage):
 
 		self.label = QLabel("Please select the server to submit troubleshooting data to.", self.child)
 		self.serverBox = QComboBox(False, self.child)
+		if submit_loader.threaded:
+			submit_loader.join()
 		self.servers = [mod for mod in submit_loader]
 		for server in self.servers:
 			self.serverBox.insertItem(server.module_name)
@@ -246,13 +250,10 @@ def main(args):
 if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
-	functions.set_conf_dir("../upstream-base/conf/")
+	
+	log_loader = logmoduleloader.LogModuleLoader(["../upstream-base/log-modules"], True, 1)
 
-	log_path = functions.get_conf_item("main", "plugins", "log_path")
-	log_loader = logmoduleloader.LogModuleLoader([log_path], True, 1)
-
-	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
-	submit_loader = submitmoduleloader.SubmitModuleLoader([submit_path], True, 1)
+	submit_loader = submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"], True, 1)
 	
 	main(sys.argv)
 

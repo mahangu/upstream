@@ -74,6 +74,7 @@ class LoadedModule(threading.Thread):
 	# This expects the module fields to already exist
 	# Note: any new module wrappers must have this exact argument list
 	def __init__(self, module, fault_tolerance, debug_output):
+		threading.Thread.__init__(self)
 		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
 		self.module = module
@@ -92,10 +93,10 @@ class ModuleLoader(threading.Thread):
 	validation_status = -1
 	# New classes should override the ModuleWrapper item
 	ModuleWrapper = LoadedModule
-	def __init__(self, path_list, use_threading = True, fault_tolerance=True, debug_output=DEBUG_NONE):
+	def __init__(self, path_list, fault_tolerance=True, debug_output=DEBUG_NONE, use_threading = False):
 		# Chain up
 		threading.Thread.__init__(self)
-		
+		self.threaded = use_threading
 		self.path_list = path_list
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
@@ -147,7 +148,7 @@ class ModuleLoader(threading.Thread):
 		return ModuleLoaderIterator(self)
 	# Methods utilized by the thread class
 	def run(self):
-		print "Running"
+		print "Running threaded load"
 		self.execute_load()
 		
 	def execute_load(self):
@@ -201,7 +202,7 @@ class ModuleLoader(threading.Thread):
 	# truncated module names
 	def scan_directory(self, path):
 		if self.debug_output >= DEBUG_ALL:
-			print "Scanning directory: %s" % self.path
+			print "Scanning directory: %s" % path
 		if path[len(path) - 1] == '/':
 			py_pattern = path + "*.py"
 			pyc_pattern = path = "*.pyc"
@@ -230,18 +231,18 @@ class ModuleLoader(threading.Thread):
 		# We also have to add 1 to the index of the /
 		found_modules = stripped_py
 		for mod in stripped_pyc:
-			if mod not in self.found_modules:
+			if mod not in found_modules:
 				if self.debug_output >= DEBUG_ALL:
 					print "Module %s does not have a corresponding source file" % mod
-				self.found_modules.append(mod)
+				found_modules.append(mod)
 			elif self.debug_output >= DEBUG_ALL:
 				print "Module %s has a bytecode file" % mod
 				
 		for mod in stripped_pyo:
-			if mod not in self.found_modules:
+			if mod not in found_modules:
 				if self.debug_output >= DEBUG_ALL:
 					print "Module %s does not have a corresponding source file or standard bytecode file" % mod
-				self.found_modules.append(mod)
+				found_modules.append(mod)
 			elif self.debug_output >= DEBUG_ALL:
 				print "Module %s has a bytecode file" % mode
 		# Return the found modules

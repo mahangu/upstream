@@ -20,17 +20,14 @@
 import sys, optparse, os, ConfigParser
 import logmoduleloader, submitmoduleloader
 
-import functions # our modules
-functions.set_conf_dir("conf/")
+import config
 # Deprecated?
 #functions.set_modules_dir("submit-modules/")
 
 # Hoorah! for ridiculous namespacings :-)
-log_path = functions.get_conf_item("main", "plugins", "log_path")
-log_modules = logmoduleloader.LogModuleLoader([log_path], False, logmoduleloader.moduleloader.DEBUG_ALL)
+log_modules = logmoduleloader.LogModuleLoader(config.log_module_path, False, logmoduleloader.moduleloader.DEBUG_ALL)
 
-submit_path = functions.get_conf_item("main", "plugins", "submit_path")
-submit_modules = submitmoduleloader.SubmitModuleLoader([submit_path], True, submitmoduleloader.moduleloader.DEBUG_ALL)
+submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path, True, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 

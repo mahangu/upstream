@@ -81,6 +81,23 @@ class LogModule(moduleloader.LoadedModule):
    				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
    			else:
    				raise
+			
+	# If used complete hander should be of type method(result, user_data)
+	def executeThreaded(self, complete_handler = None, user_data = None):
+		self.email = email
+		self.message = message
+		self.log_dict = log_dict
+		self.complete_handler = complete_handler
+		self.user_data = user_data
+		self.start()
+		
+	def run(self):
+		self.result = self.execute()
+		if self.complete_handler:
+			self.complete_handler(self.result, self.user_data)
+			
+	def getResult(self):
+		return self.result
 
 class LogModuleLoader(moduleloader.ModuleLoader):
 	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["log_path", "short_flag", "long_flag"]
@@ -89,8 +106,8 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	used_short_flags = []
 	used_long_flags = []
 	used_paths = []
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
+	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
+		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
 		
 	def validate_additional(self, module):
 		return self.validate_execution_hook(module, "execute", 0) and self.validate_non_duplicate_module_descr(module)

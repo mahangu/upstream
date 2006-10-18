@@ -22,7 +22,7 @@
 # TODO Fix spacing between widgets
 
 import sys
-import functions
+import config
 import logmoduleloader, submitmoduleloader
 from getpass import getuser
 
@@ -66,7 +66,9 @@ class CanoeGTK:
 		"""Create the checkboxes for selecting logs"""
 
 		vbox = self.wTree.get_widget("vbox_problems")
-		sections_dict = dict([(section.module_name, gtk.CheckButton(section.module_name, False)) for section in log_modules])
+		if self.log_modules.threaded:
+			self.log_modules.join()
+		sections_dict = dict([(section.module_name, gtk.CheckButton(section.module_name, False)) for section in self.log_modules])
 		for section in sections_dict:
 			vbox.pack_start(sections_dict[section])
 		vbox.show_all()
@@ -78,16 +80,20 @@ class CanoeGTK:
 		vbox = self.wTree.get_widget("vbox_modules")
 		combobox = gtk.combo_box_new_text()
 		vbox.pack_start(combobox)
+		# Join the thread since we are using threading
+		if self.submit_modules.threaded:
+			self.submit_modules.join()
+			
 		for module in self.submit_modules:
 			combobox.append_text(module.module_name)
 		vbox.reorder_child(combobox, 1)
 
 		# Set default value
 		# TODO Read the conf file and use it to select the default
-		combobox.set_active(0)
-		self.submit_select_changed(combobox)
-
+	
 		combobox.connect("changed", self.submit_select_changed)
+		combobox.set_active(0)
+		#self.submit_select_changed(combobox)
 		vbox.show_all()
 		return combobox
 
@@ -185,15 +191,6 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	conf = "../upstream-base/conf/"
-	functions.set_conf_dir(conf)
-
-	log_path = functions.get_conf_item("main", "plugins", "log_path")
-	log_modules = logmoduleloader.LogModuleLoader([log_path], False, submitmoduleloader.moduleloader.DEBUG_ALL)
-
-	submit_path = functions.get_conf_item("main", "plugins", "submit_path")
-	submit_modules = submitmoduleloader.SubmitModuleLoader([submit_path], False, logmoduleloader.moduleloader.DEBUG_ALL)
-
 	# Load the GUI
-	canoe = CanoeGTK(log_modules, submit_modules)
+	canoe = CanoeGTK(logmoduleloader.LogModuleLoader(["../upstream-base/log-modules"], False, submitmoduleloader.moduleloader.DEBUG_ALL, True) , submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL, True))
 	canoe.main()

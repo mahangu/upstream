@@ -22,6 +22,9 @@ import threading
 import functions
 import submitmoduleloader
 
+# This entire module is now deprecated.  Use the thread functions within
+# submitmoduleloader and logmoduleloader if you desire asynchronous functionality
+
 class ThreadSubmit(threading.Thread):
 	# complete_handler should be of the form func_handler(SubmitModuleResult, user_data)
 	# user_data may be arbitrary
