@@ -54,6 +54,9 @@ class SubmitModuleResult:
 		self.result_xml = result_xml
 		
 class SubmitModule(moduleloader.LoadedModule):
+	email = ""
+	message = ""
+	log_dict = ""
 	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.module_submit_url = self.module.module_submit_url
@@ -67,13 +70,15 @@ class SubmitModule(moduleloader.LoadedModule):
 			## http://docs.python.org/ref/node33.html
    			#if type(res) == SubmitModuleResult:
    			if res.__class__ == SubmitModuleResult:
+				self.result = res
    				return res
    			else:
    				if self.debug_output >= moduleloader.DEBUG_ALL:
    					print "Module execute returned type %s expected %s" % (type(res), SubmitModuleResult)
    				if self.fault_tolerance:
    				 # We are using fault tolerance so try and send back a message to the user
-   				 	return SubmitModuleResult(False, False, unknown_response)
+				 	self.result = SubmitModuleResult(False, False, unknown_response)
+					return self.result
    				else:
    				 	raise moduleloader.IncorrectModuleReturnType(type(res), type(SubmitModuleResult))
    		# Attempt to handle exceptions if we get one
@@ -84,17 +89,35 @@ class SubmitModule(moduleloader.LoadedModule):
     				
     			if self.fault_tolerance:
    				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
-   				return SubmitModuleResult(False, False, formatted_str)
+   				self.result = SubmitModuleResult(False, False, formatted_str)
+				return self.result
    			else:
    				raise
+			
+	# If used complete hander should be of type method(result, user_data)
+	def executeThreaded(self, email, message, log_dict, complete_handler = None, user_data = None):
+		self.email = email
+		self.message = message
+		self.log_dict = log_dict
+		self.complete_handler = complete_handler
+		self.user_data = user_data
+		self.start()
+		
+	def run(self):
+		self.result = self.execute(self.email, self.message, self.log_dict)
+		if self.complete_handler:
+			self.complete_handler(self.result, self.user_data)
+			
+	def getResult(self):
+		return self.result
 		
 				
 class SubmitModuleLoader(moduleloader.ModuleLoader):
 	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["module_submit_url"]
 	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str]
 	ModuleWrapper = SubmitModule
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
+	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
+		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
 		
 	def validate_additional(self, module):
 		valid_hook = self.validate_execution_hook(module, "execute", 3)
