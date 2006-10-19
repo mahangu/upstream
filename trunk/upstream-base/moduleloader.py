@@ -179,18 +179,22 @@ class ModuleLoader(threading.Thread):
 			# Load modules
 			self.load_status = 0.0
 			loaded_modules = []
-			for x in range(0, len(candidate_modules)):
-				tmp_module = self.load_module(candidate_modules[x])
+			counter = 0
+			for mod in candidate_modules:
+				tmp_module = self.load_module(mod)
 				if tmp_module:
 					loaded_modules.append(tmp_module)
-				self.load_status = ((x + 0.0)/(len(candidate_modules) - 1)) 
+				counter = counter + 1
+				self.load_status = (counter + 0.0)/len(candidate_modules) 
 
 			# Validate modules
 			self.validation_status = 0.0
-			for x in range(0, len(loaded_modules)):
-				if self.validate_module(loaded_modules[x]):
-					self.valid_modules.append(self.ModuleWrapper(loaded_modules[x], self.fault_tolerance, self.debug_output))
-				self.validation_status = ((x + 0.0)/(len(loaded_modules) - 1))
+			counter = 0
+			for mod in loaded_modules:
+				if self.validate_module(mod):
+					self.valid_modules.append(self.ModuleWrapper(mod, self.fault_tolerance, self.debug_output))
+				counter = counter + 1
+				self.validation_status = (counter + 0.0)/len(loaded_modules)
 								
 		else:
 			if not self.fault_tolerance:
