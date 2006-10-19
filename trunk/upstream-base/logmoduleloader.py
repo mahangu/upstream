@@ -19,26 +19,6 @@
 
 import moduleloader, sys
 
-COLL_LFLAG = 0
-COLL_SFLAG = 1
-COLL_PATH = 2
-
-class LogModuleDescrCollisionException(Exception):
-	def __init__(self, col_type, attr):
-		self.col_type = col_type
-		self.attr = attr
-	def __repr__(self):
-		return "raised LogModuleDescCollisionException(" + self.col_type + ")"
-	def __str__(self):
-		if self.col_type == COLL_LFLAG:
-			return "Log Modules Collided: multiple long flag %s" % self.attr
-		elif self.col_type == COLL_SFLAG:
-			return "Log Modules Collided: multiple short flag %s" % self.attr
-		elif self.col_type == COLL_PATH:
-			return "Log Modules Collided: multiple path %s" % self.attr
-		else:
-			return "Log Modules Collided: unknown reason"
-
 # Log modules should do whatever they feel like and return a tuple of the form
 # ( logname, logcontents )
 
@@ -46,8 +26,19 @@ class LogModule(moduleloader.LoadedModule):
 	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.log_path = self.module.log_path
-		self.short_flag = self.module.short_flag
-		self.long_flag = self.module.long_flag		
+		self.category = self.module.category
+		# This is temporary to preserve backward compatability with old
+		# code
+		if self.module.short_flag:
+			self.short_flag = self.module.short_flag
+		else:
+			self.short_flag = "-?"
+			
+		if self.module.long_flag:
+			self.long_flag = self.module.long_flag
+		else:
+			self.long_flag = "--<?>"
+			
 	def execute(self):
 		try:
    			res =  self.module.execute()
@@ -100,14 +91,50 @@ class LogModule(moduleloader.LoadedModule):
 		return self.result
 
 class LogModuleLoader(moduleloader.ModuleLoader):
-	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["log_path", "short_flag", "long_flag"]
-	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str, str, str]
+	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["log_path", "category"]
+	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str, str]
 	ModuleWrapper = LogModule
-	used_short_flags = []
-	used_long_flags = []
 	used_paths = []
+	module_groupings = None
+	module_grouping_status = -1
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
+		# If we are using threading, we should do nothing, as we have
+		# overriden the run method
+		if not self.threaded:
+			self.groupModules()
+	
+	def run(self):
+		moduleloader.ModuleLoader.run(self)
+		self.groupModules()
+		
+	def groupModules(self):
+		self.module_grouping_status = 0.0
+		counter = 0
+		self.module_groupings = dict()
+		for mod in self.valid_modules:
+			if not mod.category in self.module_groupings:
+				self.module_groupings[mod.category] = [mod]
+			else:
+				self.module_groupings[mod.category].append(mod)
+			counter = counter + 1
+			self.module_grouping_status = (counter + 0.0)/len(self.valid_modules)
+		
+	def getModulesInCategory(self, cat):
+		if self.module_groupings:
+			return self.module_groupings[cat]
+		else:
+			if self.debug_output >= moduleloader.DEBUG_ALL:
+				print "Module Groupings aren't yet created (Thread inconsistency?)"
+			return None
+		
+	def getCategories(self):
+		if self.module_groupings:
+			return [category for category in self.module_groupings]
+		else:
+			if self.debug_output >= moduleloader.DEBUG_ALL:
+				print "Module Groupings aren't yet created (Thread inconsistency?)"
+			return None
 		
 	def validate_additional(self, module):
 		return self.validate_execution_hook(module, "execute", 0) and self.validate_non_duplicate_module_descr(module)
@@ -122,28 +149,8 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		if module.log_path in self.used_paths:
 			if self.fault_tolerance:
 				return  False	
-			else:
-				raise LogModuleDescrCollisionException(COLL_PATH, module.log_path)
-			
-		if self.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module short flag (%s) does not already exist: %s" % (module.short_flag, not module.short_flag in self.used_short_flags)	
-		if module.short_flag in self.used_short_flags:
-			if self.fault_tolerance:
-				return  False	
-			else:
-				raise LogModuleDescrCollisionException(COLL_SFLAG, module.short_flag)	
-				
-		if self.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module long flag (%s) does not already exist: %s" % (module.long_flag, not module.long_flag in self.used_long_flags)	
-		if module.long_flag in self.used_long_flags:
-			if self.fault_tolerance:
-				return  False	
-			else:
-				raise LogModuleDescrCollisionException(COLL_LFLAG, module.long_flag)
-			
+					
 		# Add all these to the already used list
-		self.used_long_flags.append(module.long_flag)
-		self.used_short_flags.append(module.short_flag)
 		self.used_paths.append(module.log_path)	
 		
 		return True	
