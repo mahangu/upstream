@@ -21,9 +21,8 @@
 module_name = "video"
 module_description = "Read the log that contains information about the Graphics Server"
 # Required by Log Module
-short_flag = "-v"
-long_flag = "--video"
 log_path = "/var/log/Xorg.0.log"
+category = "video"
 
 def execute():
 	try:

@@ -21,9 +21,8 @@
 module_name = "pci"
 module_description = "Read PCI related log files"
 # Required by Log Module
-short_flag = "-p"
-long_flag = "--pci"
 log_path = "/var/log/kern.log"
+category = "pci"
 
 def execute():
 	try:

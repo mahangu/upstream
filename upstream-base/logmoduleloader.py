@@ -29,12 +29,12 @@ class LogModule(moduleloader.LoadedModule):
 		self.category = self.module.category
 		# This is temporary to preserve backward compatability with old
 		# code
-		if self.module.short_flag:
+		if hasattr(self.module, 'short_flag'):
 			self.short_flag = self.module.short_flag
 		else:
 			self.short_flag = "-?"
 			
-		if self.module.long_flag:
+		if hasattr(self.module, 'long_flag'):
 			self.long_flag = self.module.long_flag
 		else:
 			self.long_flag = "--<?>"
@@ -100,7 +100,7 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
 		# If we are using threading, we should do nothing, as we have
-		# overriden the run method
+		# overridden the run method
 		if not self.threaded:
 			self.groupModules()
 	
@@ -142,10 +142,10 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	# Validate to make sure we don't have colliding modules
 	def validate_non_duplicate_module_descr(self, module):
 		if self.debug_output >= moduleloader.DEBUG_ALL:
-			print "Checking for module collisions"
+			print " Checking for module collisions"
 		
 		if self.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module log path (%s) does not already exist: %s" % (module.log_path, not module.log_path in self.used_paths)
+			print " Module log path (%s) does not already exist: %s" % (module.log_path, not module.log_path in self.used_paths)
 		if module.log_path in self.used_paths:
 			if self.fault_tolerance:
 				return  False	

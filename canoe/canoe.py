@@ -19,7 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
-# TODO Fix spacing between widgets
+# TODO: Fix spacing between widgets
+# TODO: use defaults in conf file
 
 import sys
 import config
@@ -48,7 +49,7 @@ class CanoeGTK:
 		self.gladefile = "canoe.glade"  
 		self.wTree = gtk.glade.XML(self.gladefile) 
 
-		self.sections_dict = self.__gui_add_logs()
+		self.cat_dict = self.__gui_add_logs()
 		self.submits_combobox = self.__gui_add_submits()
 
 		# Set the username as the default nickname
@@ -68,11 +69,11 @@ class CanoeGTK:
 		vbox = self.wTree.get_widget("vbox_problems")
 		if self.log_modules.threaded:
 			self.log_modules.join()
-		sections_dict = dict([(section.module_name, gtk.CheckButton(section.module_name, False)) for section in self.log_modules])
-		for section in sections_dict:
-			vbox.pack_start(sections_dict[section])
+		cat_dict = dict([(cat, gtk.CheckButton(cat, False)) for cat in self.log_modules.getCategories()])
+		for cat in cat_dict:
+			vbox.pack_start(cat_dict[cat])
 		vbox.show_all()
-		return sections_dict
+		return cat_dict
 
 	def __gui_add_submits(self):
 		"""Create the combobox for the pastebin modules"""
@@ -89,7 +90,7 @@ class CanoeGTK:
 		vbox.reorder_child(combobox, 1)
 
 		# Set default value
-		# TODO Read the conf file and use it to select the default
+		# TODO: Read the conf file and use it to select the default
 	
 		combobox.connect("changed", self.submit_select_changed)
 		combobox.set_active(0)
@@ -138,9 +139,9 @@ class CanoeGTK:
 			support_msg = self.get_support_msg()
 			module = self.get_module()
 			print email, support_logs, support_msg, module  # debug print 
-			# TODO We need to update this to use threading and asyncsubmit like canoe.py
+			# TODO: We need to update this to use threading and asyncsubmit like canoe.py
 			module.execute(email, support_msg, support_logs)
-			# TODO We are exiting for now but we should give the user some confirmation beforehand
+			# TODO: We are exiting for now but we should give the user some confirmation beforehand
 			sys.exit(0)
 
 		# Go to the next page if we aren't on the last page
@@ -162,13 +163,14 @@ class CanoeGTK:
 
 	def get_support_logs(self):
 		log_dict = {}
-		for section in self.sections_dict:
-			if self.sections_dict[section].get_active():
-				module = log_modules[section]
-				(name, contents) = module.execute()
-				log_dict[name] = contents 
+		for cat in self.cat_dict:
+			if self.cat_dict[cat].get_active():
+				for mod in self.log_modules.getModulesInCategory(cat):
+					module = log_modules[mod.module_name]
+					(name, contents) = module.execute()
+					log_dict[name] = contents 
 		# See comment in canoe.py about returning None
-		# TODO Currently, returning None causes an error :)
+		# TODO: Currently, returning None causes an error :)
 		return log_dict 
 
 	def get_support_msg(self):
@@ -191,6 +193,9 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
+	log_modules = logmoduleloader.LogModuleLoader(config.log_path, False, submitmoduleloader.moduleloader.DEBUG_ALL, True)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_path, False, logmoduleloader.moduleloader.DEBUG_ALL, True)
+
 	# Load the GUI
-	canoe = CanoeGTK(logmoduleloader.LogModuleLoader(["../upstream-base/log-modules"], False, submitmoduleloader.moduleloader.DEBUG_ALL, True) , submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL, True))
+	canoe = CanoeGTK(log_modules, submit_modules)
 	canoe.main()
