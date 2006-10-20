@@ -107,7 +107,7 @@ class ModuleLoader(threading.Thread):
 			self.execute_load()
 	
 	def __repr__(self):
-		return "ModuleLoader(" + str(self.path_list) + ", " + self.fault_tolerance + ", " + self.debug_output + ")"
+		return "ModuleLoader(" + str(self.path_list) + ", " + str(self.fault_tolerance) + ", " + str(self.debug_output) + ")"
 	
 	def __getitem__(self, modid):
 		if type(modid) is not str and type(modid) is not int:
@@ -192,7 +192,11 @@ class ModuleLoader(threading.Thread):
 			counter = 0
 			for mod in loaded_modules:
 				if self.validate_module(mod):
+					if self.debug_output >= DEBUG_ALL:
+						print " Adding %s to valid modules" % (mod)
 					self.valid_modules.append(self.ModuleWrapper(mod, self.fault_tolerance, self.debug_output))
+				elif self.debug_output >= DEBUG_ALL:
+						print " Not adding %s to valid modules" % (mod)
 				counter = counter + 1
 				self.validation_status = (counter + 0.0)/len(loaded_modules)
 								
@@ -294,7 +298,7 @@ class ModuleLoader(threading.Thread):
 	def validate_fields(self, module):
 		for field in self.necessary_attributes:
 			if self.debug_output >= DEBUG_ALL:
-				print "Validating fields %s : %s" % (field, hasattr(module, field))
+				print " Validating fields %s : %s" % (field, hasattr(module, field))
 			if not hasattr(module, field):
 				return False
 			ind = self.necessary_attributes.index(field)
@@ -303,7 +307,7 @@ class ModuleLoader(threading.Thread):
 			if ind < self.necessary_attr_types:
 				# Ahh ye olde debugging output, you take up so much space
 				if self.debug_output >= DEBUG_ALL:
-					print "Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None)
+					print " Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None)
 				
 				if not type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None:
 					return False
@@ -321,9 +325,9 @@ class ModuleLoader(threading.Thread):
 	# so that base classes do not have to reimplement it
 	def validate_execution_hook(self, module, name, num_args):
 		if self.debug_output >= DEBUG_ALL:
-			print "Module %s has attribute %s: %s " % (module, name, hasattr(module, name))
-			print "Module attribute %s is of type 'func_code': %s" % (name, hasattr(module.__dict__[name], "func_code"))
-			print "Module function %s has %d args: %s" % (name, num_args, module.__dict__[name].func_code.co_argcount is num_args)
+			print " Module %s has attribute %s: %s " % (module, name, hasattr(module, name))
+			print " Module attribute %s is of type 'func_code': %s" % (name, hasattr(module.__dict__[name], "func_code"))
+			print " Module function %s has %d args: %s" % (name, num_args, module.__dict__[name].func_code.co_argcount is num_args)
 		hasfunc = hasattr(module, name) 
 		func_is_func = hasattr(module.__dict__[name], "func_code")
 		func_has_correct_param = module.__dict__[name].func_code.co_argcount is num_args

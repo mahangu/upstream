@@ -24,9 +24,8 @@
 module_name = "apt"
 module_description = "Read the file used to control software repositories in Debian based systems"
 # Required by Log Module
-short_flag = "-a"
-long_flag = "--apt"
 log_path = "/etc/apt/sources.list"
+category = "apt"
 
 def execute():
 	try:
