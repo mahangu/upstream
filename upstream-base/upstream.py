@@ -31,13 +31,17 @@ submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
-for log_module in log_modules:
-		lflag = "--%s"%(log_module.module_name)
+categories = log_modules.getCategories()
+
+for category in categories:
+		lflag = "--%s"%(category)
 		print lflag
 
-		parser.add_option("", lflag, action="store_true", help=log_module.module_description, default=False)
+		parser.add_option("", lflag, action="store_true", help="All log modules in the %s category."%(category), default=False)
 
 parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin module to use.", default=False)
+
+parser.add_option("", "--log", dest="log", help="Choose a specific a log module to use.", default=False)
 
 (options, args) = parser.parse_args()
 
@@ -48,26 +52,31 @@ if options.pastebin:
 else:
 	submit_module = submit_modules[config.log_module_default]
 	
+#if options.log:
+	
 	
 log_dict = {}
 for x in options.__dict__.iteritems():
-	log_module = x[0]
+	option = x[0]
 	on = x[1]
 
 	# Is there a nicer way to do this?
-	if on and log_module != "pastebin":
-		module = log_modules[log_module]
-		(name, contents) = module.execute()
-		log_dict[name] = contents	
+	if on and option != "pastebin" and option != "log":
 		
-		# Deprecated with new log module loader
-		# Do we need to do anything relating to "help" below?
-		#log_path = functions.get_conf_item("list", section, "file")
-		#help = functions.get_conf_item("list", section, "help")
-		#log_dict = functions.append_log(log_dict, log_path, section)
-		##dump = functions.get_log(log_path)
-		##response = functions.add_final(dump)
-
+		print option
+		
+		category = log_modules.getModulesInCategory(option)
+		
+		for log_module in category:
+			module = log_modules[log_module.module_name]
+			(name, contents) = module.execute()
+			log_dict[name] = contents 
+	
+	elif options.log:
+		module = log_modules[options.log]
+		(name, contents) = module.execute()
+		log_dict[name] = contents 
+	
 
 # Check to see if all mandatory arguments have been filled.
 
