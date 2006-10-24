@@ -1,2 +1,2 @@
-log_path = ["../upstream-base/log-modules"]
-submit_path = ["../upstream-base/submit-modules"]
+log_module_path = ["../upstream-base/log-modules"]
+submit_module_path = ["../upstream-base/submit-modules"]
