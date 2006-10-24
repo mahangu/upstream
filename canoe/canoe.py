@@ -193,8 +193,8 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	log_modules = logmoduleloader.LogModuleLoader(config.log_path, False, submitmoduleloader.moduleloader.DEBUG_ALL, True)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_path, False, logmoduleloader.moduleloader.DEBUG_ALL, True)
+	log_modules = logmoduleloader.LogModuleLoader(config.log_module_path, False, submitmoduleloader.moduleloader.DEBUG_ALL, True)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path, False, logmoduleloader.moduleloader.DEBUG_ALL, True)
 
 	# Load the GUI
 	canoe = CanoeGTK(log_modules, submit_modules)
