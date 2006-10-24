@@ -32,23 +32,21 @@ submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
 for log_module in log_modules:
-		sflag = log_module.short_flag
-		lflag = log_module.long_flag
-		print sflag
+		lflag = "--%s"%(log_module.module_name)
+		print lflag
 
-		parser.add_option(sflag, lflag, action="store_true", help=log_module.module_description, default=False)
+		parser.add_option("", lflag, action="store_true", help=log_module.module_description, default=False)
 
 parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin module to use.", default=False)
 
 (options, args) = parser.parse_args()
 
 
-	
 if options.pastebin:
 	submit_module = submit_modules[options.pastebin]
 	
 else:
-	submit_module = submit_modules[functions.get_conf_item("main", "main", "default_module")]
+	submit_module = submit_modules[config.log_module_default]
 	
 	
 log_dict = {}
