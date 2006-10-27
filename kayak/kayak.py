@@ -251,9 +251,9 @@ if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
 	
-	log_loader = logmoduleloader.LogModuleLoader(["../upstream-base/log-modules"], True, 1)
+	log_loader = logmoduleloader.LogModuleLoader(["log-modules"], True, 1)
 
-	submit_loader = submitmoduleloader.SubmitModuleLoader(["../upstream-base/submit-modules"], True, 1)
+	submit_loader = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, 1)
 	
 	main(sys.argv)
 
