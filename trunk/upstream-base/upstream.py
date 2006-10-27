@@ -25,9 +25,9 @@ import config
 #functions.set_modules_dir("submit-modules/")
 
 # Hoorah! for ridiculous namespacings :-)
-log_modules = logmoduleloader.LogModuleLoader(config.log_module_path, False, logmoduleloader.moduleloader.DEBUG_ALL)
+log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
 
-submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path, True, submitmoduleloader.moduleloader.DEBUG_ALL)
+submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
