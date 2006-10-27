@@ -48,11 +48,11 @@ class ModuleLoaderInitException(Exception):
 		return "raised ModuleLoaderInitException(" + self.err_type + ")"
 	def __str__(self):
 		if self.err_type == MLOAD_NOT_LIST:
-			return "Error: Module path list was not a list"
+			return "Error: Package list was not a list"
 		elif self.err_type == MLOAD_EMPTY_LIST:
-			return "Error: Module path list was empty"
+			return "Error: Package list was empty"
 		elif self.err_type == MLOAD_HAS_NONSTR:
-			return "Error: Module path list contained non-string paths"
+			return "Error: Package list contained non-strings"
 		else:
 			return "Error: unknown?"
 			
@@ -93,11 +93,11 @@ class ModuleLoader(threading.Thread):
 	validation_status = -1
 	# New classes should override the ModuleWrapper item
 	ModuleWrapper = LoadedModule
-	def __init__(self, path_list, fault_tolerance=True, debug_output=DEBUG_NONE, use_threading = False):
+	def __init__(self, pack_list, fault_tolerance=True, debug_output=DEBUG_NONE, use_threading = False):
 		# Chain up
 		threading.Thread.__init__(self)
 		self.threaded = use_threading
-		self.path_list = path_list
+		self.pack_list = pack_list
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
 		self.valid_modules = []
@@ -107,7 +107,7 @@ class ModuleLoader(threading.Thread):
 			self.execute_load()
 	
 	def __repr__(self):
-		return "ModuleLoader(" + str(self.path_list) + ", " + str(self.fault_tolerance) + ", " + str(self.debug_output) + ")"
+		return "ModuleLoader(" + str(self.pack_list) + ", " + str(self.fault_tolerance) + ", " + str(self.debug_output) + ")"
 	
 	def __getitem__(self, modid):
 		if type(modid) is not str and type(modid) is not int:
@@ -154,38 +154,41 @@ class ModuleLoader(threading.Thread):
 	def execute_load(self):
 		# Perform validation to ensure that we didn't end up invalid
 		# parameters
-		if type(self.path_list) is not list:
+		if type(self.pack_list) is not list:
 			raise ModuleLoaderInitException(MLOAD_NOT_LIST)
 			
 		# Only perform an actual import if we have a non-zero list
-		if len(self.path_list) is not 0:
-			# Perform validation of the content of the path_list					
-			for p in self.path_list:
+		if len(self.pack_list) is not 0:
+			# Perform validation of the content of the pack_list					
+			for p in self.pack_list:
 				if type(p) is not str:
 				# Prune from list if not a string
 					if self.fault_tolerance:
-						self.path_list.remove(p)
+						self.pack_list.remove(p)
 					else:
 						raise ModuleLoaderInitException(MLOAD_HAS_NONSTR)
 					
 			# Find all modules
-			for path_name in self.path_list:
-				if path_name not in sys.path:
-					sys.path.append(path_name)
+			loaded_modules = []
+			for package_name in self.pack_list:
+				imp_pack = __import__(package_name)
+				for plugin_name in imp_pack.__all__:
+					__import__(package_name + "." + plugin_name)
+					loaded_modules.append(getattr(imp_pack, plugin_name))
 					
-				candidate_modules = []
-				candidate_modules = candidate_modules + self.scan_directory(path_name)
+				#candidate_modules = []
+				#candidate_modules = candidate_modules + self.scan_directory(path_name)
 
 			# Load modules
-			self.load_status = 0.0
-			loaded_modules = []
-			counter = 0
-			for mod in candidate_modules:
-				tmp_module = self.load_module(mod)
-				if tmp_module:
-					loaded_modules.append(tmp_module)
-				counter = counter + 1
-				self.load_status = (counter + 0.0)/len(candidate_modules) 
+			#self.load_status = 0.0
+			#loaded_modules = []
+			#counter = 0
+			#for mod in candidate_modules:
+			#	tmp_module = self.load_module(mod)
+			#	if tmp_module:
+			#		loaded_modules.append(tmp_module)
+			#	counter = counter + 1
+			#	self.load_status = (counter + 0.0)/len(candidate_modules) 
 
 			# Validate modules
 			self.validation_status = 0.0
