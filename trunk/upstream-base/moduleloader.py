@@ -89,7 +89,7 @@ class ModuleLoader(threading.Thread):
 	# Subclasses may override this to provide for different required attributes
 	necessary_attributes = ["module_name", "module_description"]
 	necessary_attr_types = [str, str]
-	load_status = -1
+	load_stats = -1
 	validation_status = -1
 	# New classes should override the ModuleWrapper item
 	ModuleWrapper = LoadedModule
@@ -168,7 +168,7 @@ class ModuleLoader(threading.Thread):
 					else:
 						raise ModuleLoaderInitException(MLOAD_HAS_NONSTR)
 					
-			# Find all modules
+			# Find all packages and import their modules
 			loaded_modules = []
 			for package_name in self.pack_list:
 				imp_pack = __import__(package_name)
