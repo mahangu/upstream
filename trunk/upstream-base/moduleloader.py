@@ -171,6 +171,8 @@ class ModuleLoader(threading.Thread):
 			# Find all packages and import their modules
 			loaded_modules = []
 			for package_name in self.pack_list:
+				if self.debug_output >= DEBUG_ALL:
+					print "Importing %s" % package_name
 				imp_pack = __import__(package_name)
 				for plugin_name in imp_pack.__all__:
 					__import__(package_name + "." + plugin_name)
