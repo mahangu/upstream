@@ -23,7 +23,8 @@
 # TODO: use defaults in conf file
 
 import sys
-import config
+# Deprecated
+#import config
 import logmoduleloader, submitmoduleloader
 from getpass import getuser
 
@@ -69,7 +70,8 @@ class CanoeGTK:
 		vbox = self.wTree.get_widget("vbox_problems")
 		if self.log_modules.threaded:
 			self.log_modules.join()
-		cat_dict = dict([(cat, gtk.CheckButton(cat, False)) for cat in self.log_modules.getCategories()])
+		categories = self.log_modules.getCategories()
+		cat_dict = dict([(cat, gtk.CheckButton(cat, False)) for cat in categories])
 		for cat in cat_dict:
 			vbox.pack_start(cat_dict[cat])
 		vbox.show_all()
@@ -138,7 +140,7 @@ class CanoeGTK:
 			support_logs = self.get_support_logs()
 			support_msg = self.get_support_msg()
 			module = self.get_module()
-			print email, support_logs, support_msg, module  # debug print 
+			#print email, support_logs, support_msg, module  # debug print 
 			# TODO: We need to update this to use threading and asyncsubmit like canoe.py
 			module.execute(email, support_msg, support_logs)
 			# TODO: We are exiting for now but we should give the user some confirmation beforehand
@@ -169,8 +171,6 @@ class CanoeGTK:
 					module = log_modules[mod.module_name]
 					(name, contents) = module.execute()
 					log_dict[name] = contents 
-		# See comment in canoe.py about returning None
-		# TODO: Currently, returning None causes an error :)
 		return log_dict 
 
 	def get_support_msg(self):
@@ -193,8 +193,8 @@ class CanoeGTK:
 
 if __name__ == "__main__":
 	# Initialize
-	log_modules = logmoduleloader.LogModuleLoader(config.log_module_path, False, submitmoduleloader.moduleloader.DEBUG_ALL, True)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(config.submit_module_path, False, logmoduleloader.moduleloader.DEBUG_ALL, True)
+	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, submitmoduleloader.moduleloader.DEBUG_ALL, True)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL, True)
 
 	# Load the GUI
 	canoe = CanoeGTK(log_modules, submit_modules)
