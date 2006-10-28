@@ -18,10 +18,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Required by Generic Module
-module_name = "video"
-module_description = "Read the log that contains information about the Graphics Server"
+module_name = "xorgConf"
+module_description = "Read the Xorg configuration file"
 # Required by Log Module
-log_path = "/var/log/Xorg.0.log"
+log_path = "/etc/X11/xorg.conf"
 category = "video"
 
 def execute():
@@ -30,15 +30,6 @@ def execute():
 	except IOError:
 		return module_name, "Could not open this log file!"
 	else:
-		#content = fp.readlines()
-		#singlecontent = ""
-		#for line in content:
-		#	print line
-		#	print singlecontent
-		#	singlecontent = singlecontent + line
-		#return module_name, singlecontent
-	
-		# Is this ok instead?
 		content = fp.read()
 		fp.close()
 		return module_name, content
