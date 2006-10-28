@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Upstream - log file aggregator and report tool for *nix systems.
+# Copyright (C) 2006  Ryan Zeigler (zeiglerr@gmail.com)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,21 +17,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
-
 # Required by Generic Module
-module_name = "lspci"
-module_description = "Get lspci output"
+module_name = "xorgLog"
+module_description = "Read the log that contains information about the Graphics Server"
 # Required by Log Module
-log_path = "/usr/bin/lspci"
+log_path = "/var/log/Xorg.0.log"
 category = "video"
 
-# What happens if log_path does not exist or user does not have proper permissions?
 def execute():
-	if os.access(log_path, os.X_OK):
-		p = os.popen(log_path, "r")
+	try:
+		fp = open(log_path, "r")
+	except IOError:
+		return module_name, "Could not open this log file!"
 	else:
-		return module_name, "Could not successfully execute %s!" % (log_path)
-	content = p.read()
-	p.close()
-	return module_name, content
+		content = fp.read()
+		fp.close()
+		return module_name, content
