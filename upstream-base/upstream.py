@@ -51,14 +51,16 @@ if options.pastebin:
 else:
 	submit_module = submit_modules[log_module_default]
 	
-#if options.log:
-	
-	
+
 log_dict = {}
+
+optnumber = 0	
+
 for x in options.__dict__.iteritems():
 	option = x[0]
 	on = x[1]
-
+	
+	
 	# Is there a nicer way to do this?
 	if on and option != "pastebin" and option != "log":
 		
@@ -71,14 +73,23 @@ for x in options.__dict__.iteritems():
 			(name, contents) = module.execute()
 			log_dict[name] = contents 
 	
+		optnumber = optnumber + 1
+	
 	elif options.log:
 		module = log_modules[options.log]
 		(name, contents) = module.execute()
 		log_dict[name] = contents 
 	
+		optnumber = optnumber + 1
+		options.log = False
 
 # Check to see if all mandatory arguments have been filled.
 
+print "%s log file(s) have been read."%(optnumber)
+
+if optnumber < 1:
+	print "Please specify a log option. You haven't asked me to send anything. See help (-h) for more information."
+	sys.exit(1)
 
 if len(args) != 2:
 	print "Please specify the required options. See help (-h) for more information."
