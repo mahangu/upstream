@@ -21,10 +21,9 @@ import sys, optparse, os, ConfigParser
 import logmoduleloader, submitmoduleloader
 
 import config
-# Deprecated?
-#functions.set_modules_dir("submit-modules/")
 
-# Hoorah! for ridiculous namespacings :-)
+log_module_default = "red" #hack, until we get /etc/upstream/*.conf in place
+
 log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
 
 submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
@@ -50,7 +49,7 @@ if options.pastebin:
 	submit_module = submit_modules[options.pastebin]
 	
 else:
-	submit_module = submit_modules[config.log_module_default]
+	submit_module = submit_modules[log_module_default]
 	
 #if options.log:
 	
