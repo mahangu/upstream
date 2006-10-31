@@ -20,8 +20,6 @@
 import sys, optparse, os, ConfigParser
 import logmoduleloader, submitmoduleloader
 
-import config
-
 log_module_default = "red" #hack, until we get /etc/upstream/*.conf in place
 
 log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
