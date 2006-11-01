@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
 from qt import *
+
 import sys, time, threading, string, ConfigParser, re
 
 import asyncsubmit, submitmoduleloader, logmoduleloader
@@ -194,7 +195,21 @@ class UpstreamWizard(QWizard):
 			
 	def submitDone(self):
 		if self.result and self.result.bool_success:
-			QMessageBox.information(self, "Kayak", "Submission completed successfull and is located at <br />" + self.result.result_url)
+			
+			qanswer = QMessageBox.information(None,
+			self.trUtf8("Kayak"),
+			self.trUtf8("Submission completed successfull and is located at <br />%s. This URL has been sent to your clipboard for your convenience."%(self.result.result_url)),
+			self.trUtf8("OK"),
+			)
+			
+			clip = QApplication.clipboard()
+			clip.Mode(0)
+        		clip.setText(self.result.result_url)
+			print QApplication.clipboard().text() #For some reason, this prints out fine, but it won't copy to clipboard.
+			#Ryan can you test this out on KDE please?
+			
+		
+			
 		else:
 			QMessageBox.information(self, "Kayak", "Submission failed :-(")
 		self.done(0)
