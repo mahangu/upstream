@@ -23,7 +23,7 @@
 from qt import *
 import sys, time, threading, string, ConfigParser, re
 
-import functions, asyncsubmit, submitmoduleloader, logmoduleloader
+import asyncsubmit, submitmoduleloader, logmoduleloader
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
