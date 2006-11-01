@@ -23,8 +23,14 @@
 # TODO: use defaults in conf file
 
 import sys
-# Deprecated
-#import config
+
+import ConfigParser, os
+
+config = ConfigParser.ConfigParser()
+config.readfp(open('/etc/upstream/canoe.conf'))
+gladepath = config.get("main", "gladepath")
+
+
 import logmoduleloader, submitmoduleloader
 from getpass import getuser
 
@@ -47,7 +53,7 @@ class CanoeGTK:
 		self.submit_modules = submit_modules
 
 		# Set the Glade file
-		self.gladefile = "canoe.glade"  
+		self.gladefile = gladepath  
 		self.wTree = gtk.glade.XML(self.gladefile) 
 
 		self.cat_dict = self.__gui_add_logs()
