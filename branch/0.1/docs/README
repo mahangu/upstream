@@ -1,0 +1,15 @@
+Upstream Log Transfer System
+----------------------------
+Release : 0.1.0 (Chaucher) - ALPHA RELEASE
+Date    : 31st October 2006
+
+Web     : http://upstreamdev.org
+SVN     : https://svn.sf.net/svnroot/upstream/
+
+Upstream is a collection of tools that allow users to send in system specific log and troubleshooting data to support personnel. It can be easily modified to output data to any pastebin or support tracker.
+
+This Alpha Release release is named after the 13th century English poet, Geoffrey Chaucer (c. 1343 - 1500). Like Chaucer's verse, this release of Upstream is raw and unrefined, and yet contains the base that future versions will build on. Like consequent poets and playwrights built upon the work of Chaucer, the next releases of Upstream will consolidate on the code that ships with this alpha.
+
+"Ther n’ is no werkman whatever he be,
+That may both werken wel and hastily."
+- Canterbury Tales, The Merchant's Tale, Line 585.
