@@ -23,7 +23,7 @@
 from qt import *
 import sys, time, threading, string, ConfigParser, re
 
-import functions, asyncsubmit, submitmoduleloader, logmoduleloader
+import asyncsubmit, submitmoduleloader, logmoduleloader
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
@@ -78,7 +78,7 @@ class EmailPage(WizardPage):
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
 
-		self.label = QLabel("Please enter your e-mail address", formBox)
+		self.label = QLabel("Please enter a nickname:", formBox)
 		self.emailText = QLineEdit(formBox)
 
 		self.connect(self.emailText, SIGNAL("textChanged(const QString&)"), wizard.setEmail)

@@ -19,7 +19,6 @@
 # A class to handle running of requests
 
 import threading
-import functions
 import submitmoduleloader
 
 # This entire module is now deprecated.  Use the thread functions within
