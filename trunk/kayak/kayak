@@ -23,6 +23,7 @@
 from qt import *
 
 import sys, time, threading, string, ConfigParser, re
+from getpass import getuser
 
 import asyncsubmit, submitmoduleloader, logmoduleloader
 
@@ -80,7 +81,9 @@ class EmailPage(WizardPage):
 		formBox.setSpacing(12)
 
 		self.label = QLabel("Please enter your nickname", formBox)
-		self.emailText = QLineEdit(formBox)
+		nickname = getuser()
+		self.emailText = QLineEdit(nickname, formBox)
+		wizard.setEmail(nickname)
 
 		self.connect(self.emailText, SIGNAL("textChanged(const QString&)"), wizard.setEmail)
 
