@@ -74,12 +74,12 @@ class IntroPage(WizardPage):
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "E-mail")
+		WizardPage.__init__(self, wizard, "Nickname")
 
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
 
-		self.label = QLabel("Please enter your e-mail address", formBox)
+		self.label = QLabel("Please enter your nickname", formBox)
 		self.emailText = QLineEdit(formBox)
 
 		self.connect(self.emailText, SIGNAL("textChanged(const QString&)"), wizard.setEmail)
