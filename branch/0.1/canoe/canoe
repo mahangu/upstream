@@ -151,9 +151,9 @@ class CanoeGTK:
 			result = module.execute(email, support_msg, support_logs)
 			
 			# Copy the result to the clipboard
+			# TODO: we should warn the user :)
 			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
-			print result.result_url
-			clipboard.set_text(result.url)
+			clipboard.set_text(result.result_url)
 			clipboard.store()
 
 			# TODO: We are exiting for now but we should give the user some confirmation beforehand
