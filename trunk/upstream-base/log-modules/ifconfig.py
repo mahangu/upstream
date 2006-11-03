@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
 # Upstream - log file aggregator and report tool for *nix systems.
-# Copyright (C) 2006  Ryan Zeigler (zeiglerr@gmail.com)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,19 +16,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import os
+
 # Required by Generic Module
-module_name = "network"
-module_description = "Read the log that contains network information"
+module_name = "ifconfig"
+module_description = "Get ifconfig output"
 # Required by Log Module
-log_path = "/var/log/daemon.log"
+log_path = "/sbin/ifconfig"
 category = "network"
 
+# What happens if log_path does not exist or user does not have proper permissions?
 def execute():
-	try:
-		fp = open(log_path, "r")
-	except IOError:
-		return module_name, "Could not open this log file!"
+	if os.access(log_path, os.X_OK):
+		p = os.popen(log_path, "r")
 	else:
-		content = fp.read()
-		fp.close()
-		return module_name, content
+		return module_name, "Could not successfully execute %s!" % (log_path)
+	content = p.read()
+	p.close()
+	return module_name, content
