@@ -73,7 +73,7 @@ class IntroPage(WizardPage):
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "E-mail")
+		WizardPage.__init__(self, wizard, "Nickname")
 
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
