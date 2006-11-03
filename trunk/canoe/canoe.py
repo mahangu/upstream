@@ -147,8 +147,15 @@ class CanoeGTK:
 			support_msg = self.get_support_msg()
 			module = self.get_module()
 			#print email, support_logs, support_msg, module  # debug print 
-			# TODO: We need to update this to use threading and asyncsubmit like canoe.py
-			module.execute(email, support_msg, support_logs)
+			# TODO: We need to update this to use threading
+			result = module.execute(email, support_msg, support_logs)
+			
+			# Copy the result to the clipboard
+			# TODO: we should warn the user :)
+			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
+			clipboard.set_text(result.result_url)
+			clipboard.store()
+
 			# TODO: We are exiting for now but we should give the user some confirmation beforehand
 			sys.exit(0)
 
