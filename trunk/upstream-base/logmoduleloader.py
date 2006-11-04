@@ -95,24 +95,37 @@ class LogGrouper(threading.Thread):
 				self.parent.group_lock.acquire()
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
+				self.parent.group_lock.release()
+				
 				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 					print "Grouping: %s with category %s" % (mod, mod.category)
+					
 				if not mod.category in self.parent.module_groupings:
 					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 						print "Group %s not found, adding" % mod.category
+						
+					self.parent.dict_lock.acquire()
 					self.parent.module_groupings[mod.category] = [mod]
+					self.parent.dict_lock.release()
+					
 				else:
 					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 						print "Group %s found, appending" % mod.category
+						
+					self.parent.dict_lock.acquire()
 					self.parent.module_groupings[mod.category].append(mod)
-				self.parent.group_lock.release()
+					self.parent.dict_lock.release()
+				
 			else :
 				time.sleep(0.01)
+				
 			if self.debug_output >= moduleloader.DEBUG_ALL:
 				print "Module groupings"
 				for m in self.parent.module_groupings:
 					print self.parent.module_groupings[m]
+					
 		self.parent.group_pool.remove(self)
+		
 		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 			print "Group pool: %s" % self.parent.group_pool
 							
@@ -124,6 +137,7 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
 		self.module_groupings = dict()
 		self.group_lock = threading.Lock()
+		self.dict_lock = threading.Lock()
 		self.group_status = 0
 		self.group_pool = []
 		for x in range(0, moduleloader.THREAD_POOL_MAX):

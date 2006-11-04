@@ -18,12 +18,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
+# TODO replace all calls of len(threadpool_name) with a semaphore
 
 import glob, imp, sys, os, threading, time
 
-#  This module was built with the goal of maximum fault tolerance for
-#  any imported modules.  If there is a discovered case in which
-#  fault tolerance
+
 
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
@@ -274,7 +273,9 @@ class ModuleLoader:
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work
 	def join(self):
-		while len(self.package_importer_pool) and len(self.module_validator_pool) > 0:
+		if self.debug_output >= DEBUG_ALL:
+			print "Joining threads spawned from: %s " % self
+		while len(self.package_importer_pool) or len(self.module_validator_pool) > 0:
 			time.sleep(0.01)
 			if self.debug_output >= 1:
 				print "Idling in join"
