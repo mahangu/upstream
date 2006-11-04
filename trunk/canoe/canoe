@@ -45,6 +45,33 @@ try:
 except:
 	sys.exit(1)
 
+def popup_action(dialog, response_id, url):
+	print response_id
+	# There must be some convention for these response_id's ...
+	if response_id == 6094:
+		# Copy the result to the clipboard
+		clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
+		clipboard.set_text(url)
+		clipboard.store()
+	else:
+		sys.exit(0) # eww
+	
+class PopUp(gtk.Dialog):
+	"""Return the resulting url to the user"""
+	# This is all temporary until we can impliment a proper status bar
+
+	def __init__(self, url):
+
+		gtk.Dialog.__init__(self, "Success", None, gtk.DIALOG_MODAL, (gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE))
+		label = gtk.Label("Your logs can be found at:")
+		self.vbox.pack_start(label, False, False, 5)
+		url_show = gtk.Entry()
+		url_show.set_text(url)
+		url_show.set_editable(False)
+		self.vbox.pack_start(url_show, True, False, 5)
+		
+		self.show_all()
+
 class CanoeGTK:
 	"""This is the canoe frontend for Upstream"""
 
@@ -142,22 +169,19 @@ class CanoeGTK:
 
 		# Run the submit code if we are on the last page
 		if nb.get_current_page() is nb.get_n_pages()-1:
-			nickname = self.get_email()
+			nickname = self.get_nickname()
 			support_logs = self.get_support_logs()
 			support_msg = self.get_support_msg()
 			module = self.get_module()
 			#print nickname, support_logs, support_msg, module  # debug print 
+
 			# TODO: We need to update this to use threading
 			result = module.execute(nickname, support_msg, support_logs)
-			
-			# Copy the result to the clipboard
-			# TODO: we should warn the user :)
-			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
-			clipboard.set_text(result.result_url)
-			clipboard.store()
+			popup = PopUp(result.result_url)
+			popup.connect("response", popup_action, result.result_url)
 
 			# TODO: We are exiting for now but we should give the user some confirmation beforehand
-			sys.exit(0)
+			#sys.exit(0)
 
 		# Go to the next page if we aren't on the last page
 		else:
