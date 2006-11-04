@@ -60,7 +60,7 @@ class CanoeGTK:
 		self.submits_combobox = self.__gui_add_submits()
 
 		# Set the username as the default nickname
-		self.wTree.get_widget("entry_email").set_text(getuser())
+		self.wTree.get_widget("entry_nickname").set_text(getuser())
 
 		# Create our dictionay and connect it
 		dic = { "on_btnNext_clicked" : self.btnNext_clicked,
@@ -142,13 +142,13 @@ class CanoeGTK:
 
 		# Run the submit code if we are on the last page
 		if nb.get_current_page() is nb.get_n_pages()-1:
-			email = self.get_email()
+			nickname = self.get_email()
 			support_logs = self.get_support_logs()
 			support_msg = self.get_support_msg()
 			module = self.get_module()
-			#print email, support_logs, support_msg, module  # debug print 
+			#print nickname, support_logs, support_msg, module  # debug print 
 			# TODO: We need to update this to use threading
-			result = module.execute(email, support_msg, support_logs)
+			result = module.execute(nickname, support_msg, support_logs)
 			
 			# Copy the result to the clipboard
 			# TODO: we should warn the user :)
@@ -164,6 +164,7 @@ class CanoeGTK:
 			# Make the "back" button active if we are coming from the first page
 			if nb.get_current_page() is 0:
 				back.set_sensitive(True)
+				self.wTree.get_widget("entry_nickname").grab_focus()
 
 			# Change the "next" button to a "finish" button if we are going to the last page
 			if nb.get_current_page() is nb.get_n_pages()-2:
@@ -173,8 +174,8 @@ class CanoeGTK:
 
 
 	# Helper functions
-	def get_email(self):
-		return self.wTree.get_widget("entry_email").get_text()
+	def get_nickname(self):
+		return self.wTree.get_widget("entry_nickname").get_text()
 
 	def get_support_logs(self):
 		log_dict = {}
