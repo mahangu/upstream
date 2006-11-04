@@ -95,8 +95,6 @@ class LogGrouper(threading.Thread):
 				self.parent.group_lock.acquire()
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
-				self.parent.group_lock.release()
-				
 				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 					print "Grouping: %s with category %s" % (mod, mod.category)
 				if not mod.category in self.parent.module_groupings:
@@ -107,10 +105,13 @@ class LogGrouper(threading.Thread):
 					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 						print "Group %s found, appending" % mod.category
 					self.parent.module_groupings[mod.category].append(mod)
+				self.parent.group_lock.release()
 			else :
 				time.sleep(0.01)
 			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Module groupings: " % self.parent.module_groupings
+				print "Module groupings"
+				for m in self.parent.module_groupings:
+					print self.parent.module_groupings[m]
 		self.parent.group_pool.remove(self)
 		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 			print "Group pool: %s" % self.parent.group_pool
@@ -118,13 +119,13 @@ class LogGrouper(threading.Thread):
 
 class LogModuleLoader(moduleloader.ModuleLoader):
 	ValidatorClass = LogValidator
-	module_groupings = dict()
-	group_lock = threading.Lock()
-	group_status = 0
-	group_pool = []
+	
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
-		
+		self.module_groupings = dict()
+		self.group_lock = threading.Lock()
+		self.group_status = 0
+		self.group_pool = []
 		for x in range(0, moduleloader.THREAD_POOL_MAX):
 			log_thread = LogGrouper(self, self.debug_output)
 			self.group_pool.append(log_thread)
@@ -132,9 +133,6 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	
 		
 	def getModulesInCategory(self, cat):
-		if self.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module groupings"
-			print self.module_groupings
 		if self.module_groupings:
 			return self.module_groupings[cat]
 		else:

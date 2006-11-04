@@ -196,19 +196,7 @@ class GenericValidator(threading.Thread):
 		return hasattr(module, name) and hasattr(module.__dict__[name], "func_code") and module.__dict__[name].func_code.co_argcount is num_args
 
 # ModuleLoader is largely a container that provides methods
-class ModuleLoader:
-		
-	load_queue = []
-	valid_modules = []
-	
-	found_lock = threading.Lock()
-	loaded_lock = threading.Lock()
-	total_found_mod = 0
-	total_loaded_mod = 0
-	
-	package_importer_pool = []
-	module_validator_pool = []
-	
+class ModuleLoader:	
 	# New classes should override the ModuleWrapper item
 	ValidatorClass = GenericValidator
 	ModuleWrapper = LoadedModule
@@ -217,6 +205,16 @@ class ModuleLoader:
 		self.pack_list = pack_list
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
+		# Intense weirdness seems to happen if this is static initialized
+		self.package_importer_pool = []
+		self.module_validator_pool = []
+		self.load_queue = []
+		self.valid_modules = []
+		self.found_lock = threading.Lock()
+		self.loaded_lock = threading.Lock()
+		self.total_found_mod = 0
+		self.total_loaded_mod = 0
+		
 		# Initialize the loaders	
 		for pack in self.pack_list:
 			pack_thread = PackageImporter(self, pack, self.fault_tolerance, self.debug_output)
