@@ -25,7 +25,8 @@ from qt import *
 import sys, time, threading, string, ConfigParser, re
 from getpass import getuser
 
-import asyncsubmit, submitmoduleloader, logmoduleloader
+import  submitmoduleloader, logmoduleloader
+# import asyncsubmit
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
@@ -94,8 +95,8 @@ class SupportPage(WizardPage):
 		self.group = QVGroupBox("Please select categories this problem affects", self.child)
 		self.types = { }
 
-		if log_loader.threaded:
-			log_loader.join()
+		
+		log_loader.join()
 		for x in log_loader:
 			typeBox = QCheckBox(x.module_name, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
@@ -129,8 +130,8 @@ class SubmitPage(WizardPage):
 
 		self.label = QLabel("Please select the server to submit troubleshooting data to.", self.child)
 		self.serverBox = QComboBox(False, self.child)
-		if submit_loader.threaded:
-			submit_loader.join()
+		
+		submit_loader.join()
 		self.servers = [mod for mod in submit_loader]
 		for server in self.servers:
 			self.serverBox.insertItem(server.module_name)
@@ -239,14 +240,16 @@ class UpstreamWizard(QWizard):
 		self.setCaption("Kayak - Submitting Report")
 		self.setEnabled(False)
 
-		request = self.makeRequest()
 
-		if request:
-			request.start()
-		else:
-			QMessageBox.critical(self, "Kayak",
-			    "Unable to submit report (unable to create the request)")
-			QWizard.accept(self)
+		self.module.executeThreaded(self.email, self.message, self.categoryLogs(), threadCompleteHandler, None)
+		#request = self.makeRequest()
+
+		#if request:
+		#	request.start()
+		#else:
+		#	QMessageBox.critical(self, "Kayak",
+		#	    "Unable to submit report (unable to create the request)")
+		#	QWizard.accept(self)
 
 def main(args):
 	app = QApplication(args)
