@@ -111,19 +111,19 @@ class SubmitModule(moduleloader.LoadedModule):
 	def getResult(self):
 		return self.result
 		
-				
-class SubmitModuleLoader(moduleloader.ModuleLoader):
-	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["module_submit_url"]
-	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str]
+class SubmitValidator(moduleloader.GenericValidator):
+	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]
+	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str]
 	ModuleWrapper = SubmitModule
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
-		
+	def __init__(self, parent, fault_tolerance, debug_output):
+		moduleloader.GenericValidator.__init__(self, parent, fault_tolerance, debug_output)
+	
 	def validate_additional(self, module):
 		valid_hook = self.validate_execution_hook(module, "execute", 3)
 		return valid_hook
-		
-		
-
-
-	
+			
+class SubmitModuleLoader(moduleloader.ModuleLoader):
+	ValidatorClass = SubmitValidator
+	ModuleWrapper = SubmitModule
+	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
+		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)	
