@@ -200,15 +200,10 @@ class UpstreamWizard(QWizard):
 	def submitDone(self):
 		if self.result and self.result.bool_success:
 			
-			qanswer = QMessageBox.information(None,
-			self.trUtf8("Kayak"),
-			self.trUtf8("Submission completed successfull and is located at <br />%s. This URL has been sent to your clipboard for your convenience."%(self.result.result_url)),
-			self.trUtf8("OK"),
-			)
+			infobox = CompleteDialog(self, self.result.bool_success, self.result.result_url)
+			infobox.setModal(True)
+			infobox.show()			
 			
-			clip = QApplication.clipboard()
-			clip.Mode(0)
-        		clip.setText(self.result.result_url)
 			print QApplication.clipboard().text() #For some reason, this prints out fine, but it won't copy to clipboard.
 			#Ryan can you test this out on KDE please?
 			
@@ -250,7 +245,34 @@ class UpstreamWizard(QWizard):
 		#	QMessageBox.critical(self, "Kayak",
 		#	    "Unable to submit report (unable to create the request)")
 		#	QWizard.accept(self)
-
+		
+class CompleteDialog(QDialog):
+	def __init__(self, parent, success, url):
+		QDialog.__init__(self, parent) 
+		self.layout = QVBoxLayout(self, 0, 10)
+		self.b_layout = QHBoxLayout(self.layout)
+		
+		self.url = url
+	
+		self.label = QLabel("Success! Your submission is located at " + self.url, self)
+		self.c_button = QPushButton	("Copy url", self)
+		self.button = QPushButton("Finish", self)
+		self.layout.addWidget(self.label)
+		self.b_layout.addWidget(self.c_button)
+		self.b_layout.addStretch(1)
+		self.b_layout.addWidget(self.button)
+		QObject.connect(self.button, SIGNAL("clicked()"), self.end)
+		QObject.connect(self.c_button, SIGNAL("clicked()"), self.clip)	
+		
+			
+	def end(self):
+		print "Done"
+		self.done(1)
+		
+	def clip(self):
+		clip = QApplication.clipboard()
+		clip.setText(self.url)
+		
 def main(args):
 	app = QApplication(args)
 	wizard = UpstreamWizard()
