@@ -9,7 +9,7 @@ print lml.getCategories()
 for c in lml.getCategories():
 	print lml.getModulesInCategory(c)
 print "***********************************************"
-sml = SubmitModuleLoader(["submit-modules"], True, 0)
+sml = SubmitModuleLoader(["submit-modules"], True, 1)
 sml.join()
 for m in sml:
 	print m

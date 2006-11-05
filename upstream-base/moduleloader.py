@@ -88,7 +88,7 @@ class PackageImporter(threading.Thread):
 		
 	def run(self):
 		if self.debug_output >= DEBUG_ALL:
-			print "Beginning threaded ModuleImporter on package %s" % self.package
+			print "Beginning threaded importer on package %s" % self.package
 		imp_pack = __import__(self.package)
 		for plugin_name in imp_pack.__all__:
 			# This imports the module into imp_pack
@@ -107,11 +107,12 @@ class PackageImporter(threading.Thread):
 			self.parent.found_lock.release()
 			
 		# When done pop ourselves off the stack
+		self.parent.valid_lock.acquire()
+		self.parent.pack_running = self.parent.pack_running - 1
+		self.parent.valid_lock.release()
 		
-		self.parent.package_importer_pool.remove(self)
 		if self.debug_output >= DEBUG_ALL:
 			print "Ending threading importer on package %s" % self.package
-			print "Import pool: %s" % self.parent.package_importer_pool
 			
 # This is a worker class for validating modules. It idles and waits for a module
 class GenericValidator(threading.Thread):
@@ -127,13 +128,9 @@ class GenericValidator(threading.Thread):
 		
 	def run(self):
 		if self.debug_output >= DEBUG_ALL:
-			print "Beginning threaded Validator"
-		while len(self.parent.package_importer_pool) > 0 or len(self.parent.load_queue) > 0:
-			if self.debug_output >= DEBUG_ALL:
-				print "Package importer pool size: %d" % len(self.parent.package_importer_pool)
-				
+			print "Beginning threaded validator %s" % self
+		while self.parent.pack_running > 0 or len(self.parent.load_queue) > 0:
 			if len(self.parent.load_queue) > 0:
-				
 				# Get a module and validate it
 				module = self.parent.load_queue.pop(0)
 				if self.debug_output >= 1:
@@ -146,11 +143,13 @@ class GenericValidator(threading.Thread):
 					self.parent.loaded_lock.release()
 			else:
 				time.sleep(0.01)
+				
+		self.parent.valid_lock.acquire()
+		self.parent.valid_running = self.parent.valid_running - 1
+		self.parent.valid_lock.release()
 		
-		self.parent.module_validator_pool.remove(self)
 		if self.debug_output >= DEBUG_ALL:
-			print "Validator pool: %s" % self.parent.module_validator_pool
-			print "Ending threaded validator"
+			print "Ending threaded validator %s" % self
 								
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
@@ -205,8 +204,12 @@ class ModuleLoader:
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
 		# Intense weirdness seems to happen if this is static initialized
-		self.package_importer_pool = []
-		self.module_validator_pool = []
+		self.pack_running = 0
+		self.valid_running = 0
+		#These 2 locks are for locking prior to pool modifications
+		self.pack_lock = threading.Lock()
+		self.valid_lock = threading.Lock()
+		
 		self.load_queue = []
 		self.valid_modules = []
 		self.found_lock = threading.Lock()
@@ -217,12 +220,20 @@ class ModuleLoader:
 		# Initialize the loaders	
 		for pack in self.pack_list:
 			pack_thread = PackageImporter(self, pack, self.fault_tolerance, self.debug_output)
-			self.package_importer_pool.append(pack_thread)
+			
+			self.pack_lock.acquire()
+			self.pack_running = self.pack_running + 1
+			self.pack_lock.release()
+			
 			pack_thread.start()
 			
 		for x in range(0, THREAD_POOL_MAX):
 			validate_thread = self.ValidatorClass(self, self.fault_tolerance, self.debug_output)
-			self.module_validator_pool.append(validate_thread)
+			
+			self.valid_lock.acquire()
+			self.valid_running = self.valid_running + 1
+			self.valid_lock.release()
+			
 			validate_thread.start()
 			
 			
@@ -275,10 +286,11 @@ class ModuleLoader:
 	def join(self):
 		if self.debug_output >= DEBUG_ALL:
 			print "Joining threads spawned from: %s " % self
-		while len(self.package_importer_pool) or len(self.module_validator_pool) > 0:
+		while self.pack_running > 0 or self.valid_running > 0:
 			time.sleep(0.01)
 			if self.debug_output >= 1:
-				print "Idling in join"
+				print "Running package importers: %d " % self.pack_running
+				print "Runnign module validators: %d" % self.valid_running
 
 class ModuleLoaderIterator:
 	def __init__(self, parent):
