@@ -166,6 +166,7 @@ class UpstreamWizard(QWizard):
 		QWizard.__init__(self, parent)
 
 		self.email = ''
+		self.message = ''
 		self.module = None
 		self.categories = [ ]
 
