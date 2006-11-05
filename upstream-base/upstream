@@ -28,9 +28,11 @@ submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True,
 
 parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support message\" [options]")
 
+log_modules.join()
+
 categories = log_modules.getCategories()
 
-log_modules.join()
+
 for category in categories:
 		lflag = "--%s"%(category)
 		print lflag
