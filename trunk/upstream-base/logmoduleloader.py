@@ -87,15 +87,20 @@ class LogGrouper(threading.Thread):
 				
 	def run(self):
 		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module validator pool length: %d" % len(self.parent.module_validator_pool)
-			print "group_status: %d and total_loaded_mod: %d" % (self.parent.group_status, self.parent.total_loaded_mod)
-		while len(self.parent.module_validator_pool) > 0 or self.parent.group_status < self.parent.total_loaded_mod:
+			print "Module validator pool size: %d" % self.parent.valid_running
+			print "Starting grouper: %s" % self
+		
+		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
 			if self.parent.group_status < self.parent.total_loaded_mod:
 				# Aquire a lock and release it as quickly as possible
-				self.parent.group_lock.acquire()
+				self.parent.group_pool_lock.acquire()
+				print "*************************"
+				print self.parent.group_status
+				print self.parent.valid_modules
+				print "*************************"
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
-				self.parent.group_lock.release()
+				self.parent.group_pool_lock.release()
 				
 				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 					print "Grouping: %s with category %s" % (mod, mod.category)
@@ -123,12 +128,11 @@ class LogGrouper(threading.Thread):
 				print "Module groupings"
 				for m in self.parent.module_groupings:
 					print self.parent.module_groupings[m]
-					
-		self.parent.group_pool.remove(self)
-		
-		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-			print "Group pool: %s" % self.parent.group_pool
-							
+		if self.debug_output >= 1:		
+			print "Ending grouper: %s" % self
+		self.parent.group_pool_lock.acquire()		
+		self.parent.group_running = self.parent.group_running - 1
+		self.parent.group_pool_lock.release()
 
 class LogModuleLoader(moduleloader.ModuleLoader):
 	ValidatorClass = LogValidator
@@ -136,13 +140,17 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
 		self.module_groupings = dict()
-		self.group_lock = threading.Lock()
 		self.dict_lock = threading.Lock()
+		self.group_pool_lock = threading.Lock()
+		self.group_running = 0
 		self.group_status = 0
-		self.group_pool = []
+	
 		for x in range(0, moduleloader.THREAD_POOL_MAX):
 			log_thread = LogGrouper(self, self.debug_output)
-			self.group_pool.append(log_thread)
+			self.group_pool_lock.acquire()
+			self.group_running = self.group_running + 1
+			self.group_pool_lock.release()
+			
 			log_thread.start()
 	
 		
@@ -164,9 +172,9 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			
 	def join(self):
 		moduleloader.ModuleLoader.join(self)
-		while len(self.group_pool) > 0:
+		while self.group_running > 0:
 			time.sleep(0.01)
 			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Still idling in join"
-		
+				print "%d grouper threads remain" % self.group_running
+	
 	
