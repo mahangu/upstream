@@ -94,10 +94,6 @@ class LogGrouper(threading.Thread):
 			if self.parent.group_status < self.parent.total_loaded_mod:
 				# Aquire a lock and release it as quickly as possible
 				self.parent.group_pool_lock.acquire()
-				print "*************************"
-				print self.parent.group_status
-				print self.parent.valid_modules
-				print "*************************"
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
 				self.parent.group_pool_lock.release()

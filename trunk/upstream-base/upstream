@@ -30,6 +30,7 @@ parser = optparse.OptionParser("%prog yourname@yourdomain.org \"Your support mes
 
 categories = log_modules.getCategories()
 
+log_modules.join()
 for category in categories:
 		lflag = "--%s"%(category)
 		print lflag
@@ -42,7 +43,7 @@ parser.add_option("", "--log", dest="log", help="Choose a specific a log module 
 
 (options, args) = parser.parse_args()
 
-
+submit_modules.join()
 if options.pastebin:
 	submit_module = submit_modules[options.pastebin]
 	
