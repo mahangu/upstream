@@ -97,8 +97,8 @@ class SupportPage(WizardPage):
 
 		
 		log_loader.join()
-		for x in log_loader:
-			typeBox = QCheckBox(x.module_name, self.group)
+		for cat in log_loader.getCategories():
+			typeBox = QCheckBox(cat, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
 		self.label = QLabel("Please enter a description of the problem as well", self.child)
@@ -188,12 +188,11 @@ class UpstreamWizard(QWizard):
 		self.categories = categories
 
 	def categoryLogs(self):
-		logs = None
-		for x in self.categories:
-			name, contents = log_loader[x].execute()
-			if not logs:
-				logs = { name: contents }
-			else:
+		logs = {}
+		for cat in self.categories:
+			for mod in log_loader.getModulesInCategory(cat):
+				module = log_loader[mod.module_name]
+				name, contents = module.execute()
 				logs[name] = contents
 		return logs
 			
