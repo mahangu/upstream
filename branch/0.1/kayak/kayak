@@ -259,9 +259,8 @@ class CompleteDialog(QDialog):
 		self.b_layout = QHBoxLayout(self.layout)
 		self.c_button = QPushButton	("Copy url", self)
 		self.button = QPushButton("Done", self)
-		
-		self.b_layout.addWidget(self.c_button)
 		self.b_layout.addStretch(1)
+		self.b_layout.addWidget(self.c_button)
 		self.b_layout.addWidget(self.button)
 		QObject.connect(self.button, SIGNAL("clicked()"), self.end)
 		QObject.connect(self.c_button, SIGNAL("clicked()"), self.clip)	
@@ -274,6 +273,7 @@ class CompleteDialog(QDialog):
 	def clip(self):
 		clip = QApplication.clipboard()
 		clip.setText(self.url)
+		
 		
 def main(args):
 	app = QApplication(args)
