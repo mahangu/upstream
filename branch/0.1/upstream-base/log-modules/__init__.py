@@ -1,1 +1,1 @@
-__all__=["lspci", "network", "pci", "sourcelist", "xorgConf", "xorgLog"]
+__all__=["lspci", "ifconfig", "daemon", "pci", "sourcelist", "xorgConf", "xorgLog"]
