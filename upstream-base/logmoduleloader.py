@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import moduleloader, sys, threading, time
+import moduleloader, sys
 
 # Log modules should do whatever they feel like and return a tuple of the form
 # ( logname, logcontents )
@@ -27,15 +27,36 @@ class LogModule(moduleloader.LoadedModule):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.log_path = self.module.log_path
 		self.category = self.module.category
-		
+		# This is temporary to preserve backward compatability with old
+		# code
+		if hasattr(self.module, 'short_flag'):
+			self.short_flag = self.module.short_flag
+		else:
+			self.short_flag = "-?"
+			
+		if hasattr(self.module, 'long_flag'):
+			self.long_flag = self.module.long_flag
+		else:
+			self.long_flag = "--<?>"
 			
 	def execute(self):
 		try:
    			res =  self.module.execute()
-   			if type(res) != tuple or len(res) != 2:
+   			if type(res) != tuple:
    				if self.debug_output >= moduleloader.DEBUG_ALL:
-   					print "Incorrect return from module"
-   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
+   					print "Incorrect returned object, expected tuple"
+   				if self.fault_tolerance:
+   					return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
+   				else:
+   					raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
+   			elif len(res) != 2:
+   				if self.debug_output >= moduleloader.DEBUG_ALL:
+   					print "Incorrect number of items in returned tuple: module: %s" & self.name
+   				if self.fault_tolerance:
+   					return "Possible error in module loader %s: %s" % (self.module_name, res[0]), res[1]
+   				else:
+   					# I'm not sure what else to do here, perhaps another exception type?
+   					raise moduleloader.IncorrectModuleReturnException(type(res), type(SubmitModuleResult))
    			else:
    				if self.debug_output >= moduleloader.DEBUG_ALL:
 					print "Success loading log %s: %s" % (self.module_name, self.log_path)
@@ -47,10 +68,10 @@ class LogModule(moduleloader.LoadedModule):
     				print sys.exc_info()[0]
     				
     			if self.fault_tolerance:
-	   				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
-	   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
-	   		else:
-	   			raise
+   				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
+   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
+   			else:
+   				raise
 			
 	# If used complete hander should be of type method(result, user_data)
 	def executeThreaded(self, complete_handler = None, user_data = None):
@@ -69,86 +90,35 @@ class LogModule(moduleloader.LoadedModule):
 	def getResult(self):
 		return self.result
 
-class LogValidator(moduleloader.GenericValidator):
-	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["log_path", "category"]
-	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str, str]
-	ModuleWrapper = LogModule
-	def __init__(self, parent, fault_tolerance, debug_output):
-		moduleloader.GenericValidator.__init__(self, parent, fault_tolerance, debug_output)
-			
-	def validate_additional(self, module):
-		return self.validate_execution_hook(module, "execute", 0)
-		
-class LogGrouper(threading.Thread):
-	def __init__(self, parent, debug_output):
-		threading.Thread.__init__(self)
-		self.parent = parent
-		self.debug_output = debug_output
-				
-	def run(self):
-		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module validator pool size: %d" % self.parent.valid_running
-			print "Starting grouper: %s" % self
-		
-		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
-			if self.parent.group_status < self.parent.total_loaded_mod:
-				# Aquire a lock and release it as quickly as possible
-				self.parent.group_pool_lock.acquire()
-				mod = self.parent.valid_modules[self.parent.group_status]
-				self.parent.group_status = self.parent.group_status + 1
-				self.parent.group_pool_lock.release()
-				
-				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-					print "Grouping: %s with category %s" % (mod, mod.category)
-					
-				if not mod.category in self.parent.module_groupings:
-					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-						print "Group %s not found, adding" % mod.category
-						
-					self.parent.dict_lock.acquire()
-					self.parent.module_groupings[mod.category] = [mod]
-					self.parent.dict_lock.release()
-					
-				else:
-					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-						print "Group %s found, appending" % mod.category
-						
-					self.parent.dict_lock.acquire()
-					self.parent.module_groupings[mod.category].append(mod)
-					self.parent.dict_lock.release()
-				
-			else :
-				time.sleep(0.01)
-				
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Module groupings"
-				for m in self.parent.module_groupings:
-					print self.parent.module_groupings[m]
-		if self.debug_output >= 1:		
-			print "Ending grouper: %s" % self
-		self.parent.group_pool_lock.acquire()		
-		self.parent.group_running = self.parent.group_running - 1
-		self.parent.group_pool_lock.release()
-
 class LogModuleLoader(moduleloader.ModuleLoader):
-	ValidatorClass = LogValidator
+	necessary_attributes = moduleloader.ModuleLoader.necessary_attributes + ["log_path", "category"]
+	necessary_attr_types = moduleloader.ModuleLoader.necessary_attr_types + [str, str]
+	ModuleWrapper = LogModule
+	used_paths = []
+	module_groupings = None
+	module_grouping_status = -1
+	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, use_threading = False):
+		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, use_threading)
+		# If we are using threading, we should do nothing, as we have
+		# overridden the run method
+		if not self.threaded:
+			self.groupModules()
 	
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
+	def run(self):
+		moduleloader.ModuleLoader.run(self)
+		self.groupModules()
+		
+	def groupModules(self):
+		self.module_grouping_status = 0.0
+		counter = 0
 		self.module_groupings = dict()
-		self.dict_lock = threading.Lock()
-		self.group_pool_lock = threading.Lock()
-		self.group_running = 0
-		self.group_status = 0
-	
-		for x in range(0, moduleloader.THREAD_POOL_MAX):
-			log_thread = LogGrouper(self, self.debug_output)
-			self.group_pool_lock.acquire()
-			self.group_running = self.group_running + 1
-			self.group_pool_lock.release()
-			
-			log_thread.start()
-	
+		for mod in self.valid_modules:
+			if not mod.category in self.module_groupings:
+				self.module_groupings[mod.category] = [mod]
+			else:
+				self.module_groupings[mod.category].append(mod)
+			counter = counter + 1
+			self.module_grouping_status = (counter + 0.0)/len(self.valid_modules)
 		
 	def getModulesInCategory(self, cat):
 		if self.module_groupings:
@@ -165,12 +135,22 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			if self.debug_output >= moduleloader.DEBUG_ALL:
 				print "Module Groupings aren't yet created (Thread inconsistency?)"
 			return None
-			
-	def join(self):
-		moduleloader.ModuleLoader.join(self)
-		while self.group_running > 0:
-			time.sleep(0.01)
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "%d grouper threads remain" % self.group_running
-	
-	
+		
+	def validate_additional(self, module):
+		return self.validate_execution_hook(module, "execute", 0) and self.validate_non_duplicate_module_descr(module)
+		
+	# Validate to make sure we don't have colliding modules
+	def validate_non_duplicate_module_descr(self, module):
+		if self.debug_output >= moduleloader.DEBUG_ALL:
+			print " Checking for module collisions"
+		
+		if self.debug_output >= moduleloader.DEBUG_ALL:
+			print " Module log path (%s) does not already exist: %s" % (module.log_path, not module.log_path in self.used_paths)
+		if module.log_path in self.used_paths:
+			if self.fault_tolerance:
+				return  False	
+					
+		# Add all these to the already used list
+		self.used_paths.append(module.log_path)	
+		
+		return True	

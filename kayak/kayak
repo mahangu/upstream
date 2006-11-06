@@ -201,7 +201,12 @@ class UpstreamWizard(QWizard):
 		if self.result and self.result.bool_success:
 			
 			infobox = CompleteDialog(self, self.result.bool_success, self.result.result_url)
-			infobox.exec_loop()			
+			infobox.exec_loop()	
+			
+			print QApplication.clipboard().text() #For some reason, this prints out fine, but it won't copy to clipboard.
+			#Ryan can you test this out on KDE please?
+			
+		
 			
 		else:
 			QMessageBox.information(self, "Kayak", "Submission failed :-(")
@@ -292,9 +297,9 @@ if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
 	
-	log_loader = logmoduleloader.LogModuleLoader(["log-modules"], True, 1)
+	log_loader = logmoduleloader.LogModuleLoader(["log-modules"], True, 1, True)
 
-	submit_loader = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, 1)
+	submit_loader = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, 1, True)
 	
 	main(sys.argv)
 
