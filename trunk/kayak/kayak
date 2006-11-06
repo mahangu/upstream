@@ -201,12 +201,7 @@ class UpstreamWizard(QWizard):
 		if self.result and self.result.bool_success:
 			
 			infobox = CompleteDialog(self, self.result.bool_success, self.result.result_url)
-			infobox.exec_loop()	
-			
-			print QApplication.clipboard().text() #For some reason, this prints out fine, but it won't copy to clipboard.
-			#Ryan can you test this out on KDE please?
-			
-		
+			infobox.exec_loop()			
 			
 		else:
 			QMessageBox.information(self, "Kayak", "Submission failed :-(")
@@ -250,14 +245,16 @@ class CompleteDialog(QDialog):
 		QDialog.__init__(self, parent) 
 		self.layout = QVBoxLayout(self, 0, 10)
 	
-		
+		self.setCaption("Kayak - Success")
 		self.url = url
 	
-		self.label = QLabel("Success! Your submission is located at\n " + self.url, self)
+		self.label = QLabel("Success! Your submission is located at: ", self)
+		self.edit = QLineEdit(self.url, self)
 		self.layout.addWidget(self.label)
+		self.layout.addWidget(self.edit)
 		
 		self.b_layout = QHBoxLayout(self.layout)
-		self.c_button = QPushButton	("Copy url", self)
+		self.c_button = QPushButton	("Copy URL", self)
 		self.button = QPushButton("Done", self)
 		self.b_layout.addStretch(1)
 		self.b_layout.addWidget(self.c_button)
