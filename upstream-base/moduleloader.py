@@ -20,7 +20,7 @@
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 # TODO replace all calls of len(threadpool_name) with a semaphore
 
-import glob, imp, sys, os, threading, time
+import glob, sys, os, threading, time
 
 
 
@@ -139,6 +139,7 @@ class GenericValidator(threading.Thread):
 					self.parent.valid_modules.append(self.ModuleWrapper(module, self.fault_tolerance, self.debug_output))
 					
 					self.parent.loaded_lock.acquire()
+					# Not really loaded, but processed
 					self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
 					self.parent.loaded_lock.release()
 			else:
@@ -198,11 +199,12 @@ class ModuleLoader:
 	# New classes should override the ModuleWrapper item
 	ValidatorClass = GenericValidator
 	ModuleWrapper = LoadedModule
-	def __init__(self, pack_list, fault_tolerance, debug_output=DEBUG_NONE):
+	def __init__(self, pack_list, fault_tolerance, debug_output=DEBUG_NONE, thread_pool_size = THREAD_POOL_MAX):
 		# Chain up
 		self.pack_list = pack_list
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
+		self.thread_pool_size = thread_pool_size
 		# Intense weirdness seems to happen if this is static initialized
 		self.pack_running = 0
 		self.valid_running = 0
@@ -227,7 +229,7 @@ class ModuleLoader:
 			
 			pack_thread.start()
 			
-		for x in range(0, THREAD_POOL_MAX):
+		for x in range(0, self.thread_pool_size):
 			validate_thread = self.ValidatorClass(self, self.fault_tolerance, self.debug_output)
 			
 			self.valid_lock.acquire()
@@ -280,6 +282,12 @@ class ModuleLoader:
 	# Provide a string method
 	def __str__(self):
 		return "Module loader:\n" + repr(self.valid_modules)
+	
+	def getValidCompleteRatio(self):
+		if self.total_found_mod:
+			return (self.total_loaded_mod + 0.0)/self.total_found_mod
+		else:
+			return 0
 	
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work

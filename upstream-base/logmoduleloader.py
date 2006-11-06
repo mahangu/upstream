@@ -27,42 +27,48 @@ class LogModule(moduleloader.LoadedModule):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.log_path = self.module.log_path
 		self.category = self.module.category
-		
+		self.prev_exec = False
 			
 	def execute(self):
-		try:
-   			res =  self.module.execute()
-   			if type(res) != tuple or len(res) != 2:
-   				if self.debug_output >= moduleloader.DEBUG_ALL:
-   					print "Incorrect return from module"
-   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
-   			else:
-   				if self.debug_output >= moduleloader.DEBUG_ALL:
-					print "Success loading log %s: %s" % (self.module_name, self.log_path)
-   				return res
-   			
-    		except:
-    			if self.debug_output >= moduleloader.DEBUG_ALL:
-    				print "Error in execution of %s" % self.module_name
-    				print sys.exc_info()[0]
-    				
-    			if self.fault_tolerance:
-	   				formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
-	   				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
-	   		else:
-	   			raise
-			
+		if not self.prev_exec:
+			self.prev_exec = True
+			try:
+				self.result =  self.module.execute()
+				if type(self.result) != tuple or len(self.result) != 2:
+					if self.debug_output >= moduleloader.DEBUG_ALL:
+						print "Incorrect return from module"
+					return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
+				else:
+					if self.debug_output >= moduleloader.DEBUG_ALL:
+						print "Success loading log %s: %s" % (self.module_name, self.log_path)
+					return self.result
+				
+			except:
+				if self.debug_output >= moduleloader.DEBUG_ALL:
+					print "Error in execution of %s" % self.module_name
+					print sys.exc_info()[0]
+					
+				if self.fault_tolerance:
+					self.result = "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
+					return self.result
+				else:
+					raise
+		else:
+			return self.result
+				
+	
 	# If used complete hander should be of type method(result, user_data)
 	def executeThreaded(self, complete_handler = None, user_data = None):
-		self.email = email
-		self.message = message
-		self.log_dict = log_dict
-		self.complete_handler = complete_handler
-		self.user_data = user_data
-		self.start()
+		if not self.prev_exec:
+			self.email = email
+			self.message = message
+			self.log_dict = log_dict
+			self.complete_handler = complete_handler
+			self.user_data = user_data
+			self.start()
 		
 	def run(self):
-		self.result = self.execute()
+		self.execute()
 		if self.complete_handler:
 			self.complete_handler(self.result, self.user_data)
 			
@@ -133,15 +139,16 @@ class LogGrouper(threading.Thread):
 class LogModuleLoader(moduleloader.ModuleLoader):
 	ValidatorClass = LogValidator
 	
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)
+	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE, thread_pool_size=moduleloader.THREAD_POOL_MAX, group_pool_size=moduleloader.THREAD_POOL_MAX):
+		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output, thread_pool_size)
+		self.group_pool_size = group_pool_size
 		self.module_groupings = dict()
 		self.dict_lock = threading.Lock()
 		self.group_pool_lock = threading.Lock()
 		self.group_running = 0
 		self.group_status = 0
 	
-		for x in range(0, moduleloader.THREAD_POOL_MAX):
+		for x in range(0, self.group_pool_size):
 			log_thread = LogGrouper(self, self.debug_output)
 			self.group_pool_lock.acquire()
 			self.group_running = self.group_running + 1
@@ -165,6 +172,12 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			if self.debug_output >= moduleloader.DEBUG_ALL:
 				print "Module Groupings aren't yet created (Thread inconsistency?)"
 			return None
+			
+	def getGroupCompleteRatio(self):
+		if self.total_found_mod:
+			return (self.group_status + 0.0)/self.total_found_mod
+		else:
+			return 0
 			
 	def join(self):
 		moduleloader.ModuleLoader.join(self)
