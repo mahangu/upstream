@@ -26,8 +26,8 @@ unknown_response = """<html>
 				<body>
 					<h3>The module returned an unreconized type</h3><br />
 					<p>This is usually due to an incorrectly designed
-					submission module.  You request may have succeeded,
-					but the program has no way of determining this</p>
+					submission module.  Your request may have succeeded,
+					but we have way of determining this</p>
 				</body>
 			</html>"""
 
