@@ -63,7 +63,7 @@ class PopUp(gtk.Dialog):
 	def __init__(self, url):
 
 		gtk.Dialog.__init__(self, "Success", None, gtk.DIALOG_MODAL, (gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE))
-		label = gtk.Label("Your logs can be found at:")
+		label = gtk.Label("Your submission can be found at:")
 		self.vbox.pack_start(label, False, False, 5)
 		url_show = gtk.Entry()
 		url_show.set_text(url)
