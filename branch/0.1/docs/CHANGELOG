@@ -1,5 +1,5 @@
 This is the Upstream changelog. New features / fixes are marked with (+), and known issues are marked with (-).
 
-Upstream 0.1.0 (Chaucer) - 6 November 2006
+Upstream 0.1.0 (Chaucer) - 6th November 2006
 ---------------------------------------------
 -Canoe and Kayak have no error catching, input validation. Kayak crashes if a form field is left empty.
