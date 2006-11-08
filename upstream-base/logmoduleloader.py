@@ -60,15 +60,17 @@ class LogModule(moduleloader.LoadedModule):
 				else:
 					raise
 		else:
-			raise DupLogLoadError(self.module_name)
+			if self.fault_tolerance:
+				return self.module_name, "Duplicate log entry!"
+			else:
+				raise DupLogLoadError(self.log_path)
 				
 	
 	# If used complete hander should be of type method(result, user_data)
 	def executeThreaded(self, complete_handler = None, user_data = None):
-		if not self.prev_exec:
-			self.complete_handler = complete_handler
-			self.user_data = user_data
-			self.start()
+		self.complete_handler = complete_handler
+		self.user_data = user_data
+		self.start()
 		
 	def run(self):
 		self.execute()
