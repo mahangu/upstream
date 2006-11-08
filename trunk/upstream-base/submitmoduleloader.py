@@ -69,7 +69,7 @@ class SubmitModule(moduleloader.LoadedModule):
 			## http://www.python.org/download/releases/2.2.3/descrintro/
 			## http://docs.python.org/ref/node33.html
    			#if type(res) == SubmitModuleResult:
-   			if isinstance(res, SubmitModuleResult:)
+   			if isinstance(res, SubmitModuleResult):
 				self.result = res
    				return res
    			else:
