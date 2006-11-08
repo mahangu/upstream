@@ -22,7 +22,7 @@ module_name = "xorgLog"
 module_description = "Read the log that contains information about the Graphics Server"
 # Required by Log Module
 log_path = "/var/log/Xorg.0.log"
-category = "video"
+category = ["video"]
 
 def execute():
 	try:

@@ -22,7 +22,7 @@ module_name = "daemon"
 module_description = "Read the log that contains network information"
 # Required by Log Module
 log_path = "/var/log/daemon.log"
-category = "network"
+category = ["network"]
 
 def execute():
 	try:
