@@ -22,7 +22,7 @@ module_name = "xorgConf"
 module_description = "Read the Xorg configuration file"
 # Required by Log Module
 log_path = "/etc/X11/xorg.conf"
-category = "video"
+category = ["video"]
 
 def execute():
 	try:

@@ -156,9 +156,7 @@ class GenericValidator(threading.Thread):
 	def validate_module(self, module):
 		if self.debug_output >= DEBUG_ALL:
 			print "Validating module: %s" % module.__name__
-		valid_fields = self.validate_fields(module) 
-		valid_additional = self.validate_additional(module)
-		return valid_fields and valid_additional
+		return self.validate_fields(module) and self.validate_additional(module)
 		
 	# Determine if the module has the necessary fields to be a valid module
 	# Subclasses should probably not have to override this method, and

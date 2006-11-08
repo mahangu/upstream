@@ -23,7 +23,7 @@ module_name = "lspci"
 module_description = "Get lspci output"
 # Required by Log Module
 log_path = "/usr/bin/lspci"
-category = "video"
+category = ["video"]
 
 # What happens if log_path does not exist or user does not have proper permissions?
 def execute():

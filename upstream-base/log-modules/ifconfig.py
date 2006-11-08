@@ -23,7 +23,7 @@ module_name = "ifconfig"
 module_description = "Get ifconfig output"
 # Required by Log Module
 log_path = "/sbin/ifconfig"
-category = "network"
+category = ["network"]
 
 # What happens if log_path does not exist or user does not have proper permissions?
 def execute():

@@ -22,7 +22,7 @@ module_name = "pci"
 module_description = "Read PCI related log files"
 # Required by Log Module
 log_path = "/var/log/kern.log"
-category = "pci"
+category = ["pci"]
 
 def execute():
 	try:

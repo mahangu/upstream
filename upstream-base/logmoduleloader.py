@@ -22,6 +22,12 @@ import moduleloader, sys, threading, time
 # Log modules should do whatever they feel like and return a tuple of the form
 # ( logname, logcontents )
 
+class DupLogLoadError(Exception):
+	def __init__(self, log):
+		self.log = log
+	def __str__(self):
+		return "Log: %s was loaded twice"
+
 class LogModule(moduleloader.LoadedModule):
 	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
@@ -54,15 +60,12 @@ class LogModule(moduleloader.LoadedModule):
 				else:
 					raise
 		else:
-			return self.result
+			raise DupLogLoadError(self.module_name)
 				
 	
 	# If used complete hander should be of type method(result, user_data)
 	def executeThreaded(self, complete_handler = None, user_data = None):
 		if not self.prev_exec:
-			self.email = email
-			self.message = message
-			self.log_dict = log_dict
 			self.complete_handler = complete_handler
 			self.user_data = user_data
 			self.start()
@@ -77,13 +80,21 @@ class LogModule(moduleloader.LoadedModule):
 
 class LogValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["log_path", "category"]
-	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str, str]
+	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str, list]
 	ModuleWrapper = LogModule
 	def __init__(self, parent, fault_tolerance, debug_output):
 		moduleloader.GenericValidator.__init__(self, parent, fault_tolerance, debug_output)
 			
 	def validate_additional(self, module):
-		return self.validate_execution_hook(module, "execute", 0)
+		return self.validate_execution_hook(module, "execute", 0) and self.validate_category_contains_str(module)
+	
+	def validate_category_contains_str(self, module):
+		for field in module.category:
+			if self.debug_output >= moduleloader.DEBUG_ALL:
+				print "%s is of type str: %s" % (field, isinstance(field, str)) 
+			if not isinstance(field, str):
+				return False
+		return True
 		
 class LogGrouper(threading.Thread):
 	def __init__(self, parent, debug_output):
@@ -106,22 +117,22 @@ class LogGrouper(threading.Thread):
 				
 				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 					print "Grouping: %s with category %s" % (mod, mod.category)
-					
-				if not mod.category in self.parent.module_groupings:
-					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-						print "Group %s not found, adding" % mod.category
+				for cat in mod.category:
+					if not cat in self.parent.module_groupings:
+						if self.parent.debug_output >= moduleloader.DEBUG_ALL:
+							print "Group %s not found, adding" % cat
+							
+						self.parent.dict_lock.acquire()
+						self.parent.module_groupings[cat] = [mod]
+						self.parent.dict_lock.release()
 						
-					self.parent.dict_lock.acquire()
-					self.parent.module_groupings[mod.category] = [mod]
-					self.parent.dict_lock.release()
-					
-				else:
-					if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-						print "Group %s found, appending" % mod.category
-						
-					self.parent.dict_lock.acquire()
-					self.parent.module_groupings[mod.category].append(mod)
-					self.parent.dict_lock.release()
+					else:
+						if self.parent.debug_output >= moduleloader.DEBUG_ALL:
+							print "Group %s found, appending" % mod.category
+							
+						self.parent.dict_lock.acquire()
+						self.parent.module_groupings[cat].append(mod)
+						self.parent.dict_lock.release()
 				
 			else :
 				time.sleep(0.01)
