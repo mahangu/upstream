@@ -173,9 +173,9 @@ class GenericValidator(threading.Thread):
 			if ind < self.necessary_attr_types:
 				# Ahh ye olde debugging output, you take up so much space
 				if self.debug_output >= DEBUG_ALL:
-					print " Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None)
+					print " Validating field %s as type %s : %s" % (field, self.necessary_attr_types[ind], isinstance(module.__dict__[field], self.necessary_attr_types[ind]) and self.necessary_attr_types[ind] is not None)
 				
-				if not type(module.__dict__[field]) == self.necessary_attr_types[ind] and self.necessary_attr_types[ind] is not None:
+				if not isinstance(module.__dict__[field], self.necessary_attr_types[ind]) and self.necessary_attr_types[ind] is not None:
 					return False
 		# If we get to the end, we were successful
 		return True

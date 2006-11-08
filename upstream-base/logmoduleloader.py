@@ -40,7 +40,7 @@ class LogModule(moduleloader.LoadedModule):
 			self.prev_exec = True
 			try:
 				self.result =  self.module.execute()
-				if type(self.result) != tuple or len(self.result) != 2:
+				if not isinstance(self.result, tuple) or len(self.result) != 2:
 					if self.debug_output >= moduleloader.DEBUG_ALL:
 						print "Incorrect return from module"
 					return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
