@@ -39,7 +39,7 @@ if __name__ == "__main__":
 	if len(sys.argv) < 3 or sys.argv[1] == "help":
 		print "Developer tools for validating modules"
 		print "Usage:"
-		print "testsuite.py <module type> <module name> [verbose]"
+		print "modvalidate <module type> <module name> [verbose]"
 		
 	else:
 		try:
