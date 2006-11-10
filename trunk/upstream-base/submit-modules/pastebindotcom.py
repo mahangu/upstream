@@ -35,23 +35,24 @@ def execute(submit_email, submit_message, dict_of_logs):
 	flat_log_type = ""
 	for log in dict_of_logs:
 		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
-	# Not sure why the following is needed, but leaving it here just in case
-	#flat_log_type = flat_log_type.replace("\"","") 
 
 	# 'expiry' specifies for what period of time the paste should be kept
-	#	d - one day
-	#	m - one month (this is default on the web interface)
-	#	f - forever
+	#	"d" - one day
+	#	"m" - one month (this is default on the web interface)
+	#	"f" - forever
 	post_data = { 'format' : "text", 'code2': submit_email + "\n" + submit_message + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
 
 	# Send the data
-	paste = urlopen(module_submit_url, urlencode(post_data))
+	try:
+		paste = urlopen(module_submit_url, urlencode(post_data))
+	except IOError:
+		return submitmoduleloader.SubmitModuleResult(True, False)
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
 
 	print result_url
 
-	# TODO implement some error checking before reporting success
+	# TODO: We need to check that the page we get back actually has the logs
 
 	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)

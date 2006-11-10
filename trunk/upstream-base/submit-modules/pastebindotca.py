@@ -36,26 +36,31 @@ def execute(submit_email, submit_message, dict_of_logs):
 	flat_log_type = ""
 	for log in dict_of_logs:
 		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
-	# Not sure why the following is needed, but leaving it here just in case
-	#flat_log_type = flat_log_type.replace("\"","") 
 
+	# TODO Are there any limits on these fields?
 	# 'expiry' specifies for what period of time the paste should be kept:  No value means forever.
 	# 'type': 1 means raw text
-	# TODO Are there any limits on these fields?
 	post_data = { 'content': flat_log_type, 's': "Submit Post", 'description': submit_message, 'type': "1", 'expiry': "", 'name':  submit_email }
 
 	# Send the data
-	paste = urlopen(module_submit_url, urlencode(post_data))
+	try:
+		paste = urlopen(module_submit_url, urlencode(post_data))
+	except IOError:
+		return submitmoduleloader.SubmitModuleResult(True, False)
 
 	# This is not the xml for the actual paste.
 	# TODO See what we need to pass to SubmitModuleResult
 	result_xml = paste.read()
 
 	# Use regex to find the url
-	result_url = re.search(r'<meta http-equiv="refresh" content=".+?(http://pastebin\.ca/\d+?)"', result_xml).group(1)
+	match = re.search(r'<meta http-equiv="refresh" content=".+?(http://pastebin\.ca/\d+?)"', result_xml)
+	if match:
+		result_url = match.group(1)
+	else:
+		return submitmoduleloader.SubmitModuleResult(True, False)
 
 	print result_url
 
-	# TODO implement some error checking before reporting success
+	# TODO: We need to check that the page we get back actually has the logs
 
 	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
