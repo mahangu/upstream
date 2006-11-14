@@ -109,8 +109,8 @@ class PackageImporter(threading.Thread):
 		except:
 			# We lost the whole package for some reason
 			print "Exception thrown: %s" % sys.exc_info()[0]
-					if not self.fault_tolerance:
-						raise
+			if not self.fault_tolerance:
+				raise
 			
 		# When done pop ourselves off the stack
 		self.parent.valid_lock.acquire()
