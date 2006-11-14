@@ -87,24 +87,30 @@ class PackageImporter(threading.Thread):
 		self.debug_output = debug_output
 		
 	def run(self):
-		if self.debug_output >= DEBUG_ALL:
-			print "Beginning threaded importer on package %s" % self.package
-		imp_pack = __import__(self.package)
-		for plugin_name in imp_pack.__all__:
-			# This imports the module into imp_pack
+		try:
 			if self.debug_output >= DEBUG_ALL:
-				print "Importing: %s" % self.package + "." + plugin_name
-			try:
-				__import__(self.package + "." + plugin_name)
-			except:
-				print "Exception thrown: %s" % sys.exc_info()[0]
-				if not self.fault_tolerance:
-					raise
-			self.parent.load_queue.append(getattr(imp_pack, plugin_name))
-			
-			self.parent.found_lock.acquire()
-			self.parent.total_found_mod = self.parent.total_found_mod + 1
-			self.parent.found_lock.release()
+				print "Beginning threaded importer on package %s" % self.package
+			imp_pack = __import__(self.package)
+			for plugin_name in imp_pack.__all__:
+				# This imports the module into imp_pack
+				if self.debug_output >= DEBUG_ALL:
+					print "Importing: %s" % self.package + "." + plugin_name
+				try:
+					__import__(self.package + "." + plugin_name)
+				except:
+					print "Exception thrown: %s" % sys.exc_info()[0]
+					if not self.fault_tolerance:
+						raise
+				self.parent.load_queue.append(getattr(imp_pack, plugin_name))
+				
+				self.parent.found_lock.acquire()
+				self.parent.total_found_mod = self.parent.total_found_mod + 1
+				self.parent.found_lock.release()
+		except:
+			# We lost the whole package for some reason
+			print "Exception thrown: %s" % sys.exc_info()[0]
+					if not self.fault_tolerance:
+						raise
 			
 		# When done pop ourselves off the stack
 		self.parent.valid_lock.acquire()
