@@ -31,7 +31,7 @@ def execute():
 
 	log_path_split = log_path.split(" ")
 
-	log_root = log_path_split[1]
+	log_root = log_path_split[0]
 
 	if os.access(log_root, os.X_OK):
 		p = os.popen(log_path, "r")
