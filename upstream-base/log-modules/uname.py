@@ -28,11 +28,15 @@ category = ["kernel"]
 
 # What happens if log_path does not exist or user does not have proper permissions?
 def execute():
-# os.access dies when a switch like 'uname -a' is used. Must fix.
-#	if os.access(log_path, os.X_OK):
-	p = os.popen(log_path, "r")
-#	else:
-#		return module_name, "Could not successfully execute %s!" % (log_path)
+
+	log_path_split = log_path.split(" ")
+
+	log_root = log_path_split[1]
+
+	if os.access(log_root, os.X_OK):
+		p = os.popen(log_path, "r")
+	else:
+		return module_name, "Could not successfully execute %s!" % (log_path)
 	content = p.read()
 	p.close()
 	return module_name, content
