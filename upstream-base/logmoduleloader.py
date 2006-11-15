@@ -159,12 +159,14 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		self.dict_lock = threading.Lock()
 		self.group_pool_lock = threading.Lock()
 		self.group_running = 0
+		self.group_pool = []
 		self.group_status = 0
 	
 		for x in range(0, self.group_pool_size):
 			log_thread = LogGrouper(self, self.debug_output)
 			self.group_pool_lock.acquire()
 			self.group_running = self.group_running + 1
+			self.group_pool.append(log_thread)
 			self.group_pool_lock.release()
 			
 			log_thread.start()
@@ -194,9 +196,9 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			
 	def join(self):
 		moduleloader.ModuleLoader.join(self)
-		while self.group_running > 0:
-			time.sleep(0.01)
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "%d grouper threads remain" % self.group_running
+		for x in self.group_pool:
+			x.join()
+		if self.debug_output >= moduleloader.DEBUG_ALL and self.group_running > 0:
+			print "ERROR: group worker crashed!"
 	
 	
