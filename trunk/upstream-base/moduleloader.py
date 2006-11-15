@@ -97,20 +97,20 @@ class PackageImporter(threading.Thread):
 					print "Importing: %s" % self.package + "." + plugin_name
 				try:
 					__import__(self.package + "." + plugin_name)
-				except:
+				except Error:
 					print "Exception thrown: %s" % sys.exc_info()[0]
-					if not self.fault_tolerance:
-						raise
+				except:
+					print "Exception thrown: %s" % sys.exc_info()[0]					
 				self.parent.load_queue.append(getattr(imp_pack, plugin_name))
 				
 				self.parent.found_lock.acquire()
 				self.parent.total_found_mod = self.parent.total_found_mod + 1
 				self.parent.found_lock.release()
+				
 		except:
 			# We lost the whole package for some reason
 			print "Exception thrown: %s" % sys.exc_info()[0]
-			if not self.fault_tolerance:
-				raise
+			
 			
 		# When done pop ourselves off the stack
 		self.parent.valid_lock.acquire()
@@ -212,6 +212,8 @@ class ModuleLoader:
 		# Intense weirdness seems to happen if this is static initialized
 		self.pack_running = 0
 		self.valid_running = 0
+		self.pack_pool = []
+		self.valid_pool = []
 		#These 2 locks are for locking prior to pool modifications
 		self.pack_lock = threading.Lock()
 		self.valid_lock = threading.Lock()
@@ -229,6 +231,7 @@ class ModuleLoader:
 			
 			self.pack_lock.acquire()
 			self.pack_running = self.pack_running + 1
+			self.pack_pool.append(pack_thread)
 			self.pack_lock.release()
 			
 			pack_thread.start()
@@ -238,6 +241,7 @@ class ModuleLoader:
 			
 			self.valid_lock.acquire()
 			self.valid_running = self.valid_running + 1
+			self.valid_pool.append(validate_thread)
 			self.valid_lock.release()
 			
 			validate_thread.start()
@@ -298,11 +302,16 @@ class ModuleLoader:
 	def join(self):
 		if self.debug_output >= DEBUG_ALL:
 			print "Joining threads spawned from: %s " % self
-		while self.pack_running > 0 or self.valid_running > 0:
-			time.sleep(0.01)
-			if self.debug_output >= 1:
-				print "Running package importers: %d " % self.pack_running
-				print "Runnign module validators: %d" % self.valid_running
+		for x in self.pack_pool:
+			x.join()
+		for x in self.valid_pool:
+			x.join()
+		if self.debug_output >= DEBUG_ALL:
+			if self.pack_running > 0:
+				print "ERROR: package importer crashed!"
+			if self.pack_running > 0:
+				print "ERROR: module validator crashed!"
+				
 
 class ModuleLoaderIterator:
 	def __init__(self, parent):

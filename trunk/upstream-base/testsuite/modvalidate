@@ -1,9 +1,11 @@
+#!/usr/bin/python
+
 from logmoduleloader import *
 from submitmoduleloader import *
 from moduleloader import *
 
 
-def check_log():	
+def check_log():
 	rmod = __import__(sys.argv[2])
 	print dir(rmod)
 	lval = LogValidator(None, True, len(sys.argv) > 3 and sys.argv[3] == "verbose")
