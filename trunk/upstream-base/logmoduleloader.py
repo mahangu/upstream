@@ -107,8 +107,7 @@ class LogGrouper(threading.Thread):
 	def run(self):
 		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 			print "Module validator pool size: %d" % self.parent.valid_running
-			print "Starting grouper: %s" % self
-		
+			
 		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
 			self.parent.group_pool_lock.acquire()
 			if self.parent.group_status < self.parent.total_loaded_mod:
@@ -139,14 +138,8 @@ class LogGrouper(threading.Thread):
 				
 			else :
 				self.parent.group_pool_lock.release()
-				time.sleep(0.01)
-				
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Module groupings"
-				for m in self.parent.module_groupings:
-					print self.parent.module_groupings[m]
-		if self.debug_output >= 1:		
-			print "Ending grouper: %s" % self
+				time.sleep(0.01)							
+		
 		self.parent.group_pool_lock.acquire()		
 		self.parent.group_running = self.parent.group_running - 1
 		self.parent.group_pool_lock.release()

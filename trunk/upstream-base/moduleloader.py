@@ -106,8 +106,6 @@ class GenericValidator(threading.Thread):
 		
 		
 	def run(self):
-		if self.debug_output >= DEBUG_ALL:
-			print "Beginning threaded validator %s" % self
 		while self.parent.pack_running > 0 or len(self.parent.load_queue) > 0:
 			if len(self.parent.load_queue) > 0:
 				# Get a module and validate it
@@ -126,10 +124,8 @@ class GenericValidator(threading.Thread):
 				
 		self.parent.valid_lock.acquire()
 		self.parent.valid_running = self.parent.valid_running - 1
-		self.parent.valid_lock.release()
+		self.parent.valid_lock.release()		
 		
-		if self.debug_output >= DEBUG_ALL:
-			print "Ending threaded validator %s" % self
 								
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
@@ -262,7 +258,7 @@ class ModuleLoader:
 		return ModuleLoaderIterator(self)
 	# Provide a string method
 	def __str__(self):
-		return "Module loader:\n" + repr(self.valid_modules)
+		return "Module Loader:\n" + repr(self.valid_modules)
 	
 	def getValidCompleteRatio(self):
 		if self.total_found_mod:
@@ -273,8 +269,6 @@ class ModuleLoader:
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work
 	def join(self):
-		if self.debug_output >= DEBUG_ALL:
-			print "Joining threads spawned from: %s " % self
 		for x in self.pack_pool:
 			x.join()
 		for x in self.valid_pool:
