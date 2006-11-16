@@ -110,12 +110,13 @@ class LogGrouper(threading.Thread):
 			print "Starting grouper: %s" % self
 		
 		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
+			self.parent.group_pool_lock.acquire()
 			if self.parent.group_status < self.parent.total_loaded_mod:
-				# Aquire a lock and release it as quickly as possible
-				self.parent.group_pool_lock.acquire()
+					
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
 				self.parent.group_pool_lock.release()
+		
 				
 				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
 					print "Grouping: %s with category %s" % (mod, mod.category)
@@ -137,6 +138,7 @@ class LogGrouper(threading.Thread):
 						self.parent.dict_lock.release()
 				
 			else :
+				self.parent.group_pool_lock.release()
 				time.sleep(0.01)
 				
 			if self.debug_output >= moduleloader.DEBUG_ALL:
