@@ -34,33 +34,6 @@ DEBUG_ALL = 1
 # Perhaps this will change later
 THREAD_POOL_MAX = 5
 
-class ModuleLoaderInitException(Exception):
-	def __init__(self, err_type):
-		Exception.__init__(self)
-		self.err_type = err_type
-	def __repr__(self):
-		return "raised ModuleLoaderInitException(" + self.err_type + ")"
-	def __str__(self):
-		if self.err_type == MLOAD_NOT_LIST:
-			return "Error: Package list was not a list"
-		elif self.err_type == MLOAD_EMPTY_LIST:
-			return "Error: Package list was empty"
-		elif self.err_type == MLOAD_HAS_NONSTR:
-			return "Error: Package list contained non-strings"
-		else:
-			return "Error: unknown?"
-			
-			
-class IncorrectModuleReturnType(Exception):
-	def __init__(self, found_type, expected_type):
-		Exception.__init__(self)
-		self.found_type = found_type
-		self.expected_type = expected_type
-	def __repr__(self):
-		return "raised IncorrectModuleReturnType(" + self.found_type + "," + self.expected_type + ")"
-	def __str__(self):
-		return "Found type: " + self.found_type + " Expected type: " + self.expected_type
-
 # LoadedModule now extends from Thread type
 class LoadedModule(threading.Thread):
 	fault_tolerance = True
@@ -79,11 +52,10 @@ class LoadedModule(threading.Thread):
 		
 
 class PackageImporter(threading.Thread):
-	def __init__(self, parent, package, fault_tolerance, debug_output=False):
+	def __init__(self, parent, package, debug_output=False):
 		threading.Thread.__init__(self)
 		self.parent = parent
 		self.package = package
-		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
 		
 	def run(self):
@@ -131,6 +103,7 @@ class GenericValidator(threading.Thread):
 		self.parent = parent
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
+		
 		
 	def run(self):
 		if self.debug_output >= DEBUG_ALL:
@@ -227,7 +200,7 @@ class ModuleLoader:
 		
 		# Initialize the loaders	
 		for pack in self.pack_list:
-			pack_thread = PackageImporter(self, pack, self.fault_tolerance, self.debug_output)
+			pack_thread = PackageImporter(self, pack, self.debug_output)
 			
 			self.pack_lock.acquire()
 			self.pack_running = self.pack_running + 1
