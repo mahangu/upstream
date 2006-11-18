@@ -45,35 +45,36 @@ try:
 except:
 	sys.exit(1)
 
-def popup_action(dialog, response_id, url):
-	print response_id
-	# There must be some convention for these response_id's ...
-	if response_id == 6094:
-		# Copy the result to the clipboard
-		clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
-		clipboard.set_text(url)
-		clipboard.store()
-	else:
-		sys.exit(0) # eww
-	
+
 class PopUp(gtk.Dialog):
 	"""Return the resulting url to the user"""
-	# This is all temporary until we can impliment a proper status bar
+	# This is all temporary until we can implement a proper status bar
 
 	def __init__(self, url):
-
 		gtk.Dialog.__init__(self, "Success", None, gtk.DIALOG_MODAL, (gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE))
 		label = gtk.Label("Your submission can be found at:")
 		self.vbox.pack_start(label, False, False, 5)
-		url_show = gtk.Entry()
-		url_show.set_text(url)
-		url_show.set_editable(False)
+		url_show = gtk.Label(url)
+		url_show.set_selectable(True)
 		self.vbox.pack_start(url_show, True, False, 5)
 		
+		self.set_icon_from_file('./upstream.png')
+
 		self.show_all()
 
-class CanoeGTK:
-	"""This is the canoe frontend for Upstream"""
+	def popup_action(self, dialog, response_id, url):
+		print response_id
+		# There must be some convention for these response_id's ...
+		if response_id == 6094:
+			# Copy the result to the clipboard
+			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
+			clipboard.set_text(url)
+			clipboard.store()
+		else:
+			sys.exit(0)	#eww
+
+class Wizard:
+	"""Basic wizard functionaliy for Canoe"""
 
 	def __init__(self, log_modules, submit_modules):
 		self.log_modules = log_modules
@@ -89,7 +90,7 @@ class CanoeGTK:
 		# Set the username as the default nickname
 		self.wTree.get_widget("entry_nickname").set_text(getuser())
 
-		# Create our dictionay and connect it
+		# Create our dictionary and connect it
 		dic = { "on_btnNext_clicked" : self.btnNext_clicked,
 				"on_btnBack_clicked" : self.btnBack_clicked,
 				"on_btnCancel_clicked" : self.destroy,
@@ -151,45 +152,34 @@ class CanoeGTK:
 		next = self.wTree.get_widget("btnNext")
 		
 		# Make the "back" button inactive if we are coming from the second page
-		if nb.get_current_page() is 1:
+		if nb.get_current_page() == 1:
 			back.set_sensitive(False)
 
 		# Change the "finish" button to a "next" button if we are coming from the last page
-		if nb.get_current_page() is nb.get_n_pages()-1:
+		if nb.get_current_page() == nb.get_n_pages()-1:
 			next.set_label("gtk-go-forward")
 
 		nb.prev_page()
 
 	def btnNext_clicked(self, widget):
+		# we should just make these self.win, ...
+		win = self.wTree.get_widget("MainWindow")
 		nb = self.wTree.get_widget("MainNotebook")
 		back = self.wTree.get_widget("btnBack")
 		next = self.wTree.get_widget("btnNext")
 
-		# Run the submit code if we are on the last page
-		if nb.get_current_page() is nb.get_n_pages()-1:
-			nickname = self.get_nickname()
-			support_logs = self.get_support_logs()
-			support_msg = self.get_support_msg()
-			module = self.get_module()
-			#print nickname, support_logs, support_msg, module  # debug print 
-
-			# TODO: We need to update this to use threading
-			result = module.execute(nickname, support_msg, support_logs)
-			popup = PopUp(result.result_url)
-			popup.connect("response", popup_action, result.result_url)
-
-			# TODO: We are exiting for now but we should give the user some confirmation beforehand
-			#sys.exit(0)
+		if nb.get_current_page() == nb.get_n_pages()-1:
+			win.set_sensitive(False)
 
 		# Go to the next page if we aren't on the last page
 		else:
 			# Make the "back" button active if we are coming from the first page
-			if nb.get_current_page() is 0:
+			if nb.get_current_page() == 0:
 				back.set_sensitive(True)
 				self.wTree.get_widget("entry_nickname").grab_focus()
 
 			# Change the "next" button to a "finish" button if we are going to the last page
-			if nb.get_current_page() is nb.get_n_pages()-2:
+			if nb.get_current_page() == nb.get_n_pages()-2:
 				next.set_label("gtk-ok")
 
 			nb.next_page()
@@ -221,16 +211,42 @@ class CanoeGTK:
 		return module
 
 
+class Canoe(Wizard):
+	"""This is the canoe front-end for Upstream"""
+
+	def __init__(self, log_modules, submit_modules):
+		Wizard.__init__(self, log_modules, submit_modules)
+
+	def btnNext_clicked(self, widget):
+		nb = self.wTree.get_widget("MainNotebook")
+		# Run the submit code if we are on the last page
+		if nb.get_current_page() == nb.get_n_pages()-1:
+			nickname = self.get_nickname()
+			support_logs = self.get_support_logs()
+			support_msg = self.get_support_msg()
+			module = self.get_module()
+
+			# TODO: We need to update this to use threading
+			# TODO: Handle success == False from submit module execution appropriately
+			result = module.execute(nickname, support_msg, support_logs)
+			popup = PopUp(result.result_url)
+			popup.connect("response", popup.popup_action, result.result_url)
+		
+		Wizard.btnNext_clicked(self, widget)
+	
 	def main(self):
 		gtk.main()
 	def destroy(self, widget):
 		gtk.main_quit()
 
+
+
 if __name__ == "__main__":
 	# Initialize
-	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, submitmoduleloader.moduleloader.DEBUG_ALL)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
+	# Fault Tolerance should be on for releases
+	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, logmoduleloader.moduleloader.DEBUG_ALL)
 
 	# Load the GUI
-	canoe = CanoeGTK(log_modules, submit_modules)
+	canoe = Canoe(log_modules, submit_modules)
 	canoe.main()
