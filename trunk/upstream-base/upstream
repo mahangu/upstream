@@ -90,9 +90,9 @@ def main():
 		
 if __name__ == "__main__": 
 	
-	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], False, logmoduleloader.moduleloader.DEBUG_ALL)
+	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], True)
 
-	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True)
 	
 	main()
 
