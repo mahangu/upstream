@@ -46,29 +46,67 @@ except:
 	sys.exit(1)
 
 
+# should we use gtk.Dialog.run()?
 class PopUp(gtk.Dialog):
 	"""Return the resulting url to the user"""
-	# This is all temporary until we can implement a proper status bar
 
-	def __init__(self, url):
-		gtk.Dialog.__init__(self, "Success", None, gtk.DIALOG_MODAL, (gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE))
-		label = gtk.Label("Your submission can be found at:")
-		self.vbox.pack_start(label, False, False, 5)
-		url_show = gtk.Label(url)
-		url_show.set_selectable(True)
-		self.vbox.pack_start(url_show, True, False, 5)
-		
+	def __init__(self):
+		self.url = None
+
+		gtk.Dialog.__init__(self, "Submission", None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		self.progress_bar = gtk.ProgressBar()
+		self.vbox.pack_start(self.progress_bar, False, False, 5)
 		self.set_icon_from_file('./upstream.png')
+		self.show_progress()
+		self.connect("response", self.action)
 
+	def show_progress(self):
+		# TODO: make initial button list empty, and do all the adding in here
 		self.show_all()
 
-	def popup_action(self, dialog, response_id, url):
+	def show_success(self):
+		self.destroy_all()
+		label = gtk.Label("Your submission can be found at:")
+		self.vbox.pack_start(label, False, False, 5)
+		url_show = gtk.Label(self.get_url())
+		url_show.set_selectable(True)
+		self.vbox.pack_start(url_show, True, False, 5)
+		self.add_buttons(gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+		self.show_all()
+
+	def show_failure(self):
+		pass
+
+	def destroy_all(self):
+		"""destroy all existing widgets inside the popup dialog"""
+
+		# Instead: 
+		# destroy all in vbox that are not _the_ action_area or seperator
+		self.vbox.remove(self.progress_bar)
+		self.action_area.foreach(self.action_area.remove)
+
+	def handle_complete(self, result, user_data):
+		self.set_url(result.result_url)
+		self.show_success()
+
+	def set_url(self, url):
+		self.url = url
+
+	def get_url(self):
+		return self.url
+
+	def pulse(self):
+		# What if there is no progress bar...?
+		self.progress_bar.pulse()
+
+	# TODO: handle cancel
+	def action(self, dialog, response_id):
 		print response_id
 		# There must be some convention for these response_id's ...
 		if response_id == 6094:
 			# Copy the result to the clipboard
 			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
-			clipboard.set_text(url)
+			clipboard.set_text(self.get_url())
 			clipboard.store()
 		else:
 			sys.exit(0)	#eww
@@ -97,6 +135,10 @@ class Wizard:
 				"on_MainWindow_destroy" : self.destroy }
 		self.wTree.signal_autoconnect(dic)
 
+		self.win = self.wTree.get_widget("MainWindow")
+		self.nb = self.wTree.get_widget("MainNotebook")
+		self.back = self.wTree.get_widget("btnBack")
+		self.next = self.wTree.get_widget("btnNext")
 
 	def __gui_add_logs(self):
 		"""Create the checkboxes for selecting logs"""
@@ -147,42 +189,32 @@ class Wizard:
 		label_url.set_text(module.module_submit_url)
 
 	def btnBack_clicked(self, widget):
-		nb = self.wTree.get_widget("MainNotebook")
-		back = self.wTree.get_widget("btnBack")
-		next = self.wTree.get_widget("btnNext")
-		
 		# Make the "back" button inactive if we are coming from the second page
-		if nb.get_current_page() == 1:
-			back.set_sensitive(False)
+		if self.nb.get_current_page() == 1:
+			self.back.set_sensitive(False)
 
 		# Change the "finish" button to a "next" button if we are coming from the last page
-		if nb.get_current_page() == nb.get_n_pages()-1:
-			next.set_label("gtk-go-forward")
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			self.next.set_label("gtk-go-forward")
 
-		nb.prev_page()
+		self.nb.prev_page()
 
 	def btnNext_clicked(self, widget):
-		# we should just make these self.win, ...
-		win = self.wTree.get_widget("MainWindow")
-		nb = self.wTree.get_widget("MainNotebook")
-		back = self.wTree.get_widget("btnBack")
-		next = self.wTree.get_widget("btnNext")
-
-		if nb.get_current_page() == nb.get_n_pages()-1:
-			win.set_sensitive(False)
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			self.win.set_sensitive(False)
 
 		# Go to the next page if we aren't on the last page
 		else:
 			# Make the "back" button active if we are coming from the first page
-			if nb.get_current_page() == 0:
-				back.set_sensitive(True)
+			if self.nb.get_current_page() == 0:
+				self.back.set_sensitive(True)
 				self.wTree.get_widget("entry_nickname").grab_focus()
 
 			# Change the "next" button to a "finish" button if we are going to the last page
-			if nb.get_current_page() == nb.get_n_pages()-2:
-				next.set_label("gtk-ok")
+			if self.nb.get_current_page() == self.nb.get_n_pages()-2:
+				self.next.set_label("gtk-ok")
 
-			nb.next_page()
+			self.nb.next_page()
 
 	# Helper functions
 	def get_nickname(self):
@@ -218,27 +250,38 @@ class Canoe(Wizard):
 		Wizard.__init__(self, log_modules, submit_modules)
 
 	def btnNext_clicked(self, widget):
-		nb = self.wTree.get_widget("MainNotebook")
+		self.nb = self.wTree.get_widget("MainNotebook")
 		# Run the submit code if we are on the last page
-		if nb.get_current_page() == nb.get_n_pages()-1:
-			nickname = self.get_nickname()
-			support_logs = self.get_support_logs()
-			support_msg = self.get_support_msg()
-			module = self.get_module()
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			popup = PopUp()
 
-			# TODO: We need to update this to use threading
+			nickname = self.get_nickname()
+			popup.pulse()
+			support_logs = self.get_support_logs()
+			popup.pulse()
+			support_msg = self.get_support_msg()
+			popup.pulse()
+			module = self.get_module()
+			popup.pulse()
+
+			# TODO: progress bar does not pulsate during submission
+			# Maybe start a new thread here to pulse the progress bar until
+			# the submission is complete?
+
 			# TODO: Handle success == False from submit module execution appropriately
-			result = module.execute(nickname, support_msg, support_logs)
-			popup = PopUp(result.result_url)
-			popup.connect("response", popup.popup_action, result.result_url)
+			result = module.executeThreaded(nickname, support_msg, support_logs, popup.handle_complete)
+			print result
 		
 		Wizard.btnNext_clicked(self, widget)
 	
 	def main(self):
+		gtk.gdk.threads_init()
+		gtk.gdk.threads_enter()
 		gtk.main()
+		gtk.gdk.threads_leave()
+
 	def destroy(self, widget):
 		gtk.main_quit()
-
 
 
 if __name__ == "__main__":
