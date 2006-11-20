@@ -19,11 +19,14 @@
 
 import sys, threading, time
 
-FIELD_TYPES = ("string", "password", "selection", "toggle")
-MESSAGE_TYPES = ("information", "error", "request")		
 
+MESSAGE_TYPES = ("information", "error", "request")	
+REQUEST_TYPES = ("undefined", "password", "log")	
+FIELD_TYPES = ("string", "password", "selection", "toggle", "log")
+		
 class Message:
 	def __init__(self, m_type, title, message):
+				
 		self._m_type = m_type
 		self._title = title
 		self._message = message
@@ -32,8 +35,52 @@ class Message:
 	def gettitle(self): return self._title
 	def getmessage(self): return self._message
 		
-class Request(Message):
-	def __init__(self, title, message):
-		Message.__init__(self, MESSAGE_TYPES[2], title, message)
+# A req field should be of type (field name, field type, field_add_data)
+class UndefinedRequest(Message):
+	def __init__(self, title, message, req_fields):
+		Message.__init__(self, MESSAGE_TYPES[2], title, message, r_type = REQUEST_TYPES[0])
+		# TODO: possible validation of req_fields?
+		self.req_fields = req_fields
+		self.ans_fields = [None for x in self.req_fields]
+		self.request_type = r_type
+		
+	# Returns whether or not answering was successful
+	def answerByName(self, name, answer):
+		found = False
+		for x in range(0, len(self.req_fields)):
+			if self.req_fields[x][0] == name:
+				found = True
+				self.ans_fields[x] == answer
+				
+		return found
+				
+class PasswordRequest(UndefinedRequest):
+	def __init__(self, title, message, req_uname):
+		if req_uname:
+			req_fields = [("Username", "string", None), ("Password", "password", None)]
+		else:
+			req_fields = [("Password", "password", None)]
+			
+		UndefinedRequest.__init__(self, title, message, req_fields)
+		
+	def hasUsername(self):
+		for x in self.req_fields:
+			if x[0] == "Username":
+				return True
+		return False
+		
+	def answerUsername(self, uname):
+		return self.answerByName("Username", uname)
+		
+	def answerPassword(self, pword):
+		return self.answerByName("Password", pword)
+		
+class LogRequest(UndefinedRequest):
+	def __init__(self):
+		UndefinedRequest.__init__("Log Request", "All your log are belong to us", ("log", "log", None))
+		
+	def answerLogs(self, log):
+		return answerByName("log", log)
+	
 		
 		
