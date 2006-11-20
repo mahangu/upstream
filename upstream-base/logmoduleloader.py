@@ -22,48 +22,38 @@ import moduleloader, sys, threading, time
 # Log modules should do whatever they feel like and return a tuple of the form
 # ( logname, logcontents )
 
-class DupLogLoadError(Exception):
-	def __init__(self, log):
-		self.log = log
-	def __str__(self):
-		return "Log: %s was loaded twice"
-
 class LogModule(moduleloader.LoadedModule):
 	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
 		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
 		self.log_path = self.module.log_path
 		self.category = self.module.category
-		self.prev_exec = False
+		self.previous_load = False
 			
-	def execute(self):
-		if not self.prev_exec:
-			self.prev_exec = True
-			try:
-				self.result =  self.module.execute()
-				if not isinstance(self.result, tuple) or len(self.result) != 2:
-					if self.debug_output >= moduleloader.DEBUG_ALL:
-						print "Incorrect return from module"
-					return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
-				else:
-					if self.debug_output >= moduleloader.DEBUG_ALL:
-						print "Success loading log %s: %s" % (self.module_name, self.log_path)
-					return self.result
-				
-			except:
+	def execute(self):		
+		self.previous_load = True
+		try:
+			self.result =  self.module.execute()
+			if not isinstance(self.result, tuple) or len(self.result) != 2:
 				if self.debug_output >= moduleloader.DEBUG_ALL:
-					print "Error in execution of %s" % self.module_name
-					print sys.exc_info()[0]
-					
-				if self.fault_tolerance:
-					self.result = "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
-					return self.result
-				else:
-					raise
-		else:
-			if self.fault_tolerance:
-				return self.module_name, "Duplicate log entry!"
+					print "Incorrect return from module"
+				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
 			else:
-				raise DupLogLoadError(self.log_path)
+				if self.debug_output >= moduleloader.DEBUG_ALL:
+					print "Success loading log %s: %s" % (self.module_name, self.log_path)
+				return self.result
+			
+		except:
+			if self.debug_output >= moduleloader.DEBUG_ALL:
+				print "Error in execution of %s" % self.module_name
+				print sys.exc_info()[0]
+				
+			if self.fault_tolerance:
+				self.result = "Error in module loader %s: %s " % (self.module_name, self.log_path), "Error"
+				return self.result
+			else:
+				raise
+		
+			
 				
 	
 	# If used complete hander should be of type method(result, user_data)
