@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.0.2 on Fri Nov  3 19:14:53 2006 by jasonr@luso-->
+<!--Generated with glade3 3.0.2 on Mon Nov 20 23:30:14 2006 by jasonr@luso-->
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
@@ -23,7 +23,7 @@
                 <child>
                   <widget class="GtkLabel" id="label1">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Canoe Introduction&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Introduction&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                   </widget>
                   <packing>
@@ -33,7 +33,7 @@
                 <child>
                   <widget class="GtkLabel" id="label2">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">This program will assist you in sending troubleshooting data to aid support personnel in diagnosing problems on your system.</property>
+                    <property name="label" translatable="yes">This program will assist you in sending troubleshooting data to support personnel.</property>
                     <property name="wrap">True</property>
                   </widget>
                   <packing>
@@ -57,7 +57,7 @@
                 <child>
                   <widget class="GtkLabel" id="label3">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Nickname&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Name&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                   </widget>
                   <packing>
@@ -72,7 +72,7 @@
                       <widget class="GtkLabel" id="label4">
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Please enter a nickname:</property>
+                        <property name="label" translatable="yes">Please enter your name.</property>
                       </widget>
                     </child>
                     <child>
@@ -144,7 +144,7 @@
                         <child>
                           <widget class="GtkLabel" id="label6">
                             <property name="visible">True</property>
-                            <property name="label" translatable="yes">Please select categories this problem affects</property>
+                            <property name="label" translatable="yes">What are you having trouble with?</property>
                             <property name="use_markup">True</property>
                           </widget>
                           <packing>
@@ -163,7 +163,7 @@
                           <widget class="GtkLabel" id="label7">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Please enter a description of the problem as well</property>
+                            <property name="label" translatable="yes">Please enter short description of the problem.</property>
                             <property name="use_markup">True</property>
                           </widget>
                         </child>
@@ -241,7 +241,7 @@
                       <widget class="GtkLabel" id="label12">
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Please select the server to submit troubleshooting data to:</property>
+                        <property name="label" translatable="yes">Please select a server to submit to.</property>
                       </widget>
                     </child>
                     <child>
@@ -250,7 +250,7 @@
                     <child>
                       <widget class="GtkLabel" id="label_submit_name">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">name</property>
+                        <property name="label">name</property>
                       </widget>
                       <packing>
                         <property name="position">2</property>
@@ -259,7 +259,7 @@
                     <child>
                       <widget class="GtkLabel" id="label_submit_description">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">description</property>
+                        <property name="label">description</property>
                       </widget>
                       <packing>
                         <property name="position">3</property>
@@ -268,7 +268,7 @@
                     <child>
                       <widget class="GtkLabel" id="label_submit_url">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">submit url</property>
+                        <property name="label">submit url</property>
                       </widget>
                       <packing>
                         <property name="position">4</property>

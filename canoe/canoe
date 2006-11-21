@@ -258,6 +258,7 @@ class Canoe(Wizard):
 			nickname = self.get_nickname()
 			popup.pulse()
 			support_logs = self.get_support_logs()
+			print support_logs.keys() # debug
 			popup.pulse()
 			support_msg = self.get_support_msg()
 			popup.pulse()
