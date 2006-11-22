@@ -20,7 +20,7 @@
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 # TODO replace all calls of len(threadpool_name) with a semaphore
 
-import glob, sys, os, threading, time
+import glob, sys, os, threading, time, imp, md5
 
 
 
@@ -31,6 +31,10 @@ MLOAD_HAS_NONSTR = 2
 DEBUG_NONE = 0
 DEBUG_ALL = 1
 
+HASH_TRUSTED = 0
+HASH_UNTRUSTED = 1
+HASH_DANGEROUS = 2
+
 # Perhaps this will change later
 THREAD_POOL_MAX = 5
 
@@ -40,15 +44,16 @@ class LoadedModule(threading.Thread):
 	debug_output = DEBUG_NONE
 	# This expects the module fields to already exist
 	# Note: any new module wrappers must have this exact argument list
-	def __init__(self, module, fault_tolerance, debug_output):
+	def __init__(self, module, trust_level, fault_tolerance, debug_output):
 		threading.Thread.__init__(self)
 		self.fault_tolerance = fault_tolerance
 		self.debug_output = debug_output
 		self.module = module
+		self.trust_level = trust_level
 		self.module_name = self.module.module_name
 		self.module_description = self.module.module_description
 	def __repr__(self):
-		return "< loaded module with name : %s >" % self.module_name
+		return "<loaded module : %s with trust %d>" % (self.module, self.trust_level)
 		
 
 class PackageImporter(threading.Thread):
@@ -73,21 +78,22 @@ class PackageImporter(threading.Thread):
 					print "Exception thrown: %s" % sys.exc_info()[0]
 				except:
 					print "Exception thrown: %s" % sys.exc_info()[0]					
-				self.parent.load_queue.append(getattr(imp_pack, plugin_name))
+				
+				# Stick in a tuple with the module and the package
+				self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))
 				
 				self.parent.found_lock.acquire()
 				self.parent.total_found_mod = self.parent.total_found_mod + 1
 				self.parent.found_lock.release()
 				
+			# When done, mark ourselves as successfully finished
+			self.parent.valid_lock.acquire()
+			self.parent.pack_running = self.parent.pack_running - 1
+			self.parent.valid_lock.release()
 		except:
 			# We lost the whole package for some reason
 			print "Exception thrown: %s" % sys.exc_info()[0]
-			
-			
-		# When done pop ourselves off the stack
-		self.parent.valid_lock.acquire()
-		self.parent.pack_running = self.parent.pack_running - 1
-		self.parent.valid_lock.release()
+			print sys.exc_info()[1]				
 		
 		if self.debug_output >= DEBUG_ALL:
 			print "Ending threading importer on package %s" % self.package
@@ -108,25 +114,65 @@ class GenericValidator(threading.Thread):
 	def run(self):
 		while self.parent.pack_running > 0 or len(self.parent.load_queue) > 0:
 			if len(self.parent.load_queue) > 0:
-				# Get a module and validate it
-				module = self.parent.load_queue.pop(0)
-				if self.debug_output >= 1:
-					print "Validating module: %s" % module
-				if self.validate_module(module):
-					self.parent.valid_modules.append(self.ModuleWrapper(module, self.fault_tolerance, self.debug_output))
+				try:
+					# Get a module and validate it
+					m_tuple = self.parent.load_queue.pop(0)
 					
-					self.parent.loaded_lock.acquire()
-					# Not really loaded, but processed
-					self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
-					self.parent.loaded_lock.release()
+					module = m_tuple[0]
+					package = m_tuple[1]
+					
+					trust_level = self.md5_verify(module, package)
+					
+					if self.debug_output >= 1:
+						print "Validating module: %s" % module
+					if self.validate_module(module):
+						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))					
+						self.parent.loaded_lock.acquire()
+						# Not really loaded, but processed
+						self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
+						self.parent.loaded_lock.release()
+				except:
+					# We lost the import for some reason
+					print "Exception thrown: %s" % sys.exc_info()[0]
+					print sys.exc_info()[1]	
 			else:
 				time.sleep(0.01)
 				
 		self.parent.valid_lock.acquire()
 		self.parent.valid_running = self.parent.valid_running - 1
-		self.parent.valid_lock.release()		
+		self.parent.valid_lock.release()				
 		
-								
+	def md5_verify(self, module, pacakge):
+		md5er = md5.new()
+		
+		fp = open(module.__file__)				
+		d = fp.read(1024)
+		while d:
+			md5er.update(d)
+			d = fp.read(1024)
+		fp.close()
+		
+		m_hex = md5er.hexdigest()
+		
+		end_str = ""
+		if module.__file__.rfind(".pyc") != -1:
+			end_str = "pyc"
+		elif module.__file__.rfind(".py") != -1:
+			end_str = "py"		
+		else:
+			end_str = "pyo"
+		
+		# TODO: Once the conf file reading is in place
+		# uconf.somefunc(package, module.__name__, end_str)
+		md5sum = None
+		if md5sum == m_hex:
+			return HASH_TRUSTED
+		elif md5sum == None:
+			return HASH_UNTRUSTED
+		else:
+			return HASH_DANGEROUS
+			
+		
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
 		if self.debug_output >= DEBUG_ALL:

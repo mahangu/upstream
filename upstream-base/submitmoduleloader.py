@@ -57,8 +57,8 @@ class SubmitModule(moduleloader.LoadedModule):
 	email = ""
 	message = ""
 	log_dict = ""
-	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
+	def __init__(self, module, trust_level, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
+		moduleloader.LoadedModule.__init__(self, module, trust_level, fault_tolerance, debug_output)
 		self.module_submit_url = self.module.module_submit_url
 		
 	def execute(self, email, message, log_dict):
