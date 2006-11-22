@@ -23,8 +23,8 @@ import moduleloader, sys, threading, time
 # ( logname, logcontents )
 
 class LogModule(moduleloader.LoadedModule):
-	def __init__(self, module, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.LoadedModule.__init__(self, module, fault_tolerance, debug_output)
+	def __init__(self, module, trust_level, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
+		moduleloader.LoadedModule.__init__(self, module, trust_level, fault_tolerance, debug_output)
 		self.log_path = self.module.log_path
 		self.category = self.module.category
 		self.previous_load = False
