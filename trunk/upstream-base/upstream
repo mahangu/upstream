@@ -30,7 +30,14 @@ def main():
 	
 	#Step 2
 	nickname = getuser()
-	(code, nickname) = d.inputbox("Please enter your nickname", init="%s"%(nickname))
+	upnickname = ""
+	
+	while upnickname == "":
+		(code, upnickname) = d.inputbox("Please enter your nickname", init="%s"%(nickname))
+		
+		if upnickname == "":
+			d.msgbox("Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program.")
+			
 	
 
 	
@@ -43,24 +50,28 @@ def main():
 		catchoices.append(catentry)
 	
 	
-		
-	
-	(code, categories) = d.checklist(text="Please select categories this problem affects",
-                                  height=15, width=54, list_height=7, 
-                                  choices=catchoices,
-                                  title="Problem Description")
-	
-	
 	log_dict = {}
-	
-	for x in categories:
-		category = log_modules.getModulesInCategory(x)
 		
-		for log_module in category:
-			module = log_modules[log_module.module_name]
-			(name, contents) = module.execute()
-			log_dict[name] = contents 
-	
+	while log_dict == {}:
+		(code, categories) = d.checklist(text="Please select categories this problem affects",
+					height=15, width=54, list_height=7, 
+					choices=catchoices,
+					title="Problem Description")
+		
+		
+		
+		
+		for x in categories:
+			category = log_modules.getModulesInCategory(x)
+			
+			for log_module in category:
+				module = log_modules[log_module.module_name]
+				(name, contents) = module.execute()
+				log_dict[name] = contents 
+		
+		if log_dict == {}:
+			d.msgbox("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program.")
+		
 	
 	(code, description) = d.inputbox("Please enter a description of the problem as well", init="")
 	
@@ -74,10 +85,15 @@ def main():
 		modchoices.append(modentry)
 		print modentry
 	
-	(code, pastebin) = d.radiolist(text="Please select the server to submit troubleshooting data to.",
-                                  height=15, width=54, list_height=7, 
-                                  choices=modchoices,
-                                  title="Submit")
+	pastebin = ""
+	
+	while pastebin == "":
+		(code, pastebin) = d.radiolist(text="Please select the server to submit troubleshooting data to.",
+                	                  height=15, width=54, list_height=7, 
+                        	          choices=modchoices,
+                                	  title="Submit")
+		if pastebin == "":
+			d.msgbox("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program.")
 				  
 	
 	print pastebin
