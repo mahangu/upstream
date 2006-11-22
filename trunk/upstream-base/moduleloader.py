@@ -172,7 +172,9 @@ class GenericValidator(threading.Thread):
 		name_split = regex.split(module.__name__)
 		name = name_split[len(name_split) - 1]
 		md5sum = self.plugin_config.get_md5(package, name, end_str)
-		print "expected md5 %s\nreal md5 %s" % (md5sum, m_hex)
+		if self.debug_output >= 1:
+			print "%s md5 expected %s" % (module.__name__, md5sum)
+			print "%s md5 real %s" % (module.__name__, m_hex)
 		if md5sum == m_hex:
 			return HASH_TRUSTED
 		elif md5sum == None:
