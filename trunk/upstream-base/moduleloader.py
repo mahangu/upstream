@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
-# TODO replace all calls of len(threadpool_name) with a semaphore
+
 
 import glob, sys, os, threading, time, imp, md5
 
@@ -74,11 +74,11 @@ class PackageImporter(threading.Thread):
 					print "Importing: %s" % self.package + "." + plugin_name
 				try:
 					__import__(self.package + "." + plugin_name)
-				except Error:
-					print "Exception thrown: %s" % sys.exc_info()[0]
-				except:
+					
+				except Exception, e:
 					print "Exception thrown: %s" % sys.exc_info()[0]					
-				
+					print e
+					
 				# Stick in a tuple with the module and the package
 				self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))
 				
@@ -90,10 +90,10 @@ class PackageImporter(threading.Thread):
 			self.parent.valid_lock.acquire()
 			self.parent.pack_running = self.parent.pack_running - 1
 			self.parent.valid_lock.release()
-		except:
+		except Exception, e:
 			# We lost the whole package for some reason
 			print "Exception thrown: %s" % sys.exc_info()[0]
-			print sys.exc_info()[1]				
+			print e				
 		
 		if self.debug_output >= DEBUG_ALL:
 			print "Ending threading importer on package %s" % self.package
@@ -104,9 +104,10 @@ class GenericValidator(threading.Thread):
 	necessary_attr_types = [str, str]
 	ModuleWrapper = LoadedModule
 	
-	def __init__(self, parent, fault_tolerance, debug_output):
+	def __init__(self, parent, plugin_config, fault_tolerance, debug_output):
 		threading.Thread.__init__(self)
 		self.parent = parent
+		self.plugin_config = plugin_config
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
 		
@@ -131,6 +132,10 @@ class GenericValidator(threading.Thread):
 						# Not really loaded, but processed
 						self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
 						self.parent.loaded_lock.release()
+				except Error:
+					# We lost the import for some reason
+					print "Exception thrown: %s" % sys.exc_info()[0]
+					print sys.exc_info()[1]	
 				except:
 					# We lost the import for some reason
 					print "Exception thrown: %s" % sys.exc_info()[0]
@@ -142,7 +147,7 @@ class GenericValidator(threading.Thread):
 		self.parent.valid_running = self.parent.valid_running - 1
 		self.parent.valid_lock.release()				
 		
-	def md5_verify(self, module, pacakge):
+	def md5_verify(self, module, package):
 		md5er = md5.new()
 		
 		fp = open(module.__file__)				
@@ -164,7 +169,7 @@ class GenericValidator(threading.Thread):
 		
 		# TODO: Once the conf file reading is in place
 		# uconf.somefunc(package, module.__name__, end_str)
-		md5sum = None
+		md5sum = self.plugin_config.get_md5(package, module.__name__, end_str)
 		if md5sum == m_hex:
 			return HASH_TRUSTED
 		elif md5sum == None:
@@ -218,9 +223,10 @@ class ModuleLoader:
 	# New classes should override the ModuleWrapper item
 	ValidatorClass = GenericValidator
 	ModuleWrapper = LoadedModule
-	def __init__(self, pack_list, fault_tolerance, debug_output=DEBUG_NONE, thread_pool_size = THREAD_POOL_MAX):
+	def __init__(self, plugin_config, fault_tolerance, debug_output=DEBUG_NONE, thread_pool_size = THREAD_POOL_MAX):
 		# Chain up
-		self.pack_list = pack_list
+		self.plugin_config = plugin_config
+				
 		self.debug_output = debug_output
 		self.fault_tolerance = fault_tolerance
 		self.thread_pool_size = thread_pool_size
@@ -241,7 +247,7 @@ class ModuleLoader:
 		self.total_loaded_mod = 0
 		
 		# Initialize the loaders	
-		for pack in self.pack_list:
+		for pack in self.plugin_config.get_all_packages():
 			pack_thread = PackageImporter(self, pack, self.debug_output)
 			
 			self.pack_lock.acquire()
@@ -252,7 +258,7 @@ class ModuleLoader:
 			pack_thread.start()
 			
 		for x in range(0, self.thread_pool_size):
-			validate_thread = self.ValidatorClass(self, self.fault_tolerance, self.debug_output)
+			validate_thread = self.ValidatorClass(self, self.plugin_config, self.fault_tolerance, self.debug_output)
 			
 			self.valid_lock.acquire()
 			self.valid_running = self.valid_running + 1

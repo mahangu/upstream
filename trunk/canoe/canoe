@@ -288,8 +288,11 @@ class Canoe(Wizard):
 if __name__ == "__main__":
 	# Initialize
 	# Fault Tolerance should be on for releases
-	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], True, submitmoduleloader.moduleloader.DEBUG_ALL)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True, logmoduleloader.moduleloader.DEBUG_ALL)
+	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
+
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 
 	# Load the GUI
 	canoe = Canoe(log_modules, submit_modules)

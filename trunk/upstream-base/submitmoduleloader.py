@@ -115,8 +115,8 @@ class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]
 	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str]
 	ModuleWrapper = SubmitModule
-	def __init__(self, parent, fault_tolerance, debug_output):
-		moduleloader.GenericValidator.__init__(self, parent, fault_tolerance, debug_output)
+	def __init__(self, parent, plugin_conf, fault_tolerance, debug_output):
+		moduleloader.GenericValidator.__init__(self, parent, plugin_conf, fault_tolerance, debug_output)
 	
 	def validate_additional(self, module):
 		valid_hook = self.validate_execution_hook(module, "execute", 3)

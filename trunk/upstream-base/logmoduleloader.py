@@ -74,8 +74,8 @@ class LogValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["log_path", "category"]
 	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str, list]
 	ModuleWrapper = LogModule
-	def __init__(self, parent, fault_tolerance, debug_output):
-		moduleloader.GenericValidator.__init__(self, parent, fault_tolerance, debug_output)
+	def __init__(self, parent, plugin_conf, fault_tolerance, debug_output):
+		moduleloader.GenericValidator.__init__(self, parent, plugin_conf, fault_tolerance, debug_output)
 			
 	def validate_additional(self, module):
 		return self.validate_execution_hook(module, "execute", 0) and self.validate_category_contains_str(module)

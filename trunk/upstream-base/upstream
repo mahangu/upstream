@@ -19,7 +19,7 @@
 
 import dialog, sys
 from getpass import getuser
-import  submitmoduleloader, logmoduleloader 
+import  submitmoduleloader, logmoduleloader, uconf
 
 import optparse, os, ConfigParser
 
@@ -180,10 +180,11 @@ def cli(options,args):
 if __name__ == "__main__": 
 	
 	log_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
-	
-	log_modules = logmoduleloader.LogModuleLoader(["log-modules"], True)
+	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
 
-	submit_modules = submitmoduleloader.SubmitModuleLoader(["submit-modules"], True)
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
 	
 	parser = optparse.OptionParser("%prog yourname \"Your support message\" [options]")
 	
