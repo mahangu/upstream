@@ -33,22 +33,21 @@ class PluginConfigReader:
 		if p_type == LOG:
 			for f_name in os.listdir(self._base_path + "/log-plugins.d/"):
 				if regex.match(f_name, 1):
-					print f_name
 					self._plugins_c.read(self._base_path + "/log-plugins.d/" + f_name)
 		else:
 			for f_name in os.listdir(self._base_path + "/submit-plugins.d/"):
 				if regex.match(f_name, 1):
-					print f_name
 					self._plugins_c.read(self._base_path + "/submit-plugins.d/" + f_name)
-		
-		print self._plugins_c.sections()
 	
 	def get_all_packages(self):
 		return self._plugins_c.sections()
 			
 	def get_md5(self, package, name, extension):
 		if self._plugins_c.has_section(package):
+			print "Has section"
+			print name + "_" + extension
 			if self._plugins_c.has_option(package, name + "_" + extension):
+				print "Has option"
 				md5 = self._plugins_c.get(package, name + "_" + extension)
 				return md5		
 		# We get through all the if's so we should return None
