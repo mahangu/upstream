@@ -20,7 +20,7 @@
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 
 
-import glob, sys, os, threading, time, imp, md5
+import glob, sys, os, threading, time, imp, md5, re
 
 
 
@@ -167,9 +167,12 @@ class GenericValidator(threading.Thread):
 		else:
 			end_str = "pyo"
 		
-		# TODO: Once the conf file reading is in place
-		# uconf.somefunc(package, module.__name__, end_str)
-		md5sum = self.plugin_config.get_md5(package, module.__name__, end_str)
+		# We may have imported from a package, so get rid of the .
+		regex = re.compile("\.")
+		name_split = regex.split(module.__name__)
+		name = name_split[len(name_split) - 1]
+		md5sum = self.plugin_config.get_md5(package, name, end_str)
+		print "expected md5 %s\nreal md5 %s" % (md5sum, m_hex)
 		if md5sum == m_hex:
 			return HASH_TRUSTED
 		elif md5sum == None:
