@@ -1,1 +1,1 @@
-__all__=["pastebindotca", "pastebindotcom", "red", "stub", "ubuntu", "rafb", "pastesite"]
+__all__=["pastebindotca", "pastebindotcom", "red", "stub", "ubuntu", "rafb", "pastesite", "pastecode"]

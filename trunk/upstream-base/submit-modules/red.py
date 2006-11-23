@@ -26,7 +26,7 @@ module_description = """Module for Redkrieg's pastebin. Much <3 to him for hosti
 module_submit_url = "http://pastebin.redkrieg.com?page=submit"
 
 
-def execute(submit_email, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, dict_of_logs):
 	global module_submit_url
 	
 	
@@ -49,7 +49,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	c = pycurl.Curl()
 	c.setopt(pycurl.URL, module_submit_url)
 	c.setopt(pycurl.POST, 1)
-	post_data = { 'subject': "Upstream<%s>"%submit_email, 'language': "1", 'code': submit_message + flat_log_type, 'nickname': "Upstream" }
+	post_data = { 'subject': "Upstream<%s>"%submit_name, 'language': "1", 'code': submit_message + flat_log_type, 'nickname': "Upstream" }
 	c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
 	c.setopt(pycurl.REFERER, referer)
 	clog = StringIO()
