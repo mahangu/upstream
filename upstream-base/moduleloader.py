@@ -68,16 +68,19 @@ class PackageImporter(threading.Thread):
 			imp_pack = __import__(self.package)
 			for plugin_name in imp_pack.__all__:
 				# This imports the module into imp_pack
+				if self.debug_output >= DEBUG_ALL:
+					print "Importing %s" % plugin_name
 				try:
-					__import__(self.package + "." + plugin_name)					
+					__import__(self.package + "." + plugin_name)	
+					# Stick in a tuple with the module and the package
+					self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
+					self.parent.found_lock.acquire()
+					self.parent.total_found_mod = self.parent.total_found_mod + 1
+					self.parent.found_lock.release()				
 				except Exception, e:
 					print "Exception thrown: %s" % sys.exc_info()[0]					
-					print e					
-				# Stick in a tuple with the module and the package
-				self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
-				self.parent.found_lock.acquire()
-				self.parent.total_found_mod = self.parent.total_found_mod + 1
-				self.parent.found_lock.release()
+					print e			
+				
 				
 			# When done, mark ourselves as successfully finished
 			self.parent.valid_lock.acquire()
@@ -108,28 +111,22 @@ class GenericValidator(threading.Thread):
 				try:
 					# Get a module and validate it
 					m_tuple = self.parent.load_queue.pop(0)
-					
 					module = m_tuple[0]
 					package = m_tuple[1]
-					
-					trust_level = self.md5_verify(module, package)
-					
+								
 					if self.debug_output >= 1:
 						print "Validating module: %s" % module
 					if self.validate_module(module):
+						trust_level = self.md5_verify(module, package)
 						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))					
 						self.parent.loaded_lock.acquire()
 						# Not really loaded, but processed
 						self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
 						self.parent.loaded_lock.release()
-				except Error:
+				except Exception, e:
 					# We lost the import for some reason
 					print "Exception thrown: %s" % sys.exc_info()[0]
-					print sys.exc_info()[1]	
-				except:
-					# We lost the import for some reason
-					print "Exception thrown: %s" % sys.exc_info()[0]
-					print sys.exc_info()[1]	
+					print e
 			else:
 				time.sleep(0.01)
 				

@@ -292,10 +292,10 @@ if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
-	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
+	log_loader = logmoduleloader.LogModuleLoader(l_config, True, 1)
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
+	submit_loader = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 	
 	main(sys.argv)
 
