@@ -65,23 +65,16 @@ class PackageImporter(threading.Thread):
 		
 	def run(self):
 		try:
-			if self.debug_output >= DEBUG_ALL:
-				print "Beginning threaded importer on package %s" % self.package
 			imp_pack = __import__(self.package)
 			for plugin_name in imp_pack.__all__:
 				# This imports the module into imp_pack
-				if self.debug_output >= DEBUG_ALL:
-					print "Importing: %s" % self.package + "." + plugin_name
 				try:
-					__import__(self.package + "." + plugin_name)
-					
+					__import__(self.package + "." + plugin_name)					
 				except Exception, e:
 					print "Exception thrown: %s" % sys.exc_info()[0]					
-					print e
-					
+					print e					
 				# Stick in a tuple with the module and the package
-				self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))
-				
+				self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
 				self.parent.found_lock.acquire()
 				self.parent.total_found_mod = self.parent.total_found_mod + 1
 				self.parent.found_lock.release()
@@ -94,10 +87,7 @@ class PackageImporter(threading.Thread):
 			# We lost the whole package for some reason
 			print "Exception thrown: %s" % sys.exc_info()[0]
 			print e				
-		
-		if self.debug_output >= DEBUG_ALL:
-			print "Ending threading importer on package %s" % self.package
-			
+
 # This is a worker class for validating modules. It idles and waits for a module
 class GenericValidator(threading.Thread):
 	necessary_attributes = ["module_name", "module_description"]
@@ -332,9 +322,9 @@ class ModuleLoader:
 			x.join()
 		if self.debug_output >= DEBUG_ALL:
 			if self.pack_running > 0:
-				print "ERROR: package importer crashed!"
+				print "ERROR: one or more package importers crashed!"
 			if self.pack_running > 0:
-				print "ERROR: module validator crashed!"
+				print "ERROR: one or more module validators crashed!"
 				
 
 class ModuleLoaderIterator:

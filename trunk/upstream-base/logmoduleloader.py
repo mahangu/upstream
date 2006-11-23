@@ -94,10 +94,7 @@ class LogGrouper(threading.Thread):
 		self.parent = parent
 		self.debug_output = debug_output
 				
-	def run(self):
-		if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-			print "Module validator pool size: %d" % self.parent.valid_running
-			
+	def run(self):			
 		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
 			self.parent.group_pool_lock.acquire()
 			if self.parent.group_status < self.parent.total_loaded_mod:
@@ -105,14 +102,11 @@ class LogGrouper(threading.Thread):
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
 				self.parent.group_pool_lock.release()
-		
-				
-				if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-					print "Grouping: %s with category %s" % (mod, mod.category)
+				print "Grouping module %s" % mod
 				for cat in mod.category:
 					if not cat in self.parent.module_groupings:
 						if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-							print "Group %s not found, adding" % cat
+							print " Group %s not found, adding" % cat
 							
 						self.parent.dict_lock.acquire()
 						self.parent.module_groupings[cat] = [mod]
@@ -120,7 +114,7 @@ class LogGrouper(threading.Thread):
 						
 					else:
 						if self.parent.debug_output >= moduleloader.DEBUG_ALL:
-							print "Group %s found, appending" % mod.category
+							print " Group %s found, appending" % mod.category
 							
 						self.parent.dict_lock.acquire()
 						self.parent.module_groupings[cat].append(mod)
@@ -161,16 +155,12 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		if self.module_groupings:
 			return self.module_groupings[cat]
 		else:
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Module Groupings aren't yet created (Thread inconsistency?)"
 			return None
 		
 	def getCategories(self):
 		if self.module_groupings:
 			return [category for category in self.module_groupings]
 		else:
-			if self.debug_output >= moduleloader.DEBUG_ALL:
-				print "Module Groupings aren't yet created (Thread inconsistency?)"
 			return None
 			
 	def getGroupCompleteRatio(self):
@@ -184,6 +174,6 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		for x in self.group_pool:
 			x.join()
 		if self.debug_output >= moduleloader.DEBUG_ALL and self.group_running > 0:
-			print "ERROR: group worker crashed!"
+			print "ERROR: one or more group workers crashed!"
 	
 	
