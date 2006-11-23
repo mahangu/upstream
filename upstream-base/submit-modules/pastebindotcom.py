@@ -26,7 +26,7 @@ module_description = """Module for pastebin.com"""
 module_submit_url = "http://pastebin.com"
 
 
-def execute(submit_email, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, dict_of_logs):
 	global module_submit_url
 	
 	print "Executing"
@@ -40,7 +40,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 	#	"d" - one day
 	#	"m" - one month (this is default on the web interface)
 	#	"f" - forever
-	post_data = { 'format' : "text", 'code2': submit_email + "\n" + submit_message + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
+	post_data = { 'format' : "text", 'code2': submit_name + "\n\n" + submit_message + "\n\n" + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
 
 	# Send the data
 	try:

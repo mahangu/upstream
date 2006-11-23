@@ -27,7 +27,7 @@ module_description = """Module for paste.ubuntu-nl.org"""
 module_submit_url = "http://paste.ubuntu-nl.org/"
 
 
-def execute(submit_email, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, dict_of_logs):
 	global module_submit_url
 	
 	print "Executing"
@@ -41,7 +41,7 @@ def execute(submit_email, submit_message, dict_of_logs):
 
 	# 'poster' cannot exceed 21 characters for paste.ubuntu-nl.org
 	# wrapping submit_message only at the moment to the default characters
-	post_data = { 'content': submit_email + "\n" + fill(submit_message) + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
+	post_data = { 'content': submit_name + "\n" + fill(submit_message) + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
 
 	# Send the data
 	try:
