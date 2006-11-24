@@ -4,6 +4,7 @@ Upstream 0.2.0 (Marlowe) - 27th November 2006
 ---------------------------------------------
 + Upstream-base now has a dialog based wizard interface, as well as the quick --flag option.
 + Modules are now checked against a list of known md5sums, to avoid hijacking.
+- Not all md5 sums are entered, nor is the user warned when an unvalidated module is used
 + More log-modules and submit-modules added.
 
 Upstream 0.1.0 (Chaucer) - 6th November 2006
