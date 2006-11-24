@@ -1,0 +1,299 @@
+#!/usr/bin/python
+#
+# Canoe - gtk frontend using glade for Upstream
+# log file aggregator and report tool for *nix systems.
+# Copyright (C) 2006  Jason Ribeiro <jason.ribeiro@gmail.com>
+# Based on canoe.py by Ryan Zeigler <zeiglerr@gmail.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
+
+# TODO: Fix spacing between widgets
+# TODO: use defaults in conf file
+
+import sys
+
+import ConfigParser, os
+
+config = ConfigParser.ConfigParser()
+config.readfp(open('/etc/upstream/canoe.conf'))
+gladepath = config.get("main", "gladepath")
+
+
+import logmoduleloader, submitmoduleloader
+from getpass import getuser
+
+try:
+	import pygtk
+	pygtk.require("2.0")
+except:
+	pass
+try:
+	import gtk
+	import gtk.glade
+except:
+	sys.exit(1)
+
+
+# should we use gtk.Dialog.run()?
+class PopUp(gtk.Dialog):
+	"""Return the resulting url to the user"""
+
+	def __init__(self):
+		self.url = None
+
+		gtk.Dialog.__init__(self, "Submission", None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		self.progress_bar = gtk.ProgressBar()
+		self.vbox.pack_start(self.progress_bar, False, False, 5)
+		self.set_icon_from_file('./upstream.png')
+		self.show_progress()
+		self.connect("response", self.action)
+
+	def show_progress(self):
+		# TODO: make initial button list empty, and do all the adding in here
+		self.show_all()
+
+	def show_success(self):
+		self.destroy_all()
+		label = gtk.Label("Your submission can be found at:")
+		self.vbox.pack_start(label, False, False, 5)
+		url_show = gtk.Label(self.get_url())
+		url_show.set_selectable(True)
+		self.vbox.pack_start(url_show, True, False, 5)
+		self.add_buttons(gtk.STOCK_COPY, 6094, gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+		self.show_all()
+
+	def show_failure(self):
+		pass
+
+	def destroy_all(self):
+		"""destroy all existing widgets inside the popup dialog"""
+
+		# Instead: 
+		# destroy all in vbox that are not _the_ action_area or seperator
+		self.vbox.remove(self.progress_bar)
+		self.action_area.foreach(self.action_area.remove)
+
+	def handle_complete(self, result, user_data):
+		self.set_url(result.result_url)
+		self.show_success()
+
+	def set_url(self, url):
+		self.url = url
+
+	def get_url(self):
+		return self.url
+
+	def pulse(self):
+		# What if there is no progress bar...?
+		self.progress_bar.pulse()
+
+	# TODO: handle cancel
+	def action(self, dialog, response_id):
+		print response_id
+		# There must be some convention for these response_id's ...
+		if response_id == 6094:
+			# Copy the result to the clipboard
+			clipboard = gtk.Clipboard(selection = 'CLIPBOARD')
+			clipboard.set_text(self.get_url())
+			clipboard.store()
+		else:
+			sys.exit(0)	#eww
+
+class Wizard:
+	"""Basic wizard functionaliy for Canoe"""
+
+	def __init__(self, log_modules, submit_modules):
+		self.log_modules = log_modules
+		self.submit_modules = submit_modules
+
+		# Set the Glade file
+		self.gladefile = gladepath  
+		self.wTree = gtk.glade.XML(self.gladefile) 
+
+		self.cat_dict = self.__gui_add_logs()
+		self.submits_combobox = self.__gui_add_submits()
+
+		# Set the username as the default nickname
+		self.wTree.get_widget("entry_nickname").set_text(getuser())
+
+		# Create our dictionary and connect it
+		dic = { "on_btnNext_clicked" : self.btnNext_clicked,
+				"on_btnBack_clicked" : self.btnBack_clicked,
+				"on_btnCancel_clicked" : self.destroy,
+				"on_MainWindow_destroy" : self.destroy }
+		self.wTree.signal_autoconnect(dic)
+
+		self.win = self.wTree.get_widget("MainWindow")
+		self.nb = self.wTree.get_widget("MainNotebook")
+		self.back = self.wTree.get_widget("btnBack")
+		self.next = self.wTree.get_widget("btnNext")
+
+	def __gui_add_logs(self):
+		"""Create the checkboxes for selecting logs"""
+
+		vbox = self.wTree.get_widget("vbox_problems")
+		self.log_modules.join()
+		categories = self.log_modules.getCategories()
+		cat_dict = dict([(cat, gtk.CheckButton(cat, False)) for cat in categories])
+		for cat in cat_dict:
+			vbox.pack_start(cat_dict[cat])
+		vbox.show_all()
+		return cat_dict
+
+	def __gui_add_submits(self):
+		"""Create the combobox for the pastebin modules"""
+
+		vbox = self.wTree.get_widget("vbox_modules")
+		combobox = gtk.combo_box_new_text()
+		vbox.pack_start(combobox)
+		# Join the thread since we are using threading
+		self.submit_modules.join()
+			
+		for module in self.submit_modules:
+			combobox.append_text(module.module_name)
+		vbox.reorder_child(combobox, 1)
+
+		# Set default value
+		# TODO: Read the conf file and use it to select the default
+	
+		combobox.connect("changed", self.submit_select_changed)
+		combobox.set_active(0)
+		#self.submit_select_changed(combobox)
+		vbox.show_all()
+		return combobox
+
+
+	# Callbacks
+	def submit_select_changed(self, widget):
+		label_name = self.wTree.get_widget("label_submit_name")
+		label_description = self.wTree.get_widget("label_submit_description")
+		label_url = self.wTree.get_widget("label_submit_url")
+
+		name = widget.get_active_text()
+		module = self.submit_modules[name]
+
+		label_name.set_text(module.module_name)
+		label_description.set_text(module.module_description)
+		label_url.set_text(module.module_submit_url)
+
+	def btnBack_clicked(self, widget):
+		# Make the "back" button inactive if we are coming from the second page
+		if self.nb.get_current_page() == 1:
+			self.back.set_sensitive(False)
+
+		# Change the "finish" button to a "next" button if we are coming from the last page
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			self.next.set_label("gtk-go-forward")
+
+		self.nb.prev_page()
+
+	def btnNext_clicked(self, widget):
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			self.win.set_sensitive(False)
+
+		# Go to the next page if we aren't on the last page
+		else:
+			# Make the "back" button active if we are coming from the first page
+			if self.nb.get_current_page() == 0:
+				self.back.set_sensitive(True)
+				self.wTree.get_widget("entry_nickname").grab_focus()
+
+			# Change the "next" button to a "finish" button if we are going to the last page
+			if self.nb.get_current_page() == self.nb.get_n_pages()-2:
+				self.next.set_label("gtk-ok")
+
+			self.nb.next_page()
+
+	# Helper functions
+	def get_nickname(self):
+		return self.wTree.get_widget("entry_nickname").get_text()
+
+	def get_support_logs(self):
+		log_dict = {}
+		for cat in self.cat_dict:
+			if self.cat_dict[cat].get_active():
+				for mod in self.log_modules.getModulesInCategory(cat):
+					module = log_modules[mod.module_name]
+					(name, contents) = module.execute()
+					log_dict[name] = contents 
+		return log_dict 
+
+	def get_support_msg(self):
+		text_view = self.wTree.get_widget("textview_description")
+		m_buffer = text_view.get_buffer()
+		m_buffer_s_iter = m_buffer.get_start_iter()
+		m_buffer_e_iter = m_buffer.get_end_iter()
+		message = m_buffer.get_text(m_buffer_s_iter, m_buffer_e_iter)
+		return message
+
+	def get_module(self):
+		module = self.submit_modules[self.submits_combobox.get_active_text()]
+		return module
+
+
+class Canoe(Wizard):
+	"""This is the canoe front-end for Upstream"""
+
+	def __init__(self, log_modules, submit_modules):
+		Wizard.__init__(self, log_modules, submit_modules)
+
+	def btnNext_clicked(self, widget):
+		self.nb = self.wTree.get_widget("MainNotebook")
+		# Run the submit code if we are on the last page
+		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
+			popup = PopUp()
+
+			nickname = self.get_nickname()
+			popup.pulse()
+			support_logs = self.get_support_logs()
+			print support_logs.keys() # debug
+			popup.pulse()
+			support_msg = self.get_support_msg()
+			popup.pulse()
+			module = self.get_module()
+			popup.pulse()
+
+			# TODO: progress bar does not pulsate during submission
+			# Maybe start a new thread here to pulse the progress bar until
+			# the submission is complete?
+
+			# TODO: Handle success == False from submit module execution appropriately
+			result = module.executeThreaded(nickname, support_msg, support_logs, popup.handle_complete)
+			print result
+		
+		Wizard.btnNext_clicked(self, widget)
+	
+	def main(self):
+		gtk.gdk.threads_init()
+		gtk.gdk.threads_enter()
+		gtk.main()
+		gtk.gdk.threads_leave()
+
+	def destroy(self, widget):
+		gtk.main_quit()
+
+
+if __name__ == "__main__":
+	# Initialize
+	# Fault Tolerance should be on for releases
+	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
+
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
+
+	# Load the GUI
+	canoe = Canoe(log_modules, submit_modules)
+	canoe.main()

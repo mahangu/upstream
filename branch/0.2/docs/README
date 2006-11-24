@@ -1,0 +1,17 @@
+Upstream Log Transfer System
+----------------------------
+Release : 0.2.0 (Marlowe) - ALPHA RELEASE
+Date    : 27th November 2006
+
+Web     : http://upstreamdev.org
+SVN     : https://svn.sf.net/svnroot/upstream/
+
+Upstream is a collection of tools that allow users to send in system specific log and troubleshooting data to support personnel. It can be easily modified to output data to any pastebin or support tracker.
+
+This Alpha Release release is named after the Elizabethan dramatist Christopher Marlowe (1564 - 1593). With this  release we are overreaching, and attempting to go places in a very short period of time. Although we don't plan dying early like Marlowe, he embodies exactly what this release is - a daring thrust at greatness.
+
+"Come, let us march against the powers of heaven,
+ And set black streamers in the firmament,
+ To signify the slaughter of the gods. "
+Tamburlaine the Great, Part 2 - Act V, Scene III
+
