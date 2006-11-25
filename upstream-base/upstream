@@ -84,7 +84,12 @@ def main():
 	modchoices = []
 	
 	for mod in submit_modules:
-		modentry = (mod.module_name, "", 0)
+		if mod.module_name == log_module_default:
+			modbool = 1
+		else:
+			modbool = 0
+		
+		modentry = (mod.module_name, "", modbool)
 		modchoices.append(modentry)
 		print modentry
 	
