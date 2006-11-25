@@ -116,6 +116,7 @@ class PopUp(gtk.Dialog):
 			clipboard.set_text(self.get_url())
 			clipboard.store()
 		else:
+			# This may no longer be necessary
 			sys.exit(0)	#eww
 
 class Wizard:
