@@ -44,7 +44,6 @@ class PluginConfigReader:
 			
 	def get_md5(self, package, name, extension):
 		if self._plugins_c.has_section(package):
-			print name + "_" + extension
 			if self._plugins_c.has_option(package, name + "_" + extension):
 				md5 = self._plugins_c.get(package, name + "_" + extension)
 				return md5		
