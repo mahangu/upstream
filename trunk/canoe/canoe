@@ -75,7 +75,11 @@ class PopUp(gtk.Dialog):
 		self.show_all()
 
 	def show_failure(self):
-		pass
+		self.destroy_all()
+		label = gtk.Label("Your submission failed.")
+		self.vbox.pack_start(label, False, False, 5)
+		self.add_buttons(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
+		self.show_all()
 
 	def destroy_all(self):
 		"""destroy all existing widgets inside the popup dialog"""
@@ -86,8 +90,11 @@ class PopUp(gtk.Dialog):
 		self.action_area.foreach(self.action_area.remove)
 
 	def handle_complete(self, result, user_data):
-		self.set_url(result.result_url)
-		self.show_success()
+		if result.bool_success
+			self.set_url(result.result_url)
+			self.show_success()
+		else:
+			self.show_failure()
 
 	def set_url(self, url):
 		self.url = url
