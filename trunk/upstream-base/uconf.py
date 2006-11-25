@@ -22,7 +22,7 @@ import ConfigParser, os, re
 LOG = 0
 SUBMIT = 1
 
-base_path_default = "/etc/upstream"
+base_path_default = "../conf"
 
 class PluginConfigReader:
 	def __init__(self, p_type, base_path=base_path_default):

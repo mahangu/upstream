@@ -179,7 +179,11 @@ def cli(options,args):
 		
 if __name__ == "__main__": 
 	
-	log_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
+	#log_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
+	config = ConfigParser.ConfigParser()
+	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+	log_module_default = config.get("main", "log_module_default")
+
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
 
