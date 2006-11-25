@@ -31,7 +31,7 @@ config.readfp(open('/etc/upstream/canoe.conf'))
 gladepath = config.get("main", "gladepath")
 
 
-import logmoduleloader, submitmoduleloader
+import logmoduleloader, submitmoduleloader, uconf
 from getpass import getuser
 
 try:
