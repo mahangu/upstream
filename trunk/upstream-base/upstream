@@ -41,7 +41,7 @@ def main():
 		if upnickname == "":
 			d.msgbox("Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program.")
 			
-	
+	nickname = upnickname
 
 	
 	#Step 3
