@@ -84,7 +84,7 @@ def main():
 	modchoices = []
 	
 	for mod in submit_modules:
-		if mod.module_name == log_module_default:
+		if mod.module_name == submit_module_default:
 			modbool = 1
 		else:
 			modbool = 0
@@ -120,7 +120,7 @@ def cli(options,args):
 		submit_module = submit_modules[options.pastebin]
 		
 	else:
-		submit_module = submit_modules[log_module_default]
+		submit_module = submit_modules[submit_module_default]
 		
 	
 	log_dict = {}
@@ -184,10 +184,10 @@ def cli(options,args):
 		
 if __name__ == "__main__": 
 	
-	#log_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
+	#submit_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
 	config = ConfigParser.ConfigParser()
 	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
-	log_module_default = config.get("main", "log_module_default")
+	submit_module_default = config.get("main", "submit_module_default")
 
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
