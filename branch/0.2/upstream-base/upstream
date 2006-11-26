@@ -195,7 +195,7 @@ if __name__ == "__main__":
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
 	
-	parser = optparse.OptionParser("%prog yourname \"Your support message\" [options]")
+	parser = optparse.OptionParser("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode.")
 	
 	log_modules.join()
 	
