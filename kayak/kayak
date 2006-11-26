@@ -26,7 +26,11 @@ import sys, time, threading, string, ConfigParser, re, uconf
 from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
-# import asyncsubmit
+
+config = ConfigParser.ConfigParser()
+config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+gladepath = config.get("canoe", "gladepath")
+submit_module_default = config.get("main", "submit_module_default")
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
@@ -135,7 +139,14 @@ class SubmitPage(WizardPage):
 		self.servers = [mod for mod in submit_loader]
 		for server in self.servers:
 			self.serverBox.insertItem(server.module_name)
-
+			
+			if server.module_name == submit_module_default:
+				submit_module_default_id = submit_loader.valid_modules.index(server)
+				self.serverBox.setCurrentItem(submit_module_default_id)
+				
+		
+			
+	
 		self.connect(self.serverBox, SIGNAL("activated(int)"), self.serverChanged)
 		self.name = QLabel('a', self.child)
 		self.description = QLabel('b', self.child)
@@ -143,7 +154,7 @@ class SubmitPage(WizardPage):
 		# Make this multi-line.  But, this breaks layouting. :(
 		self.description.setTextFormat(Qt.RichText)
 		self.url = QLabel('c', self.child)
-		self.serverChanged(0)
+		self.serverChanged(submit_module_default_id)
 
 		self.wizard.setFinishEnabled(self, True)
 
