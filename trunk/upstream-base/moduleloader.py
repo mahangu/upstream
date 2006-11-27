@@ -309,7 +309,9 @@ class ModuleLoader:
 			return (self.total_loaded_mod + 0.0)/self.total_found_mod
 		else:
 			return 0
+		
 	def loadAdditionalModules(self, addit_m_list):
+		pass
 		
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work
