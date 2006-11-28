@@ -20,7 +20,7 @@
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 
 
-import glob, sys, os, threading, time, imp, md5, re
+import glob, sys, os, threading, time, imp, md5, re, imp
 
 
 
@@ -36,7 +36,7 @@ HASH_UNTRUSTED = 1
 HASH_DANGEROUS = 2
 
 # Perhaps this will change later
-THREAD_POOL_MAX = 5
+THREAD_POOL_MAX = 3
 
 # LoadedModule now extends from Thread type
 class LoadedModule(threading.Thread):
@@ -309,7 +309,10 @@ class ModuleLoader:
 			return (self.total_loaded_mod + 0.0)/self.total_found_mod
 		else:
 			return 0
-	
+		
+	def loadAdditionalModules(self, addit_m_list):
+		pass
+		
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work
 	def join(self):
