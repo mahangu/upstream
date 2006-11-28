@@ -41,6 +41,7 @@ class WizardPage(QWidget):
 	def __init__(self, wizard, title):
 		QWidget.__init__(self, wizard)
 
+
 		# QVBoxLayout used instead of QVBox so we can add stretchies
 		self.layout = QVBoxLayout(self, 0, 10) # margin, then spacing
 
@@ -285,6 +286,8 @@ class CompleteDialog(QDialog):
 def main(args):
 	app = QApplication(args)
 	wizard = UpstreamWizard()
+
+	wizard.setIcon(QPixmap("upstream_1_0_icon.png"))
 
 	# Bold looks better. :-)
 	font = wizard.titleFont()
