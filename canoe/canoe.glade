@@ -4,7 +4,7 @@
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
-    <property name="title" translatable="yes">Canoe</property>
+    <property name="title" translatable="no">Canoe</property>
     <property name="resizable">False</property>
     <property name="icon">upstream.png</property>
     <signal name="destroy" handler="on_MainWindow_destroy"/>
