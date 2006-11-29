@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.0.2 on Mon Nov 20 23:30:14 2006 by jasonr@luso-->
+<!--Generated with glade3 3.0.2 on Tue Nov 28 22:00:08 2006 by jasonr@luso-->
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
@@ -163,7 +163,7 @@
                           <widget class="GtkLabel" id="label7">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Please enter short description of the problem.</property>
+                            <property name="label" translatable="yes">Please enter a short description of the problem.</property>
                             <property name="use_markup">True</property>
                           </widget>
                         </child>
