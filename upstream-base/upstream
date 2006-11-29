@@ -29,14 +29,14 @@ def main():
 	d.add_persistent_args(["--backtitle", "Upstream Log Transfer System"])
 	
 	#Step 1
-	d.msgbox("This program will assist you in sending troubleshooting data to aid support personnel in diagnosing problems on your system.")
+	d.msgbox("This program will assist you in sending troubleshooting data to support personnel.")
 	
 	#Step 2
 	nickname = getuser()
 	upnickname = ""
 	
 	while upnickname == "":
-		(code, upnickname) = d.inputbox("Please enter your nickname", init="%s"%(nickname))
+		(code, upnickname) = d.inputbox("Please enter your name.", init="%s"%(nickname))
 		
 		if upnickname == "":
 			d.msgbox("Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program.")
@@ -56,7 +56,7 @@ def main():
 	log_dict = {}
 		
 	while log_dict == {}:
-		(code, categories) = d.checklist(text="Please select categories this problem affects",
+		(code, categories) = d.checklist(text="What are you having trouble with?",
 					height=15, width=54, list_height=7, 
 					choices=catchoices,
 					title="Problem Description")
@@ -76,7 +76,7 @@ def main():
 			d.msgbox("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program.")
 		
 	
-	(code, description) = d.inputbox("Please enter a description of the problem as well", init="")
+	(code, description) = d.inputbox("Please enter a short description of the problem.", init="")
 	
 
 	#Step 4
@@ -96,7 +96,7 @@ def main():
 	pastebin = ""
 	
 	while pastebin == "":
-		(code, pastebin) = d.radiolist(text="Please select the server to submit troubleshooting data to.",
+		(code, pastebin) = d.radiolist(text="Please select a server to submit to.",
                 	                  height=15, width=54, list_height=7, 
                         	          choices=modchoices,
                                 	  title="Submit")
