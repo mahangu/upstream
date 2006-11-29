@@ -23,15 +23,18 @@ import  submitmoduleloader, logmoduleloader, uconf
 
 import optparse, os, ConfigParser
 
-# il8n
-#APP = 'myapp'
-#DIR = 'locale'
+config = ConfigParser.ConfigParser()
+config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+	
 
-#import locale
+locale_app = config.get("main", "locale_app_name")
+locale_dir = config.get("main", "locale_app_dir")
+
+import locale
 import gettext
 #locale.setlocale(locale.LC_ALL, '')
-#gettext.bindtextdomain(APP, DIR)
-#gettext.textdomain(APP)
+gettext.bindtextdomain(locale_app, locale_dir)
+gettext.textdomain(locale_app)
 _ = gettext.gettext
 
 
@@ -195,9 +198,6 @@ def cli(options,args):
 		
 if __name__ == "__main__": 
 	
-	#submit_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
-	config = ConfigParser.ConfigParser()
-	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 	submit_module_default = config.get("main", "submit_module_default")
 
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
