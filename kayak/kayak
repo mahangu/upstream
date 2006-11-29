@@ -27,6 +27,17 @@ from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
 
+# il8n
+#APP = 'myapp'
+#DIR = 'locale'
+
+#import locale
+import gettext
+#locale.setlocale(locale.LC_ALL, '')
+#gettext.bindtextdomain(APP, DIR)
+#gettext.textdomain(APP)
+_ = gettext.gettext
+
 config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
@@ -73,18 +84,18 @@ class WizardPage(QWidget):
 
 class IntroPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Introduction")
+		WizardPage.__init__(self, wizard, _("Introduction"))
 
-		self.body = QLabel("""<qt><center>This program will assist you in sending troubleshooting data to support personnel.</center></qt>""", self.child)
+		self.body = QLabel(_("""<qt><center>This program will assist you in sending troubleshooting data to support personnel.</center></qt>"""), self.child)
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Name")
+		WizardPage.__init__(self, wizard, _("Name"))
 
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
 
-		self.label = QLabel("Please enter your name.", formBox)
+		self.label = QLabel(_("Please enter your name."), formBox)
 		nickname = getuser()
 		self.emailText = QLineEdit(nickname, formBox)
 		wizard.setEmail(nickname)
@@ -93,9 +104,9 @@ class EmailPage(WizardPage):
 
 class SupportPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Problem Description")
+		WizardPage.__init__(self, wizard, _("Problem Description"))
 
-		self.group = QVGroupBox("What are you having trouble with?", self.child)
+		self.group = QVGroupBox(_("What are you having trouble with?"), self.child)
 		self.types = { }
 
 		
@@ -104,7 +115,7 @@ class SupportPage(WizardPage):
 			typeBox = QCheckBox(cat, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
-		self.label = QLabel("Please enter a short description of the problem.", self.child)
+		self.label = QLabel(_("Please enter a short description of the problem."), self.child)
 		self.msg = QTextEdit(self.child)
 		self.connect(self.msg, SIGNAL("textChanged()"), self.msgChanged)
 
@@ -131,7 +142,7 @@ class SubmitPage(WizardPage):
 	def __init__(self, wizard):
 		WizardPage.__init__(self, wizard, "Submit")
 
-		self.label = QLabel("Please select a server to submit to.", self.child)
+		self.label = QLabel(_("Please select a server to submit to."), self.child)
 		self.serverBox = QComboBox(False, self.child)
 		
 		submit_loader.join()
@@ -214,7 +225,7 @@ class UpstreamWizard(QWizard):
 			infobox.exec_loop()			
 			
 		else:
-			QMessageBox.information(self, "Kayak", "Your submission failed.")
+			QMessageBox.information(self, "Kayak", _("Your submission failed."))
 		self.done(0)
 
 	def makeRequest(self):
@@ -236,7 +247,7 @@ class UpstreamWizard(QWizard):
 		global wizardDialog
 
 		wizardDialog = self
-		self.setCaption("Submission")
+		self.setCaption(_("Submission"))
 		self.setEnabled(False)
 
 
@@ -258,14 +269,14 @@ class CompleteDialog(QDialog):
 		#self.setCaption("Success")
 		self.url = url
 	
-		self.label = QLabel("Your submission can be found at:", self)
+		self.label = QLabel(_("Your submission can be found at:"), self)
 		self.edit = QLineEdit(self.url, self)
 		self.layout.addWidget(self.label)
 		self.layout.addWidget(self.edit)
 		
 		self.b_layout = QHBoxLayout(self.layout)
-		self.c_button = QPushButton	("Copy URL", self)
-		self.button = QPushButton("Done", self)
+		self.c_button = QPushButton	(_("Copy URL"), self)
+		self.button = QPushButton(_("Done"), self)
 		self.b_layout.addStretch(1)
 		self.b_layout.addWidget(self.c_button)
 		self.b_layout.addWidget(self.button)
