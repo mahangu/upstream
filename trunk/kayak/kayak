@@ -86,7 +86,7 @@ class IntroPage(WizardPage):
 	def __init__(self, wizard):
 		WizardPage.__init__(self, wizard, _("Introduction"))
 
-		self.body = QLabel(_("""<qt><center>This program will assist you in sending troubleshooting data to support personnel.</center></qt>"""), self.child)
+		self.body = QLabel("<qt><center>" + _("This program will assist you in sending troubleshooting data to support personnel.") + "</center></qt>", self.child)
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):

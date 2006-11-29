@@ -26,6 +26,21 @@ import sys
 
 import ConfigParser, os, uconf
 
+# il8n
+#APP = 'myapp'
+#DIR = 'locale'
+
+#import locale
+import gettext
+#locale.setlocale(locale.LC_ALL, '')
+#gettext.bindtextdomain(APP, DIR)
+#gettext.textdomain(APP)
+_ = gettext.gettext
+
+gtk.glade.bindtextdomain(APP, DIR)
+gtk.glade.textdomain(APP)
+
+
 config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
@@ -54,7 +69,7 @@ class PopUp(gtk.Dialog):
 	def __init__(self):
 		self.url = None
 
-		gtk.Dialog.__init__(self, "Submission", None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		gtk.Dialog.__init__(self, _("Submission"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		self.progress_bar = gtk.ProgressBar()
 		self.vbox.pack_start(self.progress_bar, False, False, 5)
 		self.set_icon_from_file('./upstream.png')
@@ -67,7 +82,7 @@ class PopUp(gtk.Dialog):
 
 	def show_success(self):
 		self.destroy_all()
-		label = gtk.Label("Your submission can be found at:")
+		label = gtk.Label(_("Your submission can be found at:"))
 		self.vbox.pack_start(label, False, False, 5)
 		url_show = gtk.Label(self.get_url())
 		url_show.set_selectable(True)
@@ -77,7 +92,7 @@ class PopUp(gtk.Dialog):
 
 	def show_failure(self):
 		self.destroy_all()
-		label = gtk.Label("Your submission failed.")
+		label = gtk.Label(_("Your submission failed."))
 		self.vbox.pack_start(label, False, False, 5)
 		self.add_buttons(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
 		self.show_all()
