@@ -1,4 +1,4 @@
-# Upstream Log Transfer System - translation file.
+# Upstream Log Transfer System - translation file for LANGUAGE.
 # Copyright (C) 2006 TRANSLATOR'S NAME
 # This file is distributed under the same license as the Upstream package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
