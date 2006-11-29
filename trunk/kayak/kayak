@@ -27,21 +27,19 @@ from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
 
-# il8n
-#APP = 'myapp'
-#DIR = 'locale'
-
-#import locale
-import gettext
-#locale.setlocale(locale.LC_ALL, '')
-#gettext.bindtextdomain(APP, DIR)
-#gettext.textdomain(APP)
-_ = gettext.gettext
-
 config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
+
+locale_app = config.get("main", "locale_app_name")
+locale_dir = config.get("main", "locale_app_dir")
+
+import locale
+import gettext
+gettext.bindtextdomain(locale_app, locale_dir)
+gettext.textdomain(locale_app)
+_ = gettext.gettext
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
