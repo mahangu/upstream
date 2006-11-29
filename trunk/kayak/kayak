@@ -73,20 +73,18 @@ class WizardPage(QWidget):
 
 class IntroPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Kayak Introduction")
+		WizardPage.__init__(self, wizard, "Introduction")
 
-		self.body = QLabel("""<qt><center>This program will assist you in
-		sending troubleshooting data to aid support personnel in diagnosing
-		problems on your system.</center></qt>""", self.child)
+		self.body = QLabel("""<qt><center>This program will assist you in sending troubleshooting data to support personnel.</center></qt>""", self.child)
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, "Nickname")
+		WizardPage.__init__(self, wizard, "Name")
 
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
 
-		self.label = QLabel("Please enter your nickname", formBox)
+		self.label = QLabel("Please enter your name.", formBox)
 		nickname = getuser()
 		self.emailText = QLineEdit(nickname, formBox)
 		wizard.setEmail(nickname)
@@ -97,7 +95,7 @@ class SupportPage(WizardPage):
 	def __init__(self, wizard):
 		WizardPage.__init__(self, wizard, "Problem Description")
 
-		self.group = QVGroupBox("Please select categories this problem affects", self.child)
+		self.group = QVGroupBox("What are you having trouble with?", self.child)
 		self.types = { }
 
 		
@@ -106,7 +104,7 @@ class SupportPage(WizardPage):
 			typeBox = QCheckBox(cat, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
-		self.label = QLabel("Please enter a description of the problem as well", self.child)
+		self.label = QLabel("Please enter a short description of the problem.", self.child)
 		self.msg = QTextEdit(self.child)
 		self.connect(self.msg, SIGNAL("textChanged()"), self.msgChanged)
 
@@ -133,7 +131,7 @@ class SubmitPage(WizardPage):
 	def __init__(self, wizard):
 		WizardPage.__init__(self, wizard, "Submit")
 
-		self.label = QLabel("Please select the server to submit troubleshooting data to.", self.child)
+		self.label = QLabel("Please select a server to submit to.", self.child)
 		self.serverBox = QComboBox(False, self.child)
 		
 		submit_loader.join()
@@ -216,7 +214,7 @@ class UpstreamWizard(QWizard):
 			infobox.exec_loop()			
 			
 		else:
-			QMessageBox.information(self, "Kayak", "Submission failed :-(")
+			QMessageBox.information(self, "Kayak", "Your submission failed.")
 		self.done(0)
 
 	def makeRequest(self):
@@ -238,7 +236,7 @@ class UpstreamWizard(QWizard):
 		global wizardDialog
 
 		wizardDialog = self
-		self.setCaption("Kayak - Submitting Report")
+		self.setCaption("Submission")
 		self.setEnabled(False)
 
 
@@ -257,10 +255,10 @@ class CompleteDialog(QDialog):
 		QDialog.__init__(self, parent) 
 		self.layout = QVBoxLayout(self, 0, 10)
 	
-		self.setCaption("Kayak - Success")
+		#self.setCaption("Success")
 		self.url = url
 	
-		self.label = QLabel("Success! Your submission is located at: ", self)
+		self.label = QLabel("Your submission can be found at:", self)
 		self.edit = QLineEdit(self.url, self)
 		self.layout.addWidget(self.label)
 		self.layout.addWidget(self.edit)
