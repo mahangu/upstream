@@ -300,7 +300,7 @@
             <child>
               <widget class="GtkButton" id="btnCancel">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">gtk-cancel</property>
+                <property name="label">gtk-cancel</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnCancel_clicked"/>
               </widget>
@@ -309,7 +309,7 @@
               <widget class="GtkButton" id="btnBack">
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
-                <property name="label" translatable="yes">gtk-go-back</property>
+                <property name="label">gtk-go-back</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnBack_clicked"/>
               </widget>
@@ -325,7 +325,7 @@
                 <property name="has_focus">True</property>
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
-                <property name="label" translatable="yes">gtk-go-forward</property>
+                <property name="label">gtk-go-forward</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnNext_clicked"/>
               </widget>
