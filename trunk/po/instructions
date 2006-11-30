@@ -2,7 +2,9 @@
 # also see: http://www.async.com.br/faq/pygtk/index.py?querytype=simple&query=gettext&req=search
 
 # extract strings from canoe.glade
-intltool-extract --type=gettext/glade ../canoe/canoe.glade
+#intltool-extract --type=gettext/glade ../canoe/canoe.glade
 
 # create .pot
-xgettext -k_ -kN_ -o messages.pot ../canoe/canoe.glade.h -LPython ../canoe/canoe -LPython ../kayak/kayak -LPython ../upstream-base/upstream
+#xgettext -k_ -kN_ -o messages.pot ../canoe/canoe.glade.h -LPython ../canoe/canoe -LPython ../kayak/kayak -LPython ../upstream-base/upstream
+
+msgcat =(xgettext -o - ../canoe/canoe.glade) =(xgettext -o - -LPython ../canoe/canoe ../kayak/kayak ../upstream-base/upstream) > messages.pot
