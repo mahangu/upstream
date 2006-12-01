@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys
+import dialog, sys, os
 from getpass import getuser
 import  submitmoduleloader, logmoduleloader, uconf
 
@@ -28,7 +28,7 @@ config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 	
 
 locale_app = config.get("main", "locale_app_name")
-locale_dir = config.get("main", "locale_app_dir")
+locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
 
 import locale
 import gettext

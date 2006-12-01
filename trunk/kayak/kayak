@@ -22,7 +22,7 @@
 
 from qt import *
 
-import sys, time, threading, string, ConfigParser, re, uconf
+import os, sys, time, threading, string, ConfigParser, re, uconf
 from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
@@ -33,7 +33,7 @@ gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
 
 locale_app = config.get("main", "locale_app_name")
-locale_dir = config.get("main", "locale_app_dir")
+locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
 
 import locale
 import gettext

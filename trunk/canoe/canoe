@@ -33,7 +33,7 @@ submit_module_default = config.get("main", "submit_module_default")
 
 # il8n
 locale_app = config.get("main", "locale_app_name")
-locale_dir = config.get("main", "locale_app_dir")
+locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
 
 #import locale
 import gettext
@@ -135,13 +135,13 @@ class PopUp(gtk.Dialog):
 class Wizard:
 	"""Basic wizard functionaliy for Canoe"""
 
-	def __init__(self, log_modules, submit_modules):
+	def __init__(self, domain, log_modules, submit_modules):
 		self.log_modules = log_modules
 		self.submit_modules = submit_modules
 
 		# Set the Glade file
 		self.gladefile = gladepath  
-		self.wTree = gtk.glade.XML(self.gladefile) 
+		self.wTree = gtk.glade.XML(self.gladefile, domain=domain) 
 
 		self.cat_dict = self.__gui_add_logs()
 		self.submits_combobox = self.__gui_add_submits()
@@ -268,8 +268,8 @@ class Wizard:
 class Canoe(Wizard):
 	"""This is the canoe front-end for Upstream"""
 
-	def __init__(self, log_modules, submit_modules):
-		Wizard.__init__(self, log_modules, submit_modules)
+	def __init__(self, domain, log_modules, submit_modules):
+		Wizard.__init__(self, domain, log_modules, submit_modules)
 
 	def btnNext_clicked(self, widget):
 		self.nb = self.wTree.get_widget("MainNotebook")
@@ -317,5 +317,5 @@ if __name__ == "__main__":
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 
 	# Load the GUI
-	canoe = Canoe(log_modules, submit_modules)
+	canoe = Canoe(locale_app, log_modules, submit_modules)
 	canoe.main()
