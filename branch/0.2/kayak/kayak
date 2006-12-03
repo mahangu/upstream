@@ -22,7 +22,7 @@
 
 from qt import *
 
-import sys, time, threading, string, ConfigParser, re, uconf
+import os, sys, time, threading, string, ConfigParser, re, uconf
 from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
@@ -31,7 +31,9 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
-icon_path = config.get("main", "icon_path")
+icon_path = os.path.abspath(config.get("main", "icon_path"))
+
+print "icon_path = ", icon_path
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):

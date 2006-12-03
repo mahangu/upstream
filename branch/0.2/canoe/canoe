@@ -30,7 +30,7 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
-icon_path = config.get("main", "icon_path")
+icon_path = os.path.abspath(config.get("main", "icon_path"))
 
 import logmoduleloader, submitmoduleloader, uconf
 from getpass import getuser
