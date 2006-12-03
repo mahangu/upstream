@@ -24,7 +24,7 @@ module_name = "net-interfaces"
 module_description = "Read the log that contains network information"
 # Required by Log Module
 log_path = "/etc/network/interfaces"
-category = ["network"]
+category = "network"
 
 def execute():
 	try:

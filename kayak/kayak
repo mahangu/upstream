@@ -31,15 +31,9 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
+icon_path = os.path.abspath(config.get("main", "icon_path"))
 
-locale_app = config.get("main", "locale_app_name")
-locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
-
-import locale
-import gettext
-gettext.bindtextdomain(locale_app, locale_dir)
-gettext.textdomain(locale_app)
-_ = gettext.gettext
+print "icon_path = ", icon_path
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
@@ -82,18 +76,20 @@ class WizardPage(QWidget):
 
 class IntroPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, _("Introduction"))
+		WizardPage.__init__(self, wizard, "Kayak Introduction")
 
-		self.body = QLabel("<qt><center>" + _("This program will assist you in sending troubleshooting data to support personnel.") + "</center></qt>", self.child)
+		self.body = QLabel("""<qt><center>This program will assist you in
+		sending troubleshooting data to aid support personnel in diagnosing
+		problems on your system.</center></qt>""", self.child)
 
 class EmailPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, _("Name"))
+		WizardPage.__init__(self, wizard, "Nickname")
 
 		formBox = QVBox(self.child)
 		formBox.setSpacing(12)
 
-		self.label = QLabel(_("Please enter your name."), formBox)
+		self.label = QLabel("Please enter your nickname", formBox)
 		nickname = getuser()
 		self.emailText = QLineEdit(nickname, formBox)
 		wizard.setEmail(nickname)
@@ -102,9 +98,9 @@ class EmailPage(WizardPage):
 
 class SupportPage(WizardPage):
 	def __init__(self, wizard):
-		WizardPage.__init__(self, wizard, _("Problem Description"))
+		WizardPage.__init__(self, wizard, "Problem Description")
 
-		self.group = QVGroupBox(_("What are you having trouble with?"), self.child)
+		self.group = QVGroupBox("Please select categories this problem affects", self.child)
 		self.types = { }
 
 		
@@ -113,7 +109,7 @@ class SupportPage(WizardPage):
 			typeBox = QCheckBox(cat, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
-		self.label = QLabel(_("Please enter a short description of the problem."), self.child)
+		self.label = QLabel("Please enter a description of the problem as well", self.child)
 		self.msg = QTextEdit(self.child)
 		self.connect(self.msg, SIGNAL("textChanged()"), self.msgChanged)
 
@@ -140,7 +136,7 @@ class SubmitPage(WizardPage):
 	def __init__(self, wizard):
 		WizardPage.__init__(self, wizard, "Submit")
 
-		self.label = QLabel(_("Please select a server to submit to."), self.child)
+		self.label = QLabel("Please select the server to submit troubleshooting data to.", self.child)
 		self.serverBox = QComboBox(False, self.child)
 		
 		submit_loader.join()
@@ -223,7 +219,7 @@ class UpstreamWizard(QWizard):
 			infobox.exec_loop()			
 			
 		else:
-			QMessageBox.information(self, "Kayak", _("Your submission failed."))
+			QMessageBox.information(self, "Kayak", "Submission failed :-(")
 		self.done(0)
 
 	def makeRequest(self):
@@ -245,7 +241,7 @@ class UpstreamWizard(QWizard):
 		global wizardDialog
 
 		wizardDialog = self
-		self.setCaption(_("Submission"))
+		self.setCaption("Kayak - Submitting Report")
 		self.setEnabled(False)
 
 
@@ -264,17 +260,17 @@ class CompleteDialog(QDialog):
 		QDialog.__init__(self, parent) 
 		self.layout = QVBoxLayout(self, 0, 10)
 	
-		#self.setCaption("Success")
+		self.setCaption("Kayak - Success")
 		self.url = url
 	
-		self.label = QLabel(_("Your submission can be found at:"), self)
+		self.label = QLabel("Success! Your submission is located at: ", self)
 		self.edit = QLineEdit(self.url, self)
 		self.layout.addWidget(self.label)
 		self.layout.addWidget(self.edit)
 		
 		self.b_layout = QHBoxLayout(self.layout)
-		self.c_button = QPushButton	(_("Copy URL"), self)
-		self.button = QPushButton(_("Done"), self)
+		self.c_button = QPushButton	("Copy URL", self)
+		self.button = QPushButton("Done", self)
 		self.b_layout.addStretch(1)
 		self.b_layout.addWidget(self.c_button)
 		self.b_layout.addWidget(self.button)
@@ -294,7 +290,7 @@ def main(args):
 	app = QApplication(args)
 	wizard = UpstreamWizard()
 
-	wizard.setIcon(QPixmap("upstream_1_0_icon.png"))
+	wizard.setIcon(QPixmap(icon_path))
 
 	# Bold looks better. :-)
 	font = wizard.titleFont()

@@ -53,5 +53,3 @@ class PluginConfigReader:
 	
 		
 	def getbase_path(self): return self._base_path
-
-	def is_default(self): return self._base_path == base_path_default

@@ -102,8 +102,7 @@ class LogGrouper(threading.Thread):
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
 				self.parent.group_pool_lock.release()
-				if self.debug_output >= moduleloader.DEBUG_ALL:
-					print "Grouping module %s" % mod
+				print "Grouping module %s" % mod
 				for cat in mod.category:
 					if not cat in self.parent.module_groupings:
 						if self.parent.debug_output >= moduleloader.DEBUG_ALL:

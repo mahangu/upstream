@@ -30,17 +30,7 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
-
-# il8n
-locale_app = config.get("main", "locale_app_name")
-locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
-
-#import locale
-import gettext
-#locale.setlocale(locale.LC_ALL, '')
-gettext.bindtextdomain(locale_app, locale_dir)
-gettext.textdomain(locale_app)
-_ = gettext.gettext
+icon_path = os.path.abspath(config.get("main", "icon_path"))
 
 import logmoduleloader, submitmoduleloader, uconf
 from getpass import getuser
@@ -56,8 +46,6 @@ try:
 except:
 	sys.exit(1)
 
-gtk.glade.bindtextdomain(locale_app, locale_dir)
-gtk.glade.textdomain(locale_app)
 
 # should we use gtk.Dialog.run()?
 class PopUp(gtk.Dialog):
@@ -66,10 +54,10 @@ class PopUp(gtk.Dialog):
 	def __init__(self):
 		self.url = None
 
-		gtk.Dialog.__init__(self, _("Submission"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		gtk.Dialog.__init__(self, "Submission", None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		self.progress_bar = gtk.ProgressBar()
 		self.vbox.pack_start(self.progress_bar, False, False, 5)
-		self.set_icon_from_file('./upstream.png')
+		self.set_icon_from_file(icon_path)
 		self.show_progress()
 		self.connect("response", self.action)
 
@@ -79,7 +67,7 @@ class PopUp(gtk.Dialog):
 
 	def show_success(self):
 		self.destroy_all()
-		label = gtk.Label(_("Your submission can be found at:"))
+		label = gtk.Label("Your submission can be found at:")
 		self.vbox.pack_start(label, False, False, 5)
 		url_show = gtk.Label(self.get_url())
 		url_show.set_selectable(True)
@@ -89,7 +77,7 @@ class PopUp(gtk.Dialog):
 
 	def show_failure(self):
 		self.destroy_all()
-		label = gtk.Label(_("Your submission failed."))
+		label = gtk.Label("Your submission failed.")
 		self.vbox.pack_start(label, False, False, 5)
 		self.add_buttons(gtk.STOCK_OK, gtk.RESPONSE_CLOSE)
 		self.show_all()
@@ -135,13 +123,13 @@ class PopUp(gtk.Dialog):
 class Wizard:
 	"""Basic wizard functionaliy for Canoe"""
 
-	def __init__(self, domain, log_modules, submit_modules):
+	def __init__(self, log_modules, submit_modules):
 		self.log_modules = log_modules
 		self.submit_modules = submit_modules
 
 		# Set the Glade file
 		self.gladefile = gladepath  
-		self.wTree = gtk.glade.XML(self.gladefile, domain=domain) 
+		self.wTree = gtk.glade.XML(self.gladefile) 
 
 		self.cat_dict = self.__gui_add_logs()
 		self.submits_combobox = self.__gui_add_submits()
@@ -268,8 +256,8 @@ class Wizard:
 class Canoe(Wizard):
 	"""This is the canoe front-end for Upstream"""
 
-	def __init__(self, domain, log_modules, submit_modules):
-		Wizard.__init__(self, domain, log_modules, submit_modules)
+	def __init__(self, log_modules, submit_modules):
+		Wizard.__init__(self, log_modules, submit_modules)
 
 	def btnNext_clicked(self, widget):
 		self.nb = self.wTree.get_widget("MainNotebook")
@@ -317,5 +305,5 @@ if __name__ == "__main__":
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 
 	# Load the GUI
-	canoe = Canoe(locale_app, log_modules, submit_modules)
+	canoe = Canoe(log_modules, submit_modules)
 	canoe.main()
