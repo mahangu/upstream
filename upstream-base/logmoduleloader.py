@@ -158,6 +158,14 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		else:
 			return None
 		
+	def getUniqueModulesInCategories(self, list_of_cat):
+		ret_mods = []
+		for category in list_of_cat
+			for mod in category:
+				if not mod in ret_mods:
+					ret_mods.append(mod)
+		return ret_mods
+		
 	def getCategories(self):
 		if self.module_groupings:
 			return [category for category in self.module_groupings]
