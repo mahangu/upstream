@@ -1,14 +1,28 @@
-make sure the current working directory is po/
+Steps to create a localised po file.
 
-## Generating upstream.pot ##
- pygettext -o upstream.pot  ../canoe/canoe ../kayak/kayak ../upstream-base/upstream && xgettext --no-wrap -j -o upstream.pot ../canoe/canoe.glade
+* Make sure your working directory is ./trunk/po/
 
-## Generating a .po for a _new_ language (portuguese) ##
- LANG=pt_PT.utf8 msginit --no-wrap
 
-## Merging a new upstream.pot with the existing pt.po ##
- msgmerge --no-wrap -U pt.po upstream.pot
+Note: These steps are optional. The upstream.pot only needs to be generated once (or whenever strings are changed in the source )
 
-## Generating .mo files for actual use by gettext ##
- mkdir -p pt/LC_MESSAGES/
- msgfmt pt.po -o pt/LC_MESSAGES/upstream.mo
+* Generate upstream.pot.
+
+	pygettext -o upstream.pot  ../canoe/canoe ../kayak/kayak ../upstream-base/upstream && xgettext --no-wrap -j -o upstream.pot ../canoe/canoe.glade
+
+
+These steps are required:
+
+* Generate a .po for the _new_ language (in this case portuguese).
+
+	LANG=pt_PT.utf8 msginit --no-wrap
+
+* Or, if a .po for the language already exists, merge the pt.po with the upstream.pot.
+
+	msgmerge --no-wrap -U pt.po upstream.pot
+
+* Make your changes or additions using your favorite editor.
+
+* Generate .mo files for actual use by gettext.
+
+	mkdir -p pt/LC_MESSAGES/
+	msgfmt pt.po -o pt/LC_MESSAGES/upstream.mo
