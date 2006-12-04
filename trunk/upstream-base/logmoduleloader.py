@@ -95,7 +95,7 @@ class LogGrouper(threading.Thread):
 		self.debug_output = debug_output
 				
 	def run(self):			
-		while self.parent.valid_running > 0 or self.parent.group_status < self.parent.total_loaded_mod:
+		while self.parent.aliveValidator() or self.parent.group_status < self.parent.total_loaded_mod:
 			self.parent.group_pool_lock.acquire()
 			if self.parent.group_status < self.parent.total_loaded_mod:
 					
@@ -169,6 +169,19 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			return (self.group_status + 0.0)/self.total_found_mod
 		else:
 			return 0
+			
+	def loadAdditionalModules(self, full_path_list):
+			if moduleloader.ModuleLoader.loadAdditionalModules(full_path_list)
+				for x in range(0, self.group_pool_size):
+					log_thread = LogGrouper(self, self.debug_output)
+					self.group_pool_lock.acquire()
+					self.group_running = self.group_running + 1
+					self.group_pool.append(log_thread)
+					self.group_pool_lock.release()					
+					log_thread.start()					
+				return True
+			else:
+				return False
 			
 	def join(self):
 		moduleloader.ModuleLoader.join(self)
