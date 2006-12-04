@@ -37,9 +37,7 @@ locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
 
 import locale
 import gettext
-gettext.bindtextdomain(locale_app, locale_dir)
-gettext.textdomain(locale_app)
-_ = gettext.gettext
+gettext.install(locale_app, locale_dir, unicode=1)
 
 class BoldLabel(QLabel):
 	def __init__(self, label, parent):
