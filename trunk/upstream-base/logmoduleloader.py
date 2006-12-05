@@ -160,7 +160,7 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 		
 	def getUniqueModulesInCategories(self, list_of_cat):
 		ret_mods = []
-		for category in list_of_cat
+		for category in list_of_cat:
 			for mod in category:
 				if not mod in ret_mods:
 					ret_mods.append(mod)
@@ -179,7 +179,7 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 			return 0
 			
 	def loadAdditionalModules(self, full_path_list):
-			if moduleloader.ModuleLoader.loadAdditionalModules(full_path_list)
+			if moduleloader.ModuleLoader.loadAdditionalModules(full_path_list):
 				for x in range(0, self.group_pool_size):
 					log_thread = LogGrouper(self, self.debug_output)
 					self.group_pool_lock.acquire()
