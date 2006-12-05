@@ -1,6 +1,6 @@
 This is the Upstream changelog. New features / fixes are marked with (+), and known issues are marked with (-).
 
-Upstream 0.2.0 (Marlowe) - 27th November 2006
+Upstream 0.2.0 (Marlowe) - 3rd December 2006
 ---------------------------------------------
 + Upstream-base now has a dialog based wizard interface, as well as the quick --flag option.
 + Modules are now checked against a list of known md5sums, to avoid hijacking.
