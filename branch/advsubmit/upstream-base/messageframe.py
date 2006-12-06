@@ -37,14 +37,20 @@ class MessageBuffer(threading.Thread):
 		
 		self._back_to_front = Queue()
 		self._front_to_back = Queue()
-		
+			
 	def backPush(self, message):
+		pass
+	
+	def backMessageAvailable(self):
 		pass
 		
 	def backPull(self):
 		pass
 	
 	def frontPush(self, message):
+		pass
+	
+	def frontAvailable(self):
 		pass
 		
 	def frontPull(self):
