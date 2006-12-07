@@ -20,6 +20,12 @@
 import threading
 import submitmoduleloader
 
+class Message:
+	def __init__(self, title, content):
+		self._title = title
+		self._content = content
+
+
 class BadTypeException(Exception):
 	def __init__(self, expected_type, received_type):
 		Exception.__init__(self)
@@ -39,20 +45,26 @@ class MessageBuffer(threading.Thread):
 		self._front_to_back = Queue()
 			
 	def backPush(self, message):
-		pass
+		if isinstance(message):
+			self._back_to_front.push(message)
+		else:
+			# Throw an exception that should bump us out any plugin
+			# written code, unless the module is really, really malicious
+			# and catches this exception.
+			raise BadTypeException(Message, message.__class__)
 	
 	def backMessageAvailable(self):
-		pass
+		return self._front_to_back.empty()
 		
 	def backPull(self):
-		pass
+		return self._front_to_back.get(True)
 	
 	def frontPush(self, message):
-		pass
+		self._front_to_push(message)
 	
 	def frontAvailable(self):
-		pass
+		return self._back_to_front.empty()
 		
 	def frontPull(self):
-		pass
+		return self._back_to_front.get(True)
 		
