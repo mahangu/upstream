@@ -1,0 +1,113 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-12-01 17:31-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../canoe/canoe:69 ../kayak/kayak:248
+msgid "Submission"
+msgstr ""
+
+#: ../canoe/canoe:82 ../kayak/kayak:270
+msgid "Your submission can be found at:"
+msgstr ""
+
+#: ../canoe/canoe:92 ../kayak/kayak:226
+msgid "Your submission failed."
+msgstr ""
+
+#: ../kayak/kayak:85 ../canoe/canoe.glade:26
+msgid "Introduction"
+msgstr ""
+
+#: ../kayak/kayak:87 ../upstream-base/upstream:46 ../canoe/canoe.glade:35
+msgid "This program will assist you in sending troubleshooting data to support personnel."
+msgstr ""
+
+#: ../kayak/kayak:91 ../canoe/canoe.glade:59
+msgid "Name"
+msgstr ""
+
+#: ../kayak/kayak:96 ../upstream-base/upstream:53 ../canoe/canoe.glade:73
+msgid "Please enter your name."
+msgstr ""
+
+#: ../kayak/kayak:105 ../upstream-base/upstream:76 ../canoe/canoe.glade:112
+msgid "Problem Description"
+msgstr ""
+
+#: ../kayak/kayak:107 ../upstream-base/upstream:73 ../canoe/canoe.glade:144
+msgid "What are you having trouble with?"
+msgstr ""
+
+#: ../kayak/kayak:116 ../upstream-base/upstream:93 ../canoe/canoe.glade:163
+msgid "Please enter a short description of the problem."
+msgstr ""
+
+#: ../kayak/kayak:143 ../upstream-base/upstream:113 ../canoe/canoe.glade:240
+msgid "Please select a server to submit to."
+msgstr ""
+
+#: ../kayak/kayak:276
+msgid "Copy URL"
+msgstr ""
+
+#: ../kayak/kayak:277
+msgid "Done"
+msgstr ""
+
+#: ../upstream-base/upstream:56
+msgid "Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program."
+msgstr ""
+
+#: ../upstream-base/upstream:90
+msgid "Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program."
+msgstr ""
+
+#: ../upstream-base/upstream:116 ../canoe/canoe.glade:226
+msgid "Submit"
+msgstr ""
+
+#: ../upstream-base/upstream:118
+msgid "Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program."
+msgstr ""
+
+#: ../upstream-base/upstream:173
+msgid "%s log file(s) have been read."
+msgstr ""
+
+#: ../upstream-base/upstream:176
+msgid "Please specify a log option. You haven't asked me to send anything. See help (-h) for more information."
+msgstr ""
+
+#: ../upstream-base/upstream:180
+msgid "Please specify the required options. See help (-h) for more information."
+msgstr ""
+
+#: ../upstream-base/upstream:209
+msgid "%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."
+msgstr ""
+
+#: ../upstream-base/upstream:219
+msgid "All log modules in the %s category."
+msgstr ""
+
+#: ../upstream-base/upstream:221
+msgid "Specify a pastebin module to use."
+msgstr ""
+
+#: ../upstream-base/upstream:223
+msgid "Choose a specific a log module to use."
+msgstr ""
