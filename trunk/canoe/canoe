@@ -30,11 +30,11 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
+icon_path = os.path.abspath(config.get("main", "icon_path"))
 
 # il8n
 locale_app = config.get("main", "locale_app_name")
 locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
-
 
 import logmoduleloader, submitmoduleloader, uconf
 from getpass import getuser
@@ -65,7 +65,7 @@ class PopUp(gtk.Dialog):
 		gtk.Dialog.__init__(self, _("Submission"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		self.progress_bar = gtk.ProgressBar()
 		self.vbox.pack_start(self.progress_bar, False, False, 5)
-		self.set_icon_from_file('./upstream.png')
+		self.set_icon_from_file(icon_path)
 		self.show_progress()
 		self.connect("response", self.action)
 
