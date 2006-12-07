@@ -31,11 +31,11 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
+icon_path = os.path.abspath(config.get("main", "icon_path"))
 
 locale_app = config.get("main", "locale_app_name")
 locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
 
-import locale
 import gettext
 gettext.install(locale_app, locale_dir, unicode=1)
 
@@ -292,7 +292,7 @@ def main(args):
 	app = QApplication(args)
 	wizard = UpstreamWizard()
 
-	wizard.setIcon(QPixmap("upstream_1_0_icon.png"))
+	wizard.setIcon(QPixmap(icon_path))
 
 	# Bold looks better. :-)
 	font = wizard.titleFont()
