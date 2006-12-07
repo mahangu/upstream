@@ -17,8 +17,46 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import moduleloader, sys, messageframe
+import moduleloader, sys, messageframe, threading
+
+# This is a class that all submit things should derive from
+# Overriding the run() method generally shouldn't be done unless
+# there is a really, really good reason
+class SubmitPlugin(threading.Thread):
+	func_ptr_list = []
+	def __init__(self, message_buffer):
+		self._m_buffer = message_buffer
 		
+	def run(self):
+		try:
+			for func_ptr in self.func_ptr_list
+				func_ptr()
+				if self.terminate:
+					# Send some kind of failure message?
+					break
+				else:
+					# Send some kind of message about state?
+					pass
+				
+		except Error, e:
+			# Send a failure message, because in this case, either a message
+			# followed invalid format, or something crashed in the module itself
+			pass
+			
+
+class SubmitModule(moduleloader.LoadedModule):
+	def __init__(self, module, trust_level, fault_tolerance, debug_level):
+		moduleloader.LoadedModule(module, trust_level, fault_tolerance, debug_level)
+		self.module_submit_url = self.module.module_submit_url
+		self.message_buffer = MessageBuffer()
+		self.plugin = self.module.createSubmit(self.message_buffer)
+		
+	def getBuffer(self):
+		return self.message_buffer
+	
+	def execute(self):
+		self.plugin.start()
+
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]
 	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str]
@@ -27,11 +65,9 @@ class SubmitValidator(moduleloader.GenericValidator):
 		moduleloader.GenericValidator.__init__(self, parent, plugin_conf, fault_tolerance, debug_output)
 	
 	def validate_additional(self, module):
-		valid_hook = self.validate_execution_hook(module, "execute", 3)
+		valid_hook = self.validate_execution_hook(module, "createSubmit", 1)
 		return valid_hook
 			
 class SubmitModuleLoader(moduleloader.ModuleLoader):
 	ValidatorClass = SubmitValidator
 	ModuleWrapper = SubmitModule
-	def __init__(self, path_list, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
-		moduleloader.ModuleLoader.__init__(self, path_list, fault_tolerance, debug_output)	

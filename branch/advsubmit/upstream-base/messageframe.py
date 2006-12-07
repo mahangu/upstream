@@ -34,7 +34,7 @@ class BadTypeException(Exception):
 	def __str__(self):
 		return  "%s got bad type: %s" % (Exception.__str__(self), self._expected_type)
 
-class MessageBuffer(threading.Thread):
+class MessageBuffer:
 	def __init__(self, submitter):
 		threading.Thread.__init__(self)
 		
