@@ -37,7 +37,7 @@ class SubmitPlugin(threading.Thread):
 				func_ptr()
 				if self.terminate:
 					# Send some kind of failure message?
-					self._m_buffer.pushBack("Error", "The submission may have been terminated prematurely.", messageframe.ERROR)
+					break
 				else:
 					# Send some kind of message about state?
 					self._m_buffer.pushBack(StatusUpdate(self.func_ptr_list.index(func_ptr), len(self.func_ptr_list)))
@@ -45,11 +45,11 @@ class SubmitPlugin(threading.Thread):
 		except messageframe.BadRequestException, e:
 			# Send a failure message, because in this case, either a message
 			# followed invalid format, or something crashed in the module itself
-			self._m_buffer.pushBack("Critical Error", "A malformed request was issued: %s" % e, messageframe.ERROR)
+			self._m_buffer.pushBack(ErrMessage("A malformed request was issued: %s" % e))
 		except messageframe.BadTypeException, e:
-			self._m_buffer.pushBack("Critical Error", "An invalid type was broadcast: %s" % e, messageframe.ERROR)
+			self._m_buffer.pushBack(ErrMessage("An invalid type was broadcast: %s" % e, messageframe.ERROR))
 		except Exception, e:
-			self._m_buffer.pushBack("Critical Error", "An exception occured: %s" % e, messageframe.ERROR)
+			self._m_buffer.pushBack(ErrMessage("An exception occured: %s" % e))
 			
 
 class SubmitModule(moduleloader.LoadedModule):
@@ -71,7 +71,7 @@ class SubmitModule(moduleloader.LoadedModule):
 		if self.plugin:
 			self.plugin.start()
 		else:
-			self.message_buffer.pushBack(messageframe.Message("Critical Error", "Unable to create submission instance.", messageframe.ERROR))
+			self.message_buffer.pushBack(messageframe.ErrMessage("Critical Error", "Unable to create submission instance."))
 
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]

@@ -66,8 +66,8 @@ class DoneMessage(Message):
 # Error message indicates a some form of terminal error
 # that the submission module doesn't think it can recover from
 class ErrMessage(Message):
-	def __init__(self, title, content):
-		Message.__init__(self, title, content, ERROR)
+	def __init__(self, content):
+		Message.__init__(self, "Error", content, ERROR)
 	
 class UndefinedRequest(Message):
 	def __init__(self, title, message, req_descr):
