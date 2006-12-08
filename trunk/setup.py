@@ -20,7 +20,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from distutils.core import setup
 
-setup(name='Upstream',
+setup(
+	name='Upstream',
 	version="0.3-alpha",
 	author="Mahangu Weerasighe",
 	packages=['upstream', 'log-modules', 'submit-modules'],
@@ -28,9 +29,9 @@ setup(name='Upstream',
 			'log-modules' : 'upstream-base/log-modules',
 			'submit-modules' : 'upstream-base/submit-modules'
 			},
-	data_files=[('/usr/share/pixmaps', ['extras/upstream.png']),
-		  ('/usr/share/upstream', ['extras/canoe.glade']),
+	data_files=[('share/pixmaps', ['extras/upstream.png']),
+		  ('share/upstream', ['extras/canoe.glade']),
                   ('/etc/upstream', ['conf/upstream.conf'])
-		  ])
-
-
+		  ],
+	scripts=['canoe/canoe', 'kayak/kayak', 'upstream-base/upstream']
+	)
