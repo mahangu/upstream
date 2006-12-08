@@ -24,11 +24,8 @@ setup(
 	name='Upstream',
 	version="0.3-alpha",
 	author="Mahangu Weerasighe",
-	packages=['upstream', 'log-modules', 'submit-modules'],
-	package_dir={'upstream' : 'upstream-base',
-			'log-modules' : 'upstream-base/log-modules',
-			'submit-modules' : 'upstream-base/submit-modules'
-			},
+	packages=['upstream', 'upstream.log-modules', 'upstream.submit-modules'],
+	package_dir={'upstream' : 'upstream-base'},
 	data_files=[('share/pixmaps', ['extras/upstream.png']),
 		  ('share/upstream', ['extras/canoe.glade']),
                   ('/etc/upstream', ['conf/upstream.conf'])
