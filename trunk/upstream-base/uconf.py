@@ -18,11 +18,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import ConfigParser, os, re
+import constants
 
 LOG = 0
 SUBMIT = 1
 
-base_path_default = "../conf"
+base_path_default = constants.conf_dir
 
 class PluginConfigReader:
 	def __init__(self, p_type, base_path=base_path_default):
