@@ -35,6 +35,14 @@ REQUEST = 0
 INFORMATION = 1
 ERROR = 2
 
+class StatusUpdate:
+	def __init__(self, current, total):
+		self._cur = current
+		self._tot = total
+		
+	def fpComplete(self):
+		return (self._cur + 0.0)/self._tot
+
 class Message:
 	def __init__(self, title, content, m_type):
 		self._title = title
@@ -76,7 +84,7 @@ class UndefinedRequest(Message):
 			
 		self._request_descr = req_descr
 		self._reply = []
-		for x in range(0, len(req_descr):
+		for x in range(0, len(req_descr)):
 			self._reply.append(None)
 			
 	def getRequestDescr(self):
@@ -108,7 +116,7 @@ class AuthenticationRequest(UndefinedRequest):
 
 class SubmitInfoRequest(UndefinedRequest):
 	def __init__(self):
-		UndefinedRequest.__init__("log", "log request", [("handle", TYPE_STR,  getpass.getuser()), ("logs", TYPE_LOG, None) 
+		UndefinedRequest.__init__("log", "log request", [("handle", TYPE_STR,  getpass.getuser()), ("logs", TYPE_LOG, None)]) 
 		
 	def answerLogs(self, logs):
 		self.answerRequest("logs", logs)
@@ -119,7 +127,7 @@ class SubmitInfoRequest(UndefinedRequest):
 
 class BadRequestException(Exception):
 	def __init__(self, request, reason):
-		Exception.__init__(self):
+		Exception.__init__(self)
 		self.request = request
 		self.reason = reason
 		
@@ -127,7 +135,7 @@ class BadRequestException(Exception):
 		return "Type: %s was malformed: %s" % (type(self.request), self.reason)
 
 class BadTypeException(Exception):
-	def __init__(self, expected_type, received_type):
+	def __init__(self, received_type):
 		Exception.__init__(self)
 		self._expected_type = expected_type
 		
@@ -135,23 +143,20 @@ class BadTypeException(Exception):
 		return  "%s got bad type: %s" % (Exception.__str__(self), self._expected_type)
 
 class MessageBuffer:
-	def __init__(self, submitter):
+	def __init__(self):
 		threading.Thread.__init__(self)
-		
-		if not isinstance(submitter, submitmoduleloader.SubmitPlugin): 
-			raise BadTypeException(submitmoduleloader.SubmitPlugin, type(submitter))
 		
 		self._back_to_front = Queue()
 		self._front_to_back = Queue()
 			
 	def backPush(self, message):
-		if isinstance(message):
+		if isinstance(message, Message) or isinstance(message, StatusUpdate):
 			self._back_to_front.push(message)
 		else:
 			# Throw an exception that should bump us out any plugin
 			# written code, unless the module is really, really malicious
 			# and catches this exception.
-			raise BadTypeException(Message, message.__class__)
+			raise BadTypeException(message.__class__)
 	
 	def backMessageAvailable(self):
 		return self._front_to_back.empty()

@@ -33,37 +33,45 @@ class SubmitPlugin(threading.Thread):
 	
 	def run(self):
 		try:
-			for func_ptr in self.func_ptr_list
+			for func_ptr in self.func_ptr_list:
 				func_ptr()
 				if self.terminate:
 					# Send some kind of failure message?
-					break
+					self._m_buffer.pushBack("Error", "The submission may have been terminated prematurely.", messageframe.ERROR)
 				else:
 					# Send some kind of message about state?
-					pass
+					self._m_buffer.pushBack(StatusUpdate(self.func_ptr_list.index(func_ptr), len(self.func_ptr_list)))
 				
 		except messageframe.BadRequestException, e:
 			# Send a failure message, because in this case, either a message
 			# followed invalid format, or something crashed in the module itself
-			pass
+			self._m_buffer.pushBack("Critical Error", "A malformed request was issued: %s" % e, messageframe.ERROR)
 		except messageframe.BadTypeException, e:
-			pass
+			self._m_buffer.pushBack("Critical Error", "An invalid type was broadcast: %s" % e, messageframe.ERROR)
 		except Exception, e:
-			pass
+			self._m_buffer.pushBack("Critical Error", "An exception occured: %s" % e, messageframe.ERROR)
 			
 
 class SubmitModule(moduleloader.LoadedModule):
 	def __init__(self, module, trust_level, fault_tolerance, debug_level):
 		moduleloader.LoadedModule(module, trust_level, fault_tolerance, debug_level)
 		self.module_submit_url = self.module.module_submit_url
-		self.message_buffer = MessageBuffer()
-		self.plugin = self.module.createSubmit(self.message_buffer)
+		self._message_buffer = MessageBuffer()
+		try:
+			self.plugin = self.module.createSubmit(self.message_buffer)
+		except AttributeError, e:
+			self.plugin = None
+			
 		
 	def getBuffer(self):
-		return self.message_buffer
+		return self._message_buffer
 	
 	def execute(self):
-		self.plugin.start()
+		# This is done here so it does not spazz while being loaded
+		if self.plugin:
+			self.plugin.start()
+		else:
+			self.message_buffer.pushBack(messageframe.Message("Critical Error", "Unable to create submission instance.", messageframe.ERROR))
 
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]
