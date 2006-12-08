@@ -60,11 +60,16 @@ def get_trans():
 
 		
 def get_docs():
+	import re
 	doc_data = []
 	for root, dirs, files in os.walk('docs/'):
 		for name in files:
-			doc_file = root + "/" + name
-			doc_data.append(("share/docs/upstream/", ["%s"%(doc_file)]))
+			print root
+			if re.search(".svn", root):
+				print "Subversion file found, skipping."
+			else:	
+				doc_file = root + "/" + name
+				doc_data.append(("share/docs/upstream", ["%s"%(doc_file)]))
 	return doc_data
 
 
