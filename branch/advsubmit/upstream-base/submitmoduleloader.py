@@ -27,6 +27,10 @@ class SubmitPlugin(threading.Thread):
 	def __init__(self, message_buffer):
 		self._m_buffer = message_buffer
 		
+	# Convenience method for fetching submission data
+	def _fetchSubmitData(self):
+		pass
+	
 	def run(self):
 		try:
 			for func_ptr in self.func_ptr_list
@@ -38,9 +42,13 @@ class SubmitPlugin(threading.Thread):
 					# Send some kind of message about state?
 					pass
 				
-		except Error, e:
+		except messageframe.BadRequestException, e:
 			# Send a failure message, because in this case, either a message
 			# followed invalid format, or something crashed in the module itself
+			pass
+		except messageframe.BadTypeException, e:
+			pass
+		except Exception, e:
 			pass
 			
 
