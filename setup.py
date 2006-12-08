@@ -3,7 +3,8 @@
 # Upstream - log file aggregator and report tool for *nix systems.
 # Build System for versions 0.3+
 #
-# Copyright (C) 2006  Mahangu Weerasinghe (mahangu@gmail.com)
+# Copyright (C) 2006  Mahangu Weerasinghe <mahangu@gmail.com>
+# Copyright (C) 2006  Jason Ribeiro <jason.ribeiro@gmail.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +22,8 @@
 from distutils.core import setup
 import glob, os, sys
 
-def setup_f():
+
+def setup_upstream():
 	global lang_data
 	other_data = [('share/pixmaps', ['extras/upstream.png']),
 		('share/upstream', ['extras/canoe.glade']),
@@ -45,27 +47,22 @@ def setup_f():
 
 	
 	
+if __name__ == "__main__":
+	lang_data = []
+	for root, dirs, files in os.walk('po/'):
+		for name in files:
+			ext = name.split(".")
+			lang = root.split("/")[1]
+			if len(ext) == 2:
+				if ext[1] == "mo":
+					lang_file = root + "/" +  name
+					print name
+					print lang
+					print lang_file				
+					lang_data.append(("usr/share/locale/%s/LC_MESSAGES/"%(lang), ["%s"%(lang_file)]))
 
-lang_data = []
-for root, dirs, files in os.walk('po/'):
-	for name in files:
-		#lang = os.path.splitext(os.path.basename(name))[0]
-		#lang_file = os.path.basename(name) 
-		#lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,lang_file), ["%s"%(name)]))
-		ext = name.split(".")
-		lang = root.split("/")[1]
-		if len(ext) == 2:
-			if ext[1] == "mo":
-				lang_file = root + "/" +  name
-				print lang
-				print lang_file				
-				lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,name), ["%s"%(lang_file)]))
-
-		#print lang_data
 		
-
-
-setup_f()
+	setup_upstream()
 
 
 
