@@ -210,7 +210,8 @@ if __name__ == "__main__":
 	
 	for category in categories:
 		lflag = "--%s"%(category)
-		print lflag
+		# debug print
+		#print lflag
 
 		parser.add_option("", lflag, action="store_true", help=_("All log modules in the %s category.")%(category), default=False)
 
