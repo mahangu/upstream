@@ -4,7 +4,7 @@
 # Build System for versions 0.3+
 #
 # Copyright (C) 2006  Mahangu Weerasinghe <mahangu@gmail.com>
-# Copyright (C) 2006  Jason Ribeiro <jason.ribeiro@gmail.com>
+# Jason Ribeiro <jason.ribeiro@gmail.com> et al.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,13 +27,10 @@ def setup_upstream():
 	global lang_data
 	other_data = [('share/pixmaps', ['extras/upstream.png']),
 		('share/upstream', ['extras/canoe.glade']),
-		('etc/upstream', ['conf/upstream.conf']),]
+		('etc/upstream', ['conf/upstream.conf'])]
 
-	complete_data = other_data + lang_data
-	print other_data
-	print complete_data
-
-
+	complete_data = other_data + get_trans() + get_docs()
+	
 	setup(
 		name='Upstream',
 		version="0.3-alpha",
@@ -46,8 +43,7 @@ def setup_upstream():
 		scripts=['canoe/canoe', 'kayak/kayak', 'upstream-base/upstream'])
 
 	
-	
-if __name__ == "__main__":
+def get_trans():
 	lang_data = []
 	for root, dirs, files in os.walk('po/'):
 		for name in files:
@@ -59,10 +55,18 @@ if __name__ == "__main__":
 					print name
 					print lang
 					print lang_file				
-					lang_data.append(("usr/share/locale/%s/LC_MESSAGES/"%(lang), ["%s"%(lang_file)]))
+					lang_data.append(("share/locale/%s/LC_MESSAGES/"%(lang), ["%s"%(lang_file)]))
+	return lang_data
 
 		
+def get_docs():
+	doc_data = []
+	for root, dirs, files in os.walk('docs/'):
+		for name in files:
+			doc_file = root + "/" + name
+			doc_data.append(("share/docs/upstream/", ["%s"%(doc_file)]))
+	return doc_data
+
+
+if __name__ == "__main__":
 	setup_upstream()
-
-
-
