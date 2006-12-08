@@ -17,11 +17,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import getpass
 import threading
 import submitmoduleloader
 
-INFORMATION = 0
-ERROR = 1
+
+TYPE_STR = 0
+# For passwords
+TYPE_SECRET_STR = 1
+TYPE_SELECT = 2
+TYPE_MULTISELECT = 3
+TYPE_TOGGLE = 4
+TYPE_LOG = 5
+
+
+REQUEST = 0
+INFORMATION = 1
+ERROR = 2
 
 class Message:
 	def __init__(self, title, content, m_type):
@@ -34,6 +46,9 @@ class Message:
 	
 	def content(self):
 		return self._content
+	
+	def getType(self):
+		return self._m_type
 
 # Done message indicates a successful completion
 class DoneMessage(Message):
@@ -48,10 +63,11 @@ class ErrMessage(Message):
 	
 class UndefinedRequest(Message):
 	def __init__(self, title, message, req_descr):
-		Message.__init__(self, title, message)
+		Message.__init__(self, title, message, REQUEST)
 		# Perform validation on the request description
 		if type(req_descr) != list:
 			raise BadRequestException(self, "Not a list")
+		# Further TODO: add some validation to make sure that types are matched
 		for x in req_descr:
 			if type(x) != tuple:
 				raise BadRequestException(self, "List contains non-tuple")
@@ -72,6 +88,33 @@ class UndefinedRequest(Message):
 				self._reply[self._request_descr.index(x)] = response
 				break
 	
+	def getAnswer(self, question):
+		for x in self._request_descr:
+			if x[0] == question:
+				return self._reply[self._request_descr.index(x)]
+		
+class AuthenticationRequest(UndefinedRequest):
+	def __init__(self, content, use_pw_field):
+		if use_pw_field:
+			UndefinedRequest.__init__(self, "Authentication", content, [("Username", TYPE_STR, ""), ("Password", TYPE_SECRET_STR, "")])
+		else:
+			UndefinedRequest.__init__(self, "Authentication", content, [("Password", TYPE_SECRET_STR, "")])
+			
+	def answerUsername(self, un):
+		self.answerRequest("Username", un)
+		
+	def answerPassword(self, pw):
+		self.answerRequest("Password", pw)
+
+class SubmitInfoRequest(UndefinedRequest):
+	def __init__(self):
+		UndefinedRequest.__init__("log", "log request", [("handle", TYPE_STR,  getpass.getuser()), ("logs", TYPE_LOG, None) 
+		
+	def answerLogs(self, logs):
+		self.answerRequest("logs", logs)
+		
+	def answerUserHandle(self, handle):
+		self.answerRequest("handle", handle)
 		
 
 class BadRequestException(Exception):
