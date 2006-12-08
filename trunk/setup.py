@@ -19,16 +19,40 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from distutils.core import setup
+import glob, os
 
-setup(
-	name='Upstream',
-	version="0.3-alpha",
-	author="Mahangu Weerasighe",
-	packages=['upstream', 'upstream.log-modules', 'upstream.submit-modules'],
-	package_dir={'upstream' : 'upstream-base'},
-	data_files=[('share/pixmaps', ['extras/upstream.png']),
-		  ('share/upstream', ['extras/canoe.glade']),
-                  ('/etc/upstream', ['conf/upstream.conf'])
-		  ],
-	scripts=['canoe/canoe', 'kayak/kayak', 'upstream-base/upstream']
-	)
+def setup_f():
+	global lang_data
+	other_data = [('share/pixmaps', ['extras/upstream.png']),
+		('share/upstream', ['extras/canoe.glade']),
+		('etc/upstream', ['conf/upstream.conf']),]
+
+	complete_data = other_data + lang_data
+	print other_data
+	print complete_data
+
+
+	setup(
+		name='Upstream',
+		version="0.3-alpha",
+		author="Mahangu Weerasighe",
+		packages=['upstream', 'upstream.log-modules', 'upstream.submit-modules'],
+		package_dir={'upstream' : 'upstream-base'},
+		package_data={'upstream': ['extras/*']},
+
+		data_files= complete_data,
+		scripts=['canoe/canoe', 'kayak/kayak', 'upstream-base/upstream'])
+
+	
+	
+
+lang_data = []
+for po in glob.glob('po/*.po'):
+	lang = os.path.splitext(os.path.basename(po))[0]
+	lang_file = os.path.basename(po)
+        lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,lang_file), ["%s"%(po)]))
+	print po
+setup_f()
+
+
+
