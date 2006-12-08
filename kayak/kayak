@@ -22,19 +22,18 @@
 
 from qt import *
 
-import os, sys, time, threading, string, ConfigParser, re, uconf
+import os, sys, time, threading, string, ConfigParser, re, uconf, constants
 from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
-gladepath = config.get("canoe", "gladepath")
 submit_module_default = config.get("main", "submit_module_default")
 icon_path = os.path.abspath(config.get("main", "icon_path"))
 
-locale_app = config.get("main", "locale_app_name")
-locale_dir = os.path.abspath(config.get("main", "locale_app_dir"))
+locale_app = constants.locale_app
+locale_dir = constants.locale_dir
 
 import gettext
 gettext.install(locale_app, locale_dir, unicode=1)
@@ -310,10 +309,10 @@ def main(args):
 if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
-	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	l_config = uconf.PluginConfigReader(uconf.LOG, constants.conf_dir)
 	log_loader = logmoduleloader.LogModuleLoader(l_config, True, 1)
 
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, constants.conf_dir)
 	submit_loader = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 	
 	main(sys.argv)
