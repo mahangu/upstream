@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from distutils.core import setup
-import glob, os
+import glob, os, sys
 
 def setup_f():
 	global lang_data
@@ -47,11 +47,24 @@ def setup_f():
 	
 
 lang_data = []
-for po in glob.glob('po/*.po'):
-	lang = os.path.splitext(os.path.basename(po))[0]
-	lang_file = os.path.basename(po)
-        lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,lang_file), ["%s"%(po)]))
-	print po
+for root, dirs, files in os.walk('po/'):
+	for name in files:
+		#lang = os.path.splitext(os.path.basename(name))[0]
+		#lang_file = os.path.basename(name) 
+		#lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,lang_file), ["%s"%(name)]))
+		ext = name.split(".")
+		lang = root.split("/")[1]
+		if len(ext) == 2:
+			if ext[1] == "mo":
+				lang_file = root + "/" +  name
+				print lang
+				print lang_file				
+				lang_data.append(("locale/%s/LC_MESSAGES/%s"%(lang,name), ["%s"%(lang_file)]))
+
+		#print lang_data
+		
+
+
 setup_f()
 
 
