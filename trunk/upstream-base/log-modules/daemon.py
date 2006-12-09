@@ -28,8 +28,8 @@ def execute():
 	try:
 		fp = open(log_path, "r")
 	except IOError:
-		return module_name, "Could not open this log file!"
+		return "Could not open this log file!"
 	else:
 		content = fp.read()
 		fp.close()
-		return module_name, content
+		return content

@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 import re
 
@@ -27,20 +28,18 @@ module_description = """Module for pastebin.ca"""
 module_submit_url = "http://pastebin.ca"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
+	contents = flat_log(log_tuple)
+	print "Failing"
 
 	# TODO Are there any limits on these fields?
 	# 'expiry' specifies for what period of time the paste should be kept:  No value means forever.
 	# 'type': 1 means raw text
-	post_data = { 'content': flat_log_type, 's': "Submit Post", 'description': submit_message, 'type': "1", 'expiry': "", 'name':  submit_name }
+	post_data = { 'content': contents, 's': "Submit Post", 'description': submit_message, 'type': "1", 'expiry': "", 'name':  submit_name }
 
 	# Send the data
 	try:

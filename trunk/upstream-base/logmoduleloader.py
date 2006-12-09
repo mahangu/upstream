@@ -33,7 +33,7 @@ class LogModule(moduleloader.LoadedModule):
 		self.previous_load = True
 		try:
 			self.result =  self.module.execute()
-			if not isinstance(self.result, tuple) or len(self.result) != 2:
+			if not isinstance(self.result, str):
 				if self.debug_output >= moduleloader.DEBUG_ALL:
 					print "Incorrect return from module"
 				return "Error in module loader %s: %s " % (self.module_name, self.log_path), "Incorrect return type"
@@ -161,7 +161,7 @@ class LogModuleLoader(moduleloader.ModuleLoader):
 	def getUniqueModulesInCategories(self, list_of_cat):
 		ret_mods = []
 		for category in list_of_cat:
-			for mod in category:
+			for mod in self.getModulesInCategory(category):
 				if not mod in ret_mods:
 					ret_mods.append(mod)
 		return ret_mods

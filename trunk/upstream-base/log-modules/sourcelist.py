@@ -31,7 +31,7 @@ def execute():
 	try:
 		fp = open(log_path, "r")
 	except IOError:
-		return module_name, "Could not open this log file!"
+		return "Could not open this log file!"
 	else:
 		#content = fp.readlines()
 		#singlecontent = ""
@@ -39,9 +39,9 @@ def execute():
 		#	print line
 		#	print singlecontent
 		#	singlecontent = singlecontent + line
-		#return module_name, singlecontent
+		#return singlecontent
 
 		# Is this ok instead?
 		content = fp.read()
 		fp.close()
-		return module_name, content
+		return content

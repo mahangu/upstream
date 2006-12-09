@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 import re
 
@@ -27,17 +28,14 @@ module_description = """Module for http://pastesite.com/"""
 module_submit_url = "http://pastesite.com/new"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
+	contents = submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log(log_tuple)
 
-	post_data = { 'paste': submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log_type, 'type': "0", 'lifetime': "1" }
+	post_data = { 'paste': contents, 'type': "0", 'lifetime': "1" }
 
 	# Send the data
 	try:
