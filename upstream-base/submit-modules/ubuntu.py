@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 from textwrap import fill
 
@@ -27,21 +28,16 @@ module_description = """Module for paste.ubuntu-nl.org"""
 module_submit_url = "http://paste.ubuntu-nl.org/"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
-	# Not sure why the following is needed, but leaving it here just in case
-	#flat_log_type = flat_log_type.replace("\"","") 
+	contents = submit_name + "\n" + fill(submit_message) + flat_log(log_tuple)
 
 	# 'poster' cannot exceed 21 characters for paste.ubuntu-nl.org
 	# wrapping submit_message only at the moment to the default characters
-	post_data = { 'content': submit_name + "\n" + fill(submit_message) + flat_log_type, 'poster': "Upstream", 'submit': "Paste it" }
+	post_data = { 'content': contents, 'poster': "Upstream", 'submit': "Paste it" }
 
 	# Send the data
 	try:

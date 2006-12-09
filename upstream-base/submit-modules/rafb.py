@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 from textwrap import fill
 
@@ -27,21 +28,18 @@ module_description = """Module for www.rafb.net"""
 module_submit_url = "http://www.rafb.net/paste/paste.php"
 
 
-def execute(nickname, submit_message, dict_of_logs):
+def execute(nickname, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
+	contents = fill(submit_message) + flat_log(log_tuple)
 
 	# wrapping submit_message to the default width (70)
 	# 'nick' is limited to 30 characters
 	# 'desc' is limited to 50 characters
 	short_nickname = nickname[:30]
-	post_data = { 'lang': "Plain Text", 'nick': short_nickname, 'desc': "", 'cvt_tabs': "No", 'text': fill(submit_message) + flat_log_type}
+	post_data = { 'lang': "Plain Text", 'nick': short_nickname, 'desc': "", 'cvt_tabs': "No", 'text': contents}
 
 	# Send the data
 	try:

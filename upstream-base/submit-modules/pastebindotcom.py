@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 
 module_name = "pastebindotcom"
@@ -26,21 +27,18 @@ module_description = """Module for pastebin.com"""
 module_submit_url = "http://pastebin.com"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
+	contents = submit_name + "\n\n" + submit_message + "\n\n" + flat_log(log_tuple)
 
 	# 'expiry' specifies for what period of time the paste should be kept
 	#	"d" - one day
 	#	"m" - one month (this is default on the web interface)
 	#	"f" - forever
-	post_data = { 'format' : "text", 'code2': submit_name + "\n\n" + submit_message + "\n\n" + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
+	post_data = { 'format' : "text", 'code2': contents, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
 
 	# Send the data
 	try:

@@ -19,25 +19,23 @@
 
 
 import submitmoduleloader
-import webbrowser,os
+from util import flat_log
+import webbrowser, os
 
 module_name = "red"
 module_description = """Module for Redkrieg's pastebin. Much <3 to him for hosting us."""
 module_submit_url = "http://pastebin.redkrieg.com?page=submit"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	
 	print "Executing"
-	# Handle the dict
-	flat_log_type = ""
-	for x in dict_of_logs:
-		# Put all the elements into one log
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (x, dict_of_logs[x])
-		
+	
+	flat_log_type = flat_log(log_tuple)
 	flat_log_type = flat_log_type.replace("\"","")
+	contents = submit_message + flat_log_type
 	
 	referer= "http://pastebin.redkrieg.com"
 	# misc= "&channel=none&colorize=none"
@@ -49,7 +47,7 @@ def execute(submit_name, submit_message, dict_of_logs):
 	c = pycurl.Curl()
 	c.setopt(pycurl.URL, module_submit_url)
 	c.setopt(pycurl.POST, 1)
-	post_data = { 'subject': "Upstream<%s>"%submit_name, 'language': "1", 'code': submit_message + flat_log_type, 'nickname': "Upstream" }
+	post_data = { 'subject': "Upstream<%s>"%submit_name, 'language': "1", 'code': contents, 'nickname': "Upstream" }
 	c.setopt(pycurl.POSTFIELDS, urlencode(post_data))
 	c.setopt(pycurl.REFERER, referer)
 	clog = StringIO()

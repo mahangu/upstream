@@ -30,11 +30,11 @@ def execute():
 	try:
 		fp = open(log_path, "r")
 	except IOError:
-		return module_name, "Could not open this log file!"
+		return "Could not open this log file!"
 	else:
 		content = fp.read()
 		content = re.sub("wireless-key .*","wireless-key MASKED WEP KEY",content)
 		content = re.sub("wireless-enc .*","wireless-enc MASKED WEP KEY",content)
 		fp.close()
-		return module_name, content
+		return content
 

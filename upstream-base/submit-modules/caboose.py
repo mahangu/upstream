@@ -19,6 +19,7 @@
 
 
 import submitmoduleloader
+from util import flat_log
 from urllib import urlopen, urlencode
 import re
 
@@ -27,20 +28,17 @@ module_description = """Module for pastie.caboo.se/"""
 module_submit_url = "http://pastie.caboo.se/pastes/create"
 
 
-def execute(submit_name, submit_message, dict_of_logs):
+def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
 	print "Executing"
 
-	# Put all the elements into one log
-	flat_log_type = ""
-	for log in dict_of_logs:
-		flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, dict_of_logs[log])
+	contents = submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log(log_tuple)
 
 	# TODO Are there any limits on these fields?
 	# 'expiry' specifies for what period of time the paste should be kept:  No value means forever.
 	# 'type': 1 means raw text
-	post_data = { 'paste[parser]': "diff", 'paste[body]': submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log_type, 'paste[authorization]': "burger", 'key': "" }
+	post_data = { 'paste[parser]': "diff", 'paste[body]': contents, 'paste[authorization]': "burger", 'key': "" }
 
 	# Send the data
 	try:

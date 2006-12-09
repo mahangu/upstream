@@ -20,7 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
 # TODO: Fix spacing between widgets
-# TODO: use defaults in conf file
+# TODO: clean up the imports
 
 import sys
 
@@ -36,7 +36,8 @@ icon_path = os.path.abspath(config.get("main", "icon_path"))
 locale_app = constants.locale_app
 locale_dir = constants.locale_dir
 
-import logmoduleloader, submitmoduleloader, uconf
+import logmoduleloader, submitmoduleloader 
+from util import make_log_tuple
 from getpass import getuser
 
 try:
@@ -239,14 +240,10 @@ class Wizard:
 		return self.wTree.get_widget("entry_nickname").get_text()
 
 	def get_support_logs(self):
-		log_dict = {}
-		for cat in self.cat_dict:
-			if self.cat_dict[cat].get_active():
-				for mod in self.log_modules.getModulesInCategory(cat):
-					module = log_modules[mod.module_name]
-					(name, contents) = module.execute()
-					log_dict[name] = contents 
-		return log_dict 
+		cats = [cat for cat in self.cat_dict if self.cat_dict[cat].get_active()]
+		mods = self.log_modules.getUniqueModulesInCategories(cats)
+		log_tuple = make_log_tuple(mods)
+		return log_tuple 
 
 	def get_support_msg(self):
 		text_view = self.wTree.get_widget("textview_description")
@@ -276,7 +273,6 @@ class Canoe(Wizard):
 			nickname = self.get_nickname()
 			popup.pulse()
 			support_logs = self.get_support_logs()
-			print support_logs.keys() # debug
 			popup.pulse()
 			support_msg = self.get_support_msg()
 			popup.pulse()

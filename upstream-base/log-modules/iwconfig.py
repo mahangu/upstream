@@ -30,8 +30,8 @@ def execute():
 	if os.access(log_path, os.X_OK):
 		p = os.popen(log_path, "r")
 	else:
-		return module_name, "Could not successfully execute %s!" % (log_path)
+		return "Could not successfully execute %s!" % (log_path)
 	content = p.read()
 	p.close()
 	# Potentially do some removing of sensetive info like ESSIDs?
-	return module_name, content
+	return content
