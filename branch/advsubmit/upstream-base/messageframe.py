@@ -113,6 +113,12 @@ class AuthenticationRequest(UndefinedRequest):
 		
 	def answerPassword(self, pw):
 		self.answerRequest("Password", pw)
+		
+	def getUsername(self):
+		return self.getAnswer("Username")
+	
+	def getPassword(self):
+		return self.getAnswer("Password")
 
 class SubmitInfoRequest(UndefinedRequest):
 	def __init__(self):
@@ -124,6 +130,11 @@ class SubmitInfoRequest(UndefinedRequest):
 	def answerUserHandle(self, handle):
 		self.answerRequest("handle", handle)
 		
+	def getLogs(self):
+		return self.getAnswer("logs")
+	
+	def getUserHandle(self)
+		return self.getAnswer("handle")
 
 class BadRequestException(Exception):
 	def __init__(self, request, reason):

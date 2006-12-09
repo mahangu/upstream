@@ -29,19 +29,21 @@ class SubmitPlugin(threading.Thread):
 		
 	# Convenience method for fetching submission data
 	def _fetchSubmitData(self):
-		pass
+		self._m_buffer.pushBack(SubmitInfoRequest())
+		resp = self._m_buffer.pullBack()
+		return (resp.getUserHandle(), resp.getLogs())
+	
+	def _fetchAuthenticationRequest(self, message):
+		self._m_buffer.pushBack(AuthenticationRequest(message, True))
+		resp = self._m_buffer.pullBack()
+		return (resp.getUsername(), resp.getPassword())
+	
+	def execute(self):
+		abstract()	
 	
 	def run(self):
 		try:
-			for func_ptr in self.func_ptr_list:
-				func_ptr()
-				if self.terminate:
-					# Send some kind of failure message?
-					break
-				else:
-					# Send some kind of message about state?
-					self._m_buffer.pushBack(StatusUpdate(self.func_ptr_list.index(func_ptr), len(self.func_ptr_list)))
-				
+			self.execute()
 		except messageframe.BadRequestException, e:
 			# Send a failure message, because in this case, either a message
 			# followed invalid format, or something crashed in the module itself
