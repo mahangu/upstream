@@ -21,13 +21,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from distutils.core import setup
 import glob, os, sys
+import ConfigParser
 
+UPSTREAM_SETUP_CONFIG = 'setup.cfg'
+
+config = ConfigParser.ConfigParser()
+config.readfp(open(UPSTREAM_SETUP_CONFIG))
+prefix = config.get("install", "prefix")
+
+# Our configs
+confdir = config.get("paths", "confdir")
+gladedir = config.get("paths", "gladedir")
+imagedir = config.get("paths", "imagedir")
 
 def setup_upstream():
 	global lang_data
-	other_data = [('share/pixmaps', ['extras/upstream.png']),
-		('share/upstream', ['extras/canoe.glade']),
-		('etc/upstream', ['conf/upstream.conf'])]
+	other_data = [(imagedir, ['extras/upstream.png']),
+		(gladedir, ['extras/canoe.glade']),
+		(confdir, ['conf/upstream.conf']),
+		(confdir + "/log-plugins.d/", ['conf/log-plugins.d/log-plugins.conf']),
+		(confdir + "/submit-plugins.d/", ['conf/submit-plugins.d/submit-plugins.conf'])]
 
 	complete_data = other_data + get_trans() + get_docs()
 	
@@ -74,4 +87,5 @@ def get_docs():
 
 
 if __name__ == "__main__":
+	print "main"
 	setup_upstream()
