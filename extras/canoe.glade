@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.0.2 on Mon Nov 20 23:30:14 2006 by jasonr@luso-->
+<!--Generated with glade3 3.0.2 on Tue Nov 28 23:23:19 2006 by jasonr@luso-->
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
-    <property name="title" translatable="yes">Canoe</property>
+    <property name="title">Canoe</property>
     <property name="resizable">False</property>
-	<property name="icon">upstream.png</property>
+    <property name="icon">upstream.png</property>
     <signal name="destroy" handler="on_MainWindow_destroy"/>
     <child>
       <widget class="GtkVBox" id="MainVbox">
@@ -23,8 +23,7 @@
                 <child>
                   <widget class="GtkLabel" id="label1">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Introduction&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="label" translatable="yes">Introduction</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -57,8 +56,7 @@
                 <child>
                   <widget class="GtkLabel" id="label3">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Name&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="label" translatable="yes">Name</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -111,8 +109,7 @@
                 <child>
                   <widget class="GtkLabel" id="label5">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Problem Description&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="label" translatable="yes">Problem Description</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -163,7 +160,7 @@
                           <widget class="GtkLabel" id="label7">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Please enter short description of the problem.</property>
+                            <property name="label" translatable="yes">Please enter a short description of the problem.</property>
                             <property name="use_markup">True</property>
                           </widget>
                         </child>
@@ -226,8 +223,7 @@
                 <child>
                   <widget class="GtkLabel" id="label8">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Submit&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="label" translatable="yes">Submit</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -304,7 +300,7 @@
             <child>
               <widget class="GtkButton" id="btnCancel">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">gtk-cancel</property>
+                <property name="label">gtk-cancel</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnCancel_clicked"/>
               </widget>
@@ -313,7 +309,7 @@
               <widget class="GtkButton" id="btnBack">
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
-                <property name="label" translatable="yes">gtk-go-back</property>
+                <property name="label">gtk-go-back</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnBack_clicked"/>
               </widget>
@@ -329,7 +325,7 @@
                 <property name="has_focus">True</property>
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
-                <property name="label" translatable="yes">gtk-go-forward</property>
+                <property name="label">gtk-go-forward</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="on_btnNext_clicked"/>
               </widget>
