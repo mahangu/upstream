@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from distutils.core import setup
 import glob, os, sys
-import ConfigParser
+import ConfigParser, shutil
 
 UPSTREAM_SETUP_CONFIG = 'setup.cfg'
 
@@ -31,8 +31,12 @@ prefix = config.get("install", "prefix")
 
 # Our configs
 confdir = config.get("paths", "confdir")
-gladedir = config.get("paths", "gladedir")
+datadir = config.get("paths", "datadir")
 imagedir = config.get("paths", "imagedir")
+gladedir = config.get("paths", "gladedir")
+localedir = config.get("paths", "localedir")
+docdir = config.get("paths", "docdir")
+getconst = config.get("options", "get_constants")
 
 def setup_upstream():
 	global lang_data
@@ -68,7 +72,7 @@ def get_trans():
 					print name
 					print lang
 					print lang_file				
-					lang_data.append(("share/locale/%s/LC_MESSAGES/"%(lang), ["%s"%(lang_file)]))
+					lang_data.append((localedir + "/%s/LC_MESSAGES/"%(lang), ["%s"%(lang_file)]))
 	return lang_data
 
 		
@@ -82,10 +86,57 @@ def get_docs():
 				print "Subversion file found, skipping."
 			else:	
 				doc_file = root + "/" + name
-				doc_data.append(("share/docs/upstream", ["%s"%(doc_file)]))
+				doc_data.append((docdir, ["%s"%(doc_file)]))
 	return doc_data
 
+def get_constants():
+	confdir_full = prefix + "/" + confdir
+	datadir_full = prefix + "/" + datadir
+	imagedir_full = prefix + "/" + imagedir
+	localedir_full = prefix + "/" + localedir
+	gladedir_full = prefix + "/" + gladedir
+	
+	constants_template = """import os
+
+		if os.environ.get('UPSTREAM_CONF_DIR'):
+			conf_dir = os.environ.get('UPSTREAM_CONF_DIR')
+		else:
+			# FIXME: change before release:  conf_dir = '/etc/upstream'
+			conf_dir = '%s'
+		
+		if os.environ.get('UPSTREAM_DATA_DIR'):
+			data_dir = os.environ.get('UPSTREAM_DATA_DIR')
+		else:
+			# FIXME: change before release:  data_dir = '/usr/share/upstream'
+			data_dir = '%s'
+		
+		if os.environ.get('UPSTREAM_LOCALE_DIR'):
+			locale_dir = os.environ.get('UPSTREAM_LOCALE_DIR')
+		else:
+			# FIXME: you get the idea...
+			locale_dir = '%s' # what is default?
+		
+		if os.environ.get('UPSTREAM_GLADE_DIR'):
+			glade_dir = os.environ.get('UPSTREAM_GLADE_DIR')
+		else:
+			glade_dir = '%s' # is this sensible?
+			
+		if os.environ.get('UPSTREAM_IMAGE_DIR'):
+			image_dir = os.environ.get('UPSTREAM_IMAGE_DIR')
+		else:
+			image_dir = '%s' # is this sensible?
+		
+		locale_app = 'upstream''"""%(confdir_full,datadir_full,localedir_full,gladedir_full,imagedir_full)
+	
+	#print constants_template #error catching
+	shutil.copyfile('upstream-base/constants.py', './constants.py.bak') #backup constants to wherever we're running setup from
+	
+	f = open("upstream-base/constants.py","w") #open the real constants.py which will be packaged
+	f.writelines(constants_template) #write to file
 
 if __name__ == "__main__":
-	print "main"
+	
+	if getconst == "yes":
+		get_constants()
+	
 	setup_upstream()

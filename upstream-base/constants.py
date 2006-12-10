@@ -22,5 +22,10 @@ if os.environ.get('UPSTREAM_GLADE_DIR'):
 	glade_dir = os.environ.get('UPSTREAM_GLADE_DIR')
 else:
 	glade_dir = data_dir # is this sensible?
+	
+if os.environ.get('UPSTREAM_IMAGE_DIR'):
+	image_dir = os.environ.get('UPSTREAM_IMAGE_DIR')
+else:
+	image_dir = data_dir # is this sensible?
 
 locale_app = 'upstream'
