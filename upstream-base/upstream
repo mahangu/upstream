@@ -22,6 +22,7 @@ from getpass import getuser
 import  submitmoduleloader, logmoduleloader, uconf, constants
 
 import optparse, os, ConfigParser
+from util import make_log_tuple
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('%s/upstream.conf'%(constants.conf_dir)))
@@ -63,9 +64,9 @@ def main():
 		catchoices.append(catentry)
 	
 	
-	log_dict = {}
+	log_tuple = []
 		
-	while log_dict == {}:
+	while log_tuple == []:
 		(code, categories) = d.checklist(text=_("What are you having trouble with?"),
 					height=15, width=54, list_height=7, 
 					choices=catchoices,
@@ -73,16 +74,12 @@ def main():
 		
 		
 		
-		
-		for x in categories:
-			category = log_modules.getModulesInCategory(x)
+		mods = log_modules.getUniqueModulesInCategories(categories)
+		log_tuple = make_log_tuple(mods)
 			
-			for log_module in category:
-				module = log_modules[log_module.module_name]
-				(name, contents) = module.execute()
-				log_dict[name] = contents 
 		
-		if log_dict == {}:
+		
+		if log_tuple == []:
 			d.msgbox(_("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program."))
 		
 	
@@ -120,7 +117,7 @@ def main():
 	
 	print submit_module
 	
-	submit_module.execute(nickname, description, log_dict)
+	submit_module.execute(nickname, description, log_tuple)
 	
 def cli(options,args):
 	
