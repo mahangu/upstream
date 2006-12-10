@@ -23,6 +23,7 @@
 from qt import *
 
 import os, sys, time, threading, string, ConfigParser, re, uconf, constants
+from util import make_log_tuple
 from getpass import getuser
 
 import  submitmoduleloader, logmoduleloader
@@ -205,12 +206,8 @@ class UpstreamWizard(QWizard):
 		self.categories = categories
 
 	def categoryLogs(self):
-		logs = {}
-		for cat in self.categories:
-			for mod in log_loader.getModulesInCategory(cat):
-				module = log_loader[mod.module_name]
-				name, contents = module.execute()
-				logs[name] = contents
+		mods = log_loader.getUniqueModulesInCategories(self.categories)
+		logs = make_log_tuple(mods)
 		return logs
 			
 	def submitDone(self):
