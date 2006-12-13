@@ -30,6 +30,7 @@ config.readfp(open(UPSTREAM_SETUP_CONFIG))
 prefix = config.get("install", "prefix")
 
 # Our configs
+rootdir = config.get("paths", "rootdir")
 confdir = config.get("paths", "confdir")
 datadir = config.get("paths", "datadir")
 imagedir = config.get("paths", "imagedir")
@@ -90,11 +91,11 @@ def get_docs():
 	return doc_data
 
 def get_constants():
-	confdir_full = prefix + "/" + confdir
-	datadir_full = prefix + "/" + datadir
-	imagedir_full = prefix + "/" + imagedir
-	localedir_full = prefix + "/" + localedir
-	gladedir_full = prefix + "/" + gladedir
+	confdir_full = rootdir + "/" + confdir
+	datadir_full = rootdir + "/" + datadir
+	imagedir_full = rootdir + "/" + imagedir
+	localedir_full = rootdir + "/" + localedir
+	gladedir_full = rootdir + "/" + gladedir
 	
 	constants_template = """import os
 
