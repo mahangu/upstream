@@ -97,37 +97,39 @@ def get_constants():
 	localedir_full = rootdir + "/" + localedir
 	gladedir_full = rootdir + "/" + gladedir
 	
-	constants_template = """import os
+	# TODO: move this to constants.py.in
+	constants_template ="""import os
 
-		if os.environ.get('UPSTREAM_CONF_DIR'):
-			conf_dir = os.environ.get('UPSTREAM_CONF_DIR')
-		else:
-			# FIXME: change before release:  conf_dir = '/etc/upstream'
-			conf_dir = '%s'
-		
-		if os.environ.get('UPSTREAM_DATA_DIR'):
-			data_dir = os.environ.get('UPSTREAM_DATA_DIR')
-		else:
-			# FIXME: change before release:  data_dir = '/usr/share/upstream'
-			data_dir = '%s'
-		
-		if os.environ.get('UPSTREAM_LOCALE_DIR'):
-			locale_dir = os.environ.get('UPSTREAM_LOCALE_DIR')
-		else:
-			# FIXME: you get the idea...
-			locale_dir = '%s' # what is default?
-		
-		if os.environ.get('UPSTREAM_GLADE_DIR'):
-			glade_dir = os.environ.get('UPSTREAM_GLADE_DIR')
-		else:
-			glade_dir = '%s' # is this sensible?
-			
-		if os.environ.get('UPSTREAM_IMAGE_DIR'):
-			image_dir = os.environ.get('UPSTREAM_IMAGE_DIR')
-		else:
-			image_dir = '%s' # is this sensible?
-		
-		locale_app = 'upstream''"""%(confdir_full,datadir_full,localedir_full,gladedir_full,imagedir_full)
+if os.environ.get('UPSTREAM_CONF_DIR'):
+	conf_dir = os.environ.get('UPSTREAM_CONF_DIR')
+else:
+	# FIXME: change before release:  conf_dir = '/etc/upstream'
+	conf_dir = '%s'
+
+if os.environ.get('UPSTREAM_DATA_DIR'):
+	data_dir = os.environ.get('UPSTREAM_DATA_DIR')
+else:
+	# FIXME: change before release:  data_dir = '/usr/share/upstream'
+	data_dir = '%s'
+
+if os.environ.get('UPSTREAM_LOCALE_DIR'):
+	locale_dir = os.environ.get('UPSTREAM_LOCALE_DIR')
+else:
+	# FIXME: you get the idea...
+	locale_dir = '%s' # what is default?
+
+if os.environ.get('UPSTREAM_GLADE_DIR'):
+	glade_dir = os.environ.get('UPSTREAM_GLADE_DIR')
+else:
+	glade_dir = '%s' # is this sensible?
+	
+if os.environ.get('UPSTREAM_IMAGE_DIR'):
+	image_dir = os.environ.get('UPSTREAM_IMAGE_DIR')
+else:
+	image_dir = '%s' # is this sensible?
+
+locale_app = 'upstream'""" \
+%(confdir_full,datadir_full,localedir_full,gladedir_full,imagedir_full)
 	
 	#print constants_template #error catching
 	shutil.copyfile('upstream-base/constants.py', './constants.py.bak') #backup constants to wherever we're running setup from
