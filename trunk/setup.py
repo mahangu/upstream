@@ -62,6 +62,8 @@ def setup_upstream():
 
 		data_files= complete_data,
 		scripts=['canoe/canoe', 'kayak/kayak', 'upstream-base/upstream'])
+	
+	cleanup()
 
 	
 def get_trans():
@@ -116,6 +118,10 @@ def get_constants():
 	
 	f = open("conf/upstream.conf","w") #open the real upstream.conf which will be packaged
 	f.writelines(conf_template_modified) #write to file
+	
+def cleanup():
+	if genpaths == "yes":
+		shutil.move('./upstream.conf.bk', 'conf/upstream.conf')
 
 if __name__ == "__main__":
 	
