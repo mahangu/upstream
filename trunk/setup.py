@@ -29,15 +29,17 @@ config = ConfigParser.ConfigParser()
 config.readfp(open(UPSTREAM_SETUP_CONFIG))
 prefix = config.get("install", "prefix")
 
-# Our configs
-rootdir = config.get("paths", "rootdir")
-confdir = config.get("paths", "confdir")
-datadir = config.get("paths", "datadir")
-imagedir = config.get("paths", "imagedir")
-gladedir = config.get("paths", "gladedir")
-localedir = config.get("paths", "localedir")
-docdir = config.get("paths", "docdir")
-getconst = config.get("options", "get_constants")
+# Constants
+getconst = config.get("constants", "get_constants")
+if getconst == "yes":
+	rootdir = config.get("constants", "rootdir")
+	confdir = config.get("constants", "confdir")
+	datadir = config.get("constants", "datadir")
+	imagedir = config.get("constants", "imagedir")
+	gladedir = config.get("constants", "gladedir")
+	localedir = config.get("constants", "localedir")
+	docdir = config.get("constants", "docdir")
+
 
 def setup_upstream():
 	global lang_data
