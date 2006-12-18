@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys
+import dialog, sys, time
 from getpass import getuser
 import  submitmoduleloader, logmoduleloader, uconf
 
@@ -44,6 +44,72 @@ def main():
 	
 	#Step 1
 	d.msgbox(_("This program will assist you in sending troubleshooting data to support personnel."))
+
+	#Step 2
+	#Select a pastebin server to use
+	submit_modules.join()
+	modchoices = []
+	
+	for mod in submit_modules:
+		if mod.module_name == submit_module_default:
+			modbool = 1
+		else:
+			modbool = 0
+		
+		modentry = (mod.module_name, "", modbool)
+		modchoices.append(modentry)
+		print modentry
+	
+	pastebin = ""
+	
+	while pastebin == "":
+		(code, pastebin) = d.radiolist(text=_("Please select a server to submit to."),
+                	                  height=15, width=54, list_height=7, 
+                        	          choices=modchoices,
+                                	  title=_("Submit"))
+		if pastebin == "":
+			d.msgbox(_("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program."))
+	
+	print pastebin
+	submit_module = submit_modules[pastebin]
+	print submit_module
+
+	
+	submit_module.execute()
+	loop_idle(submit_module)
+
+def loop_idle(mod):
+	m_buffer = submit_module.getBuffer()
+	cur_message = None
+	while cur_message == None and cur_message.getType() != messageframe.DONE and cur_message.getType() != messageframe.ERROR:
+		while not m_buffer.frontAvailable():
+			time.sleep(0.01)
+		cur_message = m_buffer.frontPull()
+		if cur_message.getType() == messageframe.INFORMATION:
+			show_info(cur_message)
+		elif cur_message.getType() == messageframe.REQUEST:
+			handle_request(cur_message)
+			m_buffer.pushFrone(cur_message)
+
+def handle_request(cur_message):
+	if isinstance(cur_message, messageframe.UndefinedRequest):
+		handle_undef(cur_message)
+	elif isinstance(cur_message, messageframe.AuthenticationRequest):
+		handle_auth(cur_message)
+	else: # isinstance(cur_message, messageframe.SubmitInfoRequest)
+		handle_subinfo(cur_message)
+
+def handle_undef(message):
+	pass
+
+def handle_auth(message):
+	pass
+
+def handle_subinfo(message):
+	pass
+
+	
+	# Possible TODO - add support 
 	
 	#Step 2
 	nickname = getuser()
@@ -93,38 +159,7 @@ def main():
 	(code, description) = d.inputbox(_("Please enter a short description of the problem."), init="")
 	
 
-	#Step 4
-	submit_modules.join()
-	modchoices = []
-	
-	for mod in submit_modules:
-		if mod.module_name == submit_module_default:
-			modbool = 1
-		else:
-			modbool = 0
-		
-		modentry = (mod.module_name, "", modbool)
-		modchoices.append(modentry)
-		print modentry
-	
-	pastebin = ""
-	
-	while pastebin == "":
-		(code, pastebin) = d.radiolist(text=_("Please select a server to submit to."),
-                	                  height=15, width=54, list_height=7, 
-                        	          choices=modchoices,
-                                	  title=_("Submit"))
-		if pastebin == "":
-			d.msgbox(_("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program."))
-				  
-	
-	print pastebin
-	
-	submit_module = submit_modules[pastebin]
-	
-	print submit_module
-	
-	submit_module.execute(nickname, description, log_dict)
+
 	
 def cli(options,args):
 	
@@ -201,9 +236,11 @@ if __name__ == "__main__":
 	submit_module_default = config.get("main", "submit_module_default")
 
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	global log_modules
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	global submit_modules
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
 	
 	parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))

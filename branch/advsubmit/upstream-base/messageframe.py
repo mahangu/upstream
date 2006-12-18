@@ -31,17 +31,10 @@ TYPE_TOGGLE = 4
 TYPE_LOG = 5
 
 
-REQUEST = 0
-INFORMATION = 1
+REQUEST = 1
+INFORMATION = 0
 ERROR = 2
-
-class StatusUpdate:
-	def __init__(self, current, total):
-		self._cur = current
-		self._tot = total
-		
-	def fpComplete(self):
-		return (self._cur + 0.0)/self._tot
+DONE = 3
 
 class Message:
 	def __init__(self, title, content, m_type):
@@ -61,7 +54,7 @@ class Message:
 # Done message indicates a successful completion
 class DoneMessage(Message):
 	def __init__(self, title, content):
-		Message.__init__(self, title, content, INFORMATION)
+		Message.__init__(self, title, content, DONE)
 		
 # Error message indicates a some form of terminal error
 # that the submission module doesn't think it can recover from
@@ -122,7 +115,7 @@ class AuthenticationRequest(UndefinedRequest):
 
 class SubmitInfoRequest(UndefinedRequest):
 	def __init__(self):
-		UndefinedRequest.__init__("log", "log request", [("handle", TYPE_STR,  getpass.getuser()), ("logs", TYPE_LOG, None)]) 
+		UndefinedRequest.__init__("log", "log request", [("handle", TYPE_STR,  getpass.getuser()), ("logs", TYPE_LOG, None), ("message", TYPE_STR, None)]) 
 		
 	def answerLogs(self, logs):
 		self.answerRequest("logs", logs)

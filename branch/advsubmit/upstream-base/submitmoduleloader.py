@@ -71,6 +71,9 @@ class SubmitModule(moduleloader.LoadedModule):
 	def execute(self):
 		# This is done here so it does not spazz while being loaded
 		if self.plugin:
+			# Make the plugin thread a daemon, so it doesn't
+			# keep the application alive if we try and exit
+			self.plugin.setDaemon()
 			self.plugin.start()
 		else:
 			self.message_buffer.pushBack(messageframe.ErrMessage("Critical Error", "Unable to create submission instance."))
