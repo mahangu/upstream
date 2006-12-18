@@ -20,23 +20,28 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.\
 
+
+import os, sys, time, threading, string, ConfigParser, re, gettext
+from getpass import getuser
 from qt import *
 
-import os, sys, time, threading, string, ConfigParser, re, uconf, constants
-from util import make_log_tuple
-from getpass import getuser
-
-import  submitmoduleloader, logmoduleloader
-
 config = ConfigParser.ConfigParser()
-config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+config.readfp(open('../conf/upstream.conf'))
+libsdir = config.get("paths","libsdir")
+
+sys.path.append(libsdir)
+
+locale_app = config.get("main","locale_app")
+locale_dir = config.get("paths","localedir")
+
+import submitmoduleloader, logmoduleloader, uconf
+from util import make_log_tuple
+
 submit_module_default = config.get("main", "submit_module_default")
-icon_path = os.path.abspath(config.get("main", "icon_path"))
 
-locale_app = constants.locale_app
-locale_dir = constants.locale_dir
+confdir = config.get("paths","confdir")
+icon_path = os.path.abspath(config.get("paths", "imagedir") + "upstream.png")
 
-import gettext
 gettext.install(locale_app, locale_dir, unicode=1)
 
 class BoldLabel(QLabel):
@@ -306,10 +311,11 @@ def main(args):
 if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
-	l_config = uconf.PluginConfigReader(uconf.LOG, constants.conf_dir)
+	
+	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
 	log_loader = logmoduleloader.LogModuleLoader(l_config, True, 1)
 
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, constants.conf_dir)
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
 	submit_loader = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 	
 	main(sys.argv)

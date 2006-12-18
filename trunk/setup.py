@@ -34,6 +34,7 @@ genpaths = config.get("paths", "generate_paths")
 if genpaths == "yes":
 	rootdir = config.get("paths", "rootdir")
 	confdir = config.get("paths", "confdir")
+	libsdir = config.get("paths", "libsdir")
 	datadir = config.get("paths", "datadir")
 	imagedir = config.get("paths", "imagedir")
 	gladedir = config.get("paths", "gladedir")
@@ -95,19 +96,19 @@ def get_docs():
 def get_constants():
 	confdir_full = "/" + confdir
 	datadir_full = os.path.join(rootdir,datadir)
+	libsdir_full = os.path.join(rootdir,libsdir)
 	imagedir_full = os.path.join(rootdir,imagedir)
 	localedir_full = os.path.join(rootdir,rootdir)
 	gladedir_full = os.path.join(rootdir,gladedir)
 	docdir_full = os.path.join(rootdir,docdir)
 	
-	# TODO: move this to constants.py.in
 	f = open("conf/upstream.conf.in","r")
 	 
 	conf_template = f.read()
 	
 	print conf_template
 	 
-	conf_template_modified = conf_template%(confdir_full, datadir_full,imagedir_full,gladedir_full,localedir_full,docdir_full)
+	conf_template_modified = conf_template%(confdir_full,libsdir_full,datadir_full,imagedir_full,gladedir_full,localedir_full,docdir_full)
 		
 	print conf_template_modified
 	

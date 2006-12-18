@@ -18,25 +18,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import dialog, sys, os, optparse, ConfigParser, gettext, locale
-import submitmoduleloader, logmoduleloader, uconf
-
 from getpass import getuser
-from util import make_log_tuple
-
-try:
-	from upstream import constants
-except: 
-	try:
-		import constants
-	except:
-		print "Could not import constants file."
-		sys.exit(1)
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('../conf/upstream.conf'))
+libsdir = config.get("paths","libsdir")
+
+sys.path.append(libsdir)
 
 locale_app = config.get("main","locale_app")
 locale_dir = config.get("paths","localedir")
+
+import submitmoduleloader, logmoduleloader, uconf
+from util import make_log_tuple
+
+submit_module_default = config.get("main", "submit_module_default")
+
+confdir = config.get("paths","confdir")
 
 gettext.install(locale_app, locale_dir, unicode=1)
 
@@ -196,13 +194,11 @@ def cli(options,args):
 		
 if __name__ == "__main__": 
 	
-	submit_module_default = config.get("main", "submit_module_default")
+	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
 
-	l_config = uconf.PluginConfigReader(uconf.LOG, constants.conf_dir)
-	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
-
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, constants.conf_dir)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 	
 	parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))
 	
