@@ -17,22 +17,27 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys, os
-from getpass import getuser
-import  submitmoduleloader, logmoduleloader, uconf, constants
+import dialog, sys, os, optparse, ConfigParser, gettext, locale
+import submitmoduleloader, logmoduleloader, uconf
 
-import optparse, os, ConfigParser
+from getpass import getuser
 from util import make_log_tuple
 
+try:
+	from upstream import constants
+except: 
+	try:
+		import constants
+	except:
+		print "Could not import constants file."
+		sys.exit(1)
+
 config = ConfigParser.ConfigParser()
-config.readfp(open('%s/upstream.conf'%(constants.conf_dir)))
-	
+config.readfp(open('../conf/upstream.conf'))
 
-locale_app = constants.locale_app
-locale_dir = constants.locale_dir
+locale_app = config.get("main","locale_app")
+locale_dir = config.get("paths","localedir")
 
-import locale
-import gettext
 gettext.install(locale_app, locale_dir, unicode=1)
 
 def main():

@@ -30,15 +30,15 @@ config.readfp(open(UPSTREAM_SETUP_CONFIG))
 prefix = config.get("install", "prefix")
 
 # Constants
-getconst = config.get("constants", "get_constants")
-if getconst == "yes":
-	rootdir = config.get("constants", "rootdir")
-	confdir = config.get("constants", "confdir")
-	datadir = config.get("constants", "datadir")
-	imagedir = config.get("constants", "imagedir")
-	gladedir = config.get("constants", "gladedir")
-	localedir = config.get("constants", "localedir")
-	docdir = config.get("constants", "docdir")
+genpaths = config.get("paths", "generate_paths")
+if genpaths == "yes":
+	rootdir = config.get("paths", "rootdir")
+	confdir = config.get("paths", "confdir")
+	datadir = config.get("paths", "datadir")
+	imagedir = config.get("paths", "imagedir")
+	gladedir = config.get("paths", "gladedir")
+	localedir = config.get("paths", "localedir")
+	docdir = config.get("paths", "docdir")
 
 
 def setup_upstream():
@@ -93,30 +93,32 @@ def get_docs():
 	return doc_data
 
 def get_constants():
-	confdir_full = os.path.join(rootdir,confdir)
+	confdir_full = "/" + confdir
 	datadir_full = os.path.join(rootdir,datadir)
 	imagedir_full = os.path.join(rootdir,imagedir)
 	localedir_full = os.path.join(rootdir,rootdir)
 	gladedir_full = os.path.join(rootdir,gladedir)
+	docdir_full = os.path.join(rootdir,docdir)
 	
 	# TODO: move this to constants.py.in
-	f = open("upstream-base/constants.py.in","r")
+	f = open("conf/upstream.conf.in","r")
 	 
-	constants_template = f.read()
+	conf_template = f.read()
+	
+	print conf_template
 	 
-	constants_template_modified = constants_template%(confdir_full,datadir_full,localedir_full,gladedir_full,imagedir_full)
+	conf_template_modified = conf_template%(confdir_full, datadir_full,imagedir_full,gladedir_full,localedir_full,docdir_full)
+		
+	print conf_template_modified
 	
-	print constants_template_modified
+	shutil.copyfile('conf/upstream.conf', './upstream.conf.bk') #backup upstream.conf to wherever we're running setup from
 	
-	#print constants_template #error catching
-	shutil.copyfile('upstream-base/constants.py', './constants.py.bak') #backup constants to wherever we're running setup from
-	
-	f = open("upstream-base/constants.py","w") #open the real constants.py which will be packaged
-	f.writelines(constants_template_modified) #write to file
+	f = open("conf/upstream.conf","w") #open the real upstream.conf which will be packaged
+	f.writelines(conf_template_modified) #write to file
 
 if __name__ == "__main__":
 	
-	if getconst == "yes":
+	if genpaths == "yes":
 		get_constants()
 	
 	setup_upstream()

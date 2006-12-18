@@ -24,19 +24,21 @@
 
 import sys
 
-import ConfigParser, os, uconf, constants
+import ConfigParser, os
 
 config = ConfigParser.ConfigParser()
-config.readfp(open('%s/upstream.conf' % constants.conf_dir)) # use os.path.join
-gladepath = constants.glade_dir + '/canoe.glade'
+config.readfp(open('../conf/upstream.conf'))
+
+gladepath = config.get("paths","gladedir") + '/canoe.glade'
 submit_module_default = config.get("main", "submit_module_default")
-icon_path = os.path.abspath(config.get("main", "icon_path"))
+icon_path = os.path.abspath(config.get("paths", "imagedir") + "upstream.png")
 
 # il8n
-locale_app = constants.locale_app
-locale_dir = constants.locale_dir
 
-import logmoduleloader, submitmoduleloader 
+locale_app = config.get("main","locale_app")
+locale_dir = config.get("paths","localedir")
+
+import logmoduleloader, submitmoduleloader, uconf
 from util import make_log_tuple
 from getpass import getuser
 
@@ -302,12 +304,15 @@ class Canoe(Wizard):
 if __name__ == "__main__":
 	# Initialize
 	# Fault Tolerance should be on for releases
-	l_config = uconf.PluginConfigReader(uconf.LOG, constants.conf_dir)
+	
+	confdir = config.get("paths","confdir")
+	
+	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
 
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, constants.conf_dir)
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
 
 	# Load the GUI
-	canoe = Canoe(constants.locale_app, log_modules, submit_modules)
+	canoe = Canoe(locale_app, log_modules, submit_modules)
 	canoe.main()
