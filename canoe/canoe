@@ -22,25 +22,26 @@
 # TODO: Fix spacing between widgets
 # TODO: clean up the imports
 
-import sys
-
-import ConfigParser, os
+import sys, ConfigParser, os, gettext
+from getpass import getuser
 
 config = ConfigParser.ConfigParser()
 config.readfp(open('../conf/upstream.conf'))
+libsdir = config.get("paths","libsdir")
 
-gladepath = config.get("paths","gladedir") + '/canoe.glade'
-submit_module_default = config.get("main", "submit_module_default")
-icon_path = os.path.abspath(config.get("paths", "imagedir") + "upstream.png")
-
-# il8n
+sys.path.append(libsdir)
 
 locale_app = config.get("main","locale_app")
 locale_dir = config.get("paths","localedir")
 
-import logmoduleloader, submitmoduleloader, uconf
+import submitmoduleloader, logmoduleloader, uconf
 from util import make_log_tuple
-from getpass import getuser
+
+submit_module_default = config.get("main", "submit_module_default")
+
+confdir = config.get("paths","confdir")
+gladepath = config.get("paths","gladedir") + '/canoe.glade'
+icon_path = os.path.abspath(config.get("paths", "imagedir") + "upstream.png")
 
 try:
 	import pygtk
@@ -53,7 +54,6 @@ try:
 except:
 	sys.exit(1)
 
-import gettext
 gettext.install(locale_app, locale_dir, unicode=1)
 gtk.glade.bindtextdomain(locale_app, locale_dir)
 gtk.glade.textdomain(locale_app)
@@ -304,8 +304,6 @@ class Canoe(Wizard):
 if __name__ == "__main__":
 	# Initialize
 	# Fault Tolerance should be on for releases
-	
-	confdir = config.get("paths","confdir")
 	
 	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
