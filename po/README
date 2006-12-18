@@ -9,6 +9,20 @@ Note: These steps are optional. The upstream.pot only needs to be generated once
 
 	pygettext -o upstream.pot  ../canoe/canoe ../kayak/kayak ../upstream-base/upstream && xgettext --no-wrap -j -o upstream.pot ../canoe/canoe.glade
 
+* Run this command to append to bottom of the file some strings we may need in the future:
+
+cat << END >> upstream.pot
+
+msgid "Back"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+END
+
 
 These steps are required:
 

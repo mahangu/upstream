@@ -111,3 +111,12 @@ msgstr ""
 #: ../upstream-base/upstream:223
 msgid "Choose a specific a log module to use."
 msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
