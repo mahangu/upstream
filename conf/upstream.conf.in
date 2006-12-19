@@ -1,0 +1,13 @@
+[main]
+submit_module_default=ubuntu
+
+[paths]
+confdir=%s
+libsdir=%s
+datadir=%s
+imagedir=%s
+gladedir=%s
+localedir=%s
+docdir=%s
+
+
