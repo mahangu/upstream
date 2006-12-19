@@ -89,7 +89,7 @@ def loop_idle(mod):
 			show_info(cur_message)
 		elif cur_message.getType() == messageframe.REQUEST:
 			handle_request(cur_message)
-			m_buffer.pushFrone(cur_message)
+			
 
 def handle_request(cur_message):
 	if isinstance(cur_message, messageframe.UndefinedRequest):
@@ -98,6 +98,7 @@ def handle_request(cur_message):
 		handle_auth(cur_message)
 	else: # isinstance(cur_message, messageframe.SubmitInfoRequest)
 		handle_subinfo(cur_message)
+	m_buffer.pushFront(cur_message)
 
 def handle_undef(message):
 	pass
@@ -106,11 +107,6 @@ def handle_auth(message):
 	pass
 
 def handle_subinfo(message):
-	pass
-
-	
-	# Possible TODO - add support 
-	
 	#Step 2
 	nickname = getuser()
 	upnickname = ""
@@ -122,16 +118,13 @@ def handle_subinfo(message):
 			d.msgbox(_("Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program."))
 			
 	nickname = upnickname
-
-	
-	#Step 3
+	message.answerUserHandle(nickname)
 	log_modules.join()
 	catchoices = []
 	
 	for cat in log_modules.getCategories():	
 		catentry = (cat, "", 0)
 		catchoices.append(catentry)
-	
 	
 	log_dict = {}
 		
@@ -140,24 +133,17 @@ def handle_subinfo(message):
 					height=15, width=54, list_height=7, 
 					choices=catchoices,
 					title=_("Problem Description"))
-		
-		
-		
-		
 		for x in categories:
 			category = log_modules.getModulesInCategory(x)
-			
 			for log_module in category:
 				module = log_modules[log_module.module_name]
 				(name, contents) = module.execute()
 				log_dict[name] = contents 
-		
 		if log_dict == {}:
 			d.msgbox(_("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program."))
-		
-	
+	message.answerLogs(log_dict)
 	(code, description) = d.inputbox(_("Please enter a short description of the problem."), init="")
-	
+	message.answerUserHandle(description)
 
 
 	
