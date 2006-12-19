@@ -33,7 +33,7 @@ def createSubmit(m_buffer):
 class PastebindotcomPlugin(messageframe.SubmitPlugin):
 	module_submit_url = module_submit_url
 	def __init__(self, m_buffer):
-		messageframe.SubmitPlugin.__init__(m_buffer):
+		messageframe.SubmitPlugin.__init__(m_buffer)
 		
 	def execute(self):		
 		print "Executing"

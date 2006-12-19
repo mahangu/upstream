@@ -126,7 +126,7 @@ class SubmitInfoRequest(UndefinedRequest):
 	def getLogs(self):
 		return self.getAnswer("logs")
 	
-	def getUserHandle(self)
+	def getUserHandle(self):
 		return self.getAnswer("handle")
 
 class BadRequestException(Exception):
