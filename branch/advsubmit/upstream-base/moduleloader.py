@@ -53,8 +53,7 @@ class LoadedModule(threading.Thread):
 		self.module_name = self.module.module_name
 		self.module_description = self.module.module_description
 	def __repr__(self):
-		return "<loaded module : %s with trust %d>" % (self.module, self.trust_level)
-		
+		return "<loaded module : %s with trust %d>" % (self.module, self.trust_level)		
 
 class PackageImporter(threading.Thread):
 	def __init__(self, parent, package, debug_output=False):
@@ -73,12 +72,14 @@ class PackageImporter(threading.Thread):
 				try:
 					__import__(self.package + "." + plugin_name)	
 					# Stick in a tuple with the module and the package
-					self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
+					module = getattr(imp_pack, plugin_name)
+					self.parent.load_queue.append((module, self.package))				
 					self.parent.found_lock.acquire()
 					self.parent.total_found_mod = self.parent.total_found_mod + 1
 					self.parent.found_lock.release()				
 				except Exception, e:
-					print "Exception thrown: %s" % sys.exc_info()[0]					
+				
+					print "Exception thrown during import: %s\n%s" % (sys.exc_info()[0], repr(sys.exc_info()[2]))										
 					print e			
 				
 				
@@ -115,7 +116,7 @@ class GenericValidator(threading.Thread):
 					package = m_tuple[1]
 								
 					if self.debug_output >= 1:
-						print "Validating module: %s" % module
+						print "Validating: %s" % module
 					if self.validate_module(module):
 						trust_level = self.md5_verify(module, package)
 						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))					
@@ -125,7 +126,7 @@ class GenericValidator(threading.Thread):
 						self.parent.loaded_lock.release()
 				except Exception, e:
 					# We lost the import for some reason
-					print "Exception thrown: %s" % sys.exc_info()[0]
+					print "Exception thrown in validation: %s" % sys.exc_info()[0]
 					print e
 			else:
 				time.sleep(0.01)

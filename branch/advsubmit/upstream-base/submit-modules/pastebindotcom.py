@@ -30,11 +30,15 @@ module_submit_url = "http://pastebin.com"
 def createSubmit(m_buffer):
 	return PastebindotcomPlugin(m_buffer)	
 	
-class PastebindotcomPlugin(messageframe.SubmitPlugin):
+class PastebindotcomPlugin(submitmoduleloader.SubmitPlugin):
 	module_submit_url = module_submit_url
 	def __init__(self, m_buffer):
-		messageframe.SubmitPlugin.__init__(m_buffer)
+		submitmoduleloader.SubmitPlugin.__init__(m_buffer)
 		
+	def run(self):
+		print "Executing Nothing"
+		
+	# Deprecated and unused
 	def execute(self):		
 		print "Executing"
 		username, message, logs = self._fetchSubmitData()		
