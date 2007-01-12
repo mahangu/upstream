@@ -19,8 +19,8 @@
 
 import moduleloader, sys, threading, time
 
-# Log modules should do whatever they feel like and return a tuple of the form
-# ( logname, logcontents )
+# Log modules should do whatever they feel like and return a string
+# containing the log contents
 
 class LogModule(moduleloader.LoadedModule):
 	def __init__(self, module, trust_level, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
