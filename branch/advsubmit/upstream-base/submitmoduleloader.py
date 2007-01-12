@@ -24,14 +24,9 @@ class SubmitPlugin(threading.Thread):
 	func_ptr_list = []
 	def __init__(self, message_buffer):
 		threading.Thread.__init__(self)
-		self._m_buffer = message_buffer
-		
-	# Convenience method for fetching submission data
-	def _fetchSubmitData(self):		
+		self.m_buffer = message_buffer
+	def run(self):
 		pass
-		
-	def _fetchAuthenticationRequest(self, message):
-		pass			
 
 class SubmitModule(moduleloader.LoadedModule):
 	def __init__(self, module, trust_level, fault_tolerance, debug_level):
@@ -45,16 +40,25 @@ class SubmitModule(moduleloader.LoadedModule):
 		
 	def getBuffer(self):
 		return self._message_buffer
+		
+	def pluginRunning(self):
+		return self.plugin.isAlive()
 	
 	def execute(self):
 		# This is done here so it does not spazz while being loaded
 		if self.plugin:
 			# Make the plugin thread a daemon, so it doesn't
 			# keep the application alive if we try and exit
-			self.plugin.setDaemon()
-			self.plugin.start()
+			try:
+				self.plugin.setDaemon()
+				self.plugin.start()
+			except Exception, e:
+				if self.debug_level >= 1:
+					print e
+				self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, "Unhandled exception in the plugin"))
+				
 		else:
-			self._message_buffer.backendSendMessage((messageframe.ERROR, "Could not instantiate plugin object"))
+			self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, "Could not instantiate plugin object"))
 
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]

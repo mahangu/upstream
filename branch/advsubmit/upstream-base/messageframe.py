@@ -19,37 +19,18 @@
 
 import Queue
 
+INFORMATION = 1 >> 0
+REQUEST_STRINGS = 1 >> 1
+REQUEST_UID = 1 >> 2
+REQUEST_LOGS = 1 >> 3
+REQUEST_PAW = 1 >> 4
+DONE_ERROR = 1 >> 5
+DONE = 1 >> 6
 
-TYPE_STR = 0
-# For passwords
-TYPE_SECRET_STR = 1
-TYPE_SELECT = 2
-TYPE_MULTISELECT = 3
-TYPE_TOGGLE = 4
-TYPE_LOG = 5
-
-
-REQUEST = 1
-INFORMATION = 0
-ERROR = 2
-DONE = 3
-
-# Messages shall be of the form
-# ( TYPE , RELEVANT_DATA)
-# If TYPE is Information, Error or Done, there should be a human
-# readable string contained as RELEVANT_DATA
-# If TYPE is a request, it should contain a list of tuples of the form
-# (FIELD_TYPE, FIELD_NAME, ADDITIONAL_INFOMATION)
-# ADDITIONAL INFORMATION can be interpreted several ways
-# for instance, a string field might contain a default string, or a
-# request for a "selection" would contain a list of choices
-# Requests will be answered in the order they were sent out as single
-# objects
 class MessageBuffer:
 	def __init__(self):
-		threading.Thread.__init__(self)
-		self._back_to_front = Queue()
-		self._front_to_back = Queue()
+		self._back_to_front = Queue.Queue()
+		self._front_to_back = Queue.Queue()
 			
 	def frontendSendMessage(message):
 		self._front_to_back.put(message)

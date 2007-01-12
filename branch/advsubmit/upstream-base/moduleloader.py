@@ -119,7 +119,7 @@ class GenericValidator(threading.Thread):
 						print "Validating: %s" % module
 					if self.validate_module(module):
 						trust_level = self.md5_verify(module, package)
-						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))					
+						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))
 						self.parent.loaded_lock.acquire()
 						# Not really loaded, but processed
 						self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1

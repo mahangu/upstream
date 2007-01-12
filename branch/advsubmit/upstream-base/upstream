@@ -17,50 +17,266 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys, time
+import dialog, sys
 from getpass import getuser
 import  submitmoduleloader, logmoduleloader, uconf
 
 import optparse, os, ConfigParser
 
-config = ConfigParser.ConfigParser()
-config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+# Alterations for new backend
+
+def show_welcome(d):
+	d.msgbox("This program will assist you in sending troubleshooting data to aid support personnel in diagnosing problems on your system.")
 	
+def show_submit_choices(d, submit_loader):	
+	UNSET = -10
+	exit_code = UNSET
+	exit_info = None
+	select_module = None
+	submit_loader.join()
+	mod_opts = [(mod.module_name, mod.module_description) for mod in submit_loader]
+	# See line 423 in dialog.py for the relevant codes, 5 is DIALOG_HELP
+	while exit_code == UNSET or exit_code == 5:
+		exit_code, exit_info = d.radiolist(text="Select a submission module", choices=[])
+		if exit_code == DIALOG_OK:
+			select_module = submit_loader[exit_info]
+		elif exit_code == dialog.DIALOG_HELP:
+			# Not yet implemented
+			pass
+	return select_module
+	
+def show_log_choices(d, log_loader):
+	pass
+	
+def show_password(d, request_tuple):
+	pass
 
-locale_app = config.get("main", "locale_app_name")
-locale_dir = config.get("main", "locale_app_dir")
+def show_username(d):
+	pass
+	
+def show_select(d, request_tuple):
+	pass
+	
+def show_str(d, request):
+	pass
+	
+def show_multistring(d, request):
+	pass
+	
+if __name__ == "__main__":
+	d = dialog.Dialog(dialog="dialog")
+	d.add_persistent_args(["--backtitle", "Upstream Log Transfer System"])
+	
+	config = ConfigParser.ConfigParser()
+	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
+	submit_module_default = config.get("main", "submit_module_default")
+	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
+	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
+	
+	show_welcome(d)
+	submitter = show_submit_choices(d, submit_modules)
+		
+# End alterations for new backend
 
-import locale
-import gettext
-#locale.setlocale(locale.LC_ALL, '')
-gettext.bindtextdomain(locale_app, locale_dir)
-gettext.textdomain(locale_app)
-_ = gettext.gettext
+"""
 
+Preserve the old thing with a large comment
 
 def main():
 	d = dialog.Dialog(dialog="dialog")
 	d.add_persistent_args(["--backtitle", "Upstream Log Transfer System"])
 	
 	#Step 1
-	#d.msgbox(_("This program will assist you in sending troubleshooting data to support personnel."))
+	d.msgbox("This program will assist you in sending troubleshooting data to aid support personnel in diagnosing problems on your system.")
+	
+	#Step 2
+	nickname = getuser()
+	upnickname = ""
+	
+	while upnickname == "":
+		(code, upnickname) = d.inputbox("Please enter your nickname", init="%s"%(nickname))
+		
+		if upnickname == "":
+			d.msgbox("Sorry, but you didn't specify a name to use. Please try again, or hit CTRL+C to exit this program.")
+			
+	nickname = upnickname
+
+	
+	#Step 3
+	log_modules.join()
+	catchoices = []
+	
+	for cat in log_modules.getCategories():	
+		catentry = (cat, "", 0)
+		catchoices.append(catentry)
 	
 	
+	log_dict = {}
+		
+	while log_dict == {}:
+		(code, categories) = d.checklist(text="Please select categories this problem affects",
+					height=15, width=54, list_height=7, 
+					choices=catchoices,
+					title="Problem Description")
+		
+		
+		
+		
+		for x in categories:
+			category = log_modules.getModulesInCategory(x)
+			
+			for log_module in category:
+				module = log_modules[log_module.module_name]
+				(name, contents) = module.execute()
+				log_dict[name] = contents 
+		
+		if log_dict == {}:
+			d.msgbox("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program.")
+		
+	
+	(code, description) = d.inputbox("Please enter a description of the problem as well", init="")
+	
+
+	#Step 4
+	submit_modules.join()
+	modchoices = []
+	
+	for mod in submit_modules:
+		if mod.module_name == submit_module_default:
+			modbool = 1
+		else:
+			modbool = 0
+		
+		modentry = (mod.module_name, "", modbool)
+		modchoices.append(modentry)
+		print modentry
+	
+	pastebin = ""
+	
+	while pastebin == "":
+		(code, pastebin) = d.radiolist(text="Please select the server to submit troubleshooting data to.",
+                	                  height=15, width=54, list_height=7, 
+                        	          choices=modchoices,
+                                	  title="Submit")
+		if pastebin == "":
+			d.msgbox("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program.")
+				  
+	
+	print pastebin
+	
+	submit_module = submit_modules[pastebin]
+	
+	print submit_module
+	
+	submit_module.execute(nickname, description, log_dict)
+	
+def cli(options,args):
+	
+	log_modules.join()
+	submit_modules.join()
+	if options.pastebin:
+		submit_module = submit_modules[options.pastebin]
+		
+	else:
+		submit_module = submit_modules[submit_module_default]
+		
+	
+	log_dict = {}
+	
+	optnumber = 0	
+	
+	for x in options.__dict__.iteritems():
+		option = x[0]
+		on = x[1]
+		
+		
+		# Is there a nicer way to do this?
+		if on and option != "pastebin" and option != "log":
+			
+			print option
+			
+			category = log_modules.getModulesInCategory(option)
+			
+			for log_module in category:
+				module = log_modules[log_module.module_name]
+				(name, contents) = module.execute()
+				log_dict[name] = contents 
+		
+			optnumber = optnumber + 1
+		
+		elif options.log:
+			module = log_modules[options.log]
+			(name, contents) = module.execute()
+			log_dict[name] = contents 
+		
+			optnumber = optnumber + 1
+			options.log = False
+	
+	# Check to see if all mandatory arguments have been filled.
+	
+	print "%s log file(s) have been read."%(optnumber)
+	
+	if optnumber < 1:
+		print "Please specify a log option. You haven't asked me to send anything. See help (-h) for more information."
+		sys.exit(1)
+	
+	if len(args) != 2:
+		print "Please specify the required options. See help (-h) for more information."
+		sys.exit(1)
+	
+	
+	#  Populating final variables.
+	
+	user_email = args[0]
+	user_message = args[1]
+	
+	print user_message
+	print user_email
+	
+	#user_logs = functions.get_final()
+	
+	submit_module.execute(user_email, user_message, log_dict)
+	
+	
+		
+		
 if __name__ == "__main__": 
 	
+	#submit_module_default = "rafb" #hack, until we get /etc/upstream/*.conf in place
+	config = ConfigParser.ConfigParser()
+	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
 	submit_module_default = config.get("main", "submit_module_default")
 
 	l_config = uconf.PluginConfigReader(uconf.LOG, "../conf")
-	global log_modules
 	log_modules = logmoduleloader.LogModuleLoader(l_config, True)
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, "../conf")
-	global submit_modules
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
 	
-	#parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))
-	submit_modules.join()
-	log_modules.join()	
-	main()
+	parser = optparse.OptionParser("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode.")
 	
+	log_modules.join()
+	
+	categories = log_modules.getCategories()
+	
+	for category in categories:
+		lflag = "--%s"%(category)
+		print lflag
+
+		parser.add_option("", lflag, action="store_true", help="All log modules in the %s category."%(category), default=False)
+
+	parser.add_option("", "--pastebin", dest="pastebin", help="Specify a pastebin module to use.", default=False)
+
+	parser.add_option("", "--log", dest="log", help="Choose a specific a log module to use.", default=False)
+
+	(options, args) = parser.parse_args()
+	
+	
+	if args == []:
+		main()
+	else:
+		cli(options,args)
+"""
 
