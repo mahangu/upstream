@@ -34,7 +34,6 @@ def execute(submit_name, submit_message, log_tuple):
 	print "Executing"
 
 	contents = flat_log(log_tuple)
-	print "Failing"
 
 	# TODO Are there any limits on these fields?
 	# 'expiry' specifies for what period of time the paste should be kept:  No value means forever.
