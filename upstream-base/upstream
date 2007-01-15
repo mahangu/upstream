@@ -29,7 +29,7 @@ sys.path.append(libsdir)
 locale_app = config.get("main","locale_app")
 locale_dir = config.get("paths","localedir")
 
-import submitmoduleloader, logmoduleloader, uconf
+import submitmoduleloader, logmoduleloader, moduleloader, uconf
 from util import make_log_tuple
 
 submit_module_default = config.get("main", "submit_module_default")
@@ -78,6 +78,25 @@ def main():
 		
 		
 		mods = log_modules.getUniqueModulesInCategories(categories)
+		nt_logmods = []
+		t_logmods = []
+		
+		# Locate untrusted modules
+		for m in mods:
+			if m.trust_level != moduleloader.HASH_TRUSTED:
+				nt_logmods.append(m)
+			else:
+				t_logmods.append(m)
+				
+		if len(nt_logmods) > 0:		
+			nt_lognames = [n.module_name for n in nt_logmods]
+			n_code, n_categories = d.checklist(text=_("The following modules cannot be verified as secure. If you would like to use the specified module anyway, put a check by it"), height=15, width=54, list_height=7, choices = nt_lognames, title=_("Use Unsecure Modules"))
+			for nt in nt_logmods:
+				if nt.module_name in n_categories:
+					t_logmods.append(nt)
+			mods = t_logmods
+				
+				
 		log_tuple = make_log_tuple(mods)
 			
 		
@@ -198,10 +217,10 @@ def cli(options,args):
 if __name__ == "__main__": 
 	
 	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
-	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
+	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 0)
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
+	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 0)
 	
 	parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))
 	
