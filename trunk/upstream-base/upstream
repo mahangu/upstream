@@ -73,9 +73,11 @@ def main():
 		(code, categories) = d.checklist(text=_("What are you having trouble with?"),
 					height=15, width=54, list_height=7, 
 					choices=catchoices,
-					title=_("Problem Description"))
+					title=_("Problem Description"))		
 		
-		
+		# Codes from dialog.py, see dialog.py 423
+		if code == 1 or code == 2:
+			sys.exit(0)
 		
 		mods = log_modules.getUniqueModulesInCategories(categories)
 		nt_logmods = []
@@ -94,19 +96,19 @@ def main():
 			for nt in nt_logmods:
 				if nt.module_name in n_categories:
 					t_logmods.append(nt)
-			mods = t_logmods
-				
+			mods = t_logmods				
 				
 		log_tuple = make_log_tuple(mods)
-			
-		
 		
 		if log_tuple == []:
 			d.msgbox(_("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program."))
 		
 	
 	(code, description) = d.inputbox(_("Please enter a short description of the problem."), init="")
-	
+	# Codes from dialog.py, see dialog.py 423
+	if code == 1 or code == 2:
+		sys.exit(0)
+
 
 	#Step 4
 	submit_modules.join()
@@ -129,8 +131,14 @@ def main():
                 	                  height=15, width=54, list_height=7, 
                         	          choices=modchoices,
                                 	  title=_("Submit"))
+									  
+		# Codes from dialog.py, see dialog.py 423
+		if code == 1 or code == 2:
+			sys.exit(0)
+			
 		if pastebin == "":
 			d.msgbox(_("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program."))
+			
 				  
 	
 	print pastebin
