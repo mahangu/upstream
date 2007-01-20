@@ -17,50 +17,99 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys
+import dialog, sys, time
 from getpass import getuser
-import  submitmoduleloader, logmoduleloader, uconf
+import  submitmoduleloader, logmoduleloader, uconf, messageframe
 
 import optparse, os, ConfigParser
 
 # Alterations for new backend
 
+# This method takes an exit code from dialog and returns True if success, False if help
+# was request, and calls sys.exit if cancel or esc happened
+
+def process_exit_code(code):
+	if code == 0:
+		return True
+	elif code == 2 or code == 1: # ESC/Cancel
+		sys.exit(0)
+	else:
+		return False
+
 def show_welcome(d):
 	d.msgbox("This program will assist you in sending troubleshooting data to aid support personnel in diagnosing problems on your system.")
 	
-def show_submit_choices(d, submit_loader):	
+def show_submit_choices(d, submit_loader, default):	
 	UNSET = -10
 	exit_code = UNSET
 	exit_info = None
 	select_module = None
 	submit_loader.join()
-	mod_opts = [(mod.module_name, mod.module_description, 0) for mod in submit_loader]
-	# TODO: Load a default module and set it
+	mod_opts_tmp = [[mod.module_name, mod.module_description, 0] for mod in submit_loader]
+	for x in mod_opts_tmp:
+		if x[0] == default:
+			x[2] = 1
+	mod_opts = [(x[0], x[1], x[2]) for x in mod_opts_tmp]
 	
 	# See line 423 in dialog.py for the relevant codes, 5 is DIALOG_HELP, DIALOG_OK == 0
 	while exit_code == UNSET or exit_code == 5:
 		exit_code, exit_info = d.radiolist(text="Select a submission module", height=15, list_height=7, choices=mod_opts, title="Submit")
-		if exit_code == 0:
+		if process_exit_code(exit_code):
 			select_module = submit_loader[exit_info]
 	return select_module
 	
 def show_log_choices(d, log_loader):
-	pass
+		
+	catchoices = [(cat, "", 0) for cat in log_modules.getCategories()]	
+	log_dict = {}
+		
+	while log_dict == {}:
+		(code, categories) = d.checklist(text="Please select categories this problem affects", height=15, width=54, list_height=7, choices=catchoices, title="Problem Description")	
+		process_exit_code(code)
+		
+		for x in categories:
+			category = log_modules.getModulesInCategory(x)
+			
+			for log_module in category:
+				module = log_modules[log_module.module_name]
+				(name, contents) = module.execute()
+				log_dict[name] = contents 
+		
+		if log_dict == {}:
+			d.msgbox("Sorry, but you didn't specify even one category to load logs from. Please try again, or hit CTRL+C to exit this program.")
+			
+	return log_dict
+		
 	
 def show_password(d, request_tuple):
 	pass
 
 def show_username(d):
-	pass
+	nickname = getuser()
+	upnickname = ""	
+	while upnickname == "":
+		code, upnickname = d.inputbox("Please enter your nickname", init="%s"%(nickname))
+	process_exit_code(code)
+	return upnickname
 	
 def show_select(d, request_tuple):
 	pass
+
+def show_description(d):
+	code, result = d.inputbox("Please enter a description of the problem as well", init="")
+	process_exit_code(code)
+	return result
 	
-def show_str(d, request):
-	pass
+def show_strings(d, request):
+	print request
+	response =[d.inputbox(r[0], r[1])[1] for r in request[1]]
+	return response
 	
 def show_multistring(d, request):
 	pass
+
+def show_info(d, request):
+	d.msgbox(request[1])
 	
 if __name__ == "__main__":
 	d = dialog.Dialog(dialog="dialog")
@@ -75,7 +124,33 @@ if __name__ == "__main__":
 	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True)
 	
 	show_welcome(d)
-	submitter = show_submit_choices(d, submit_modules)
+	submitter = show_submit_choices(d, submit_modules, submit_module_default)
+	if not submitter:
+		sys.exit(0)
+		print "No module selected"
+		
+	message_buffer = submitter.getBuffer()
+	submitter.execute()
+	message = None
+	while message != messageframe.DONE and message != messageframe.DONE_ERROR:
+		#TODO: Add some kind of nice status message informing the user
+		#that we are waiting on signals
+		while not message_buffer.frontendMessageWaiting():
+			time.sleep(0.1)
+		message = message_buffer.frontendReceiveMessage()
+		if message[0] == messageframe.INFORMATION:
+			show_info(d, message)
+		elif message[0] == messageframe.REQUEST_UID:
+			message_buffer.frontendSendMessage(show_username(d))
+		elif message[0] == messageframe.REQUEST_LOGS:
+			message_buffer.frontendSendMessage(show_log_choices(d, log_modules))
+		elif message[0] == messageframe.REQUEST_DESCR:
+			message_buffer.frontendSendMessage(show_description(d))
+		elif message[0] == messageframe.REQUEST_STRINGS:
+			message_buffer.frontendSendMessage(show_strings(d, message))
+		elif message[0] == messageframe.DONE or message[0] == messageframe.DONE_ERROR:
+			show_info(d, message)
+			break
 		
 # End alterations for new backend
 

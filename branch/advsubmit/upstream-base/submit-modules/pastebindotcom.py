@@ -33,39 +33,21 @@ def createSubmit(m_buffer):
 class PastebindotcomPlugin(submitmoduleloader.SubmitPlugin):
 	module_submit_url = module_submit_url
 	def __init__(self, m_buffer):
-		submitmoduleloader.SubmitPlugin.__init__(m_buffer)
+		submitmoduleloader.SubmitPlugin.__init__(self, m_buffer)
 		
-	def run(self):
+	def execute(self):
 		# Batch all messages that we know we need.
-		self.m_buffer.backendSendMessage( (messageframe.REQUEST_UID) )
-		self.m_buffer.backendSendMessage( (messageframe.REQUEST_STRINGS, [("Problem Description", "")]) )
-		self.m_buffer.backendSendMessage( (messageframe.REQUEST_LOGS) ) 
+		self.m_buffer.backendSendMessage( (messageframe.REQUEST_UID,) )
+		self.m_buffer.backendSendMessage( (messageframe.REQUEST_LOGS,) ) 
+		self.m_buffer.backendSendMessage( (messageframe.REQUEST_DESCR,) )		
 		
+		print "Waiting on UID"
 		uid = self.m_buffer.backendReceiveMessage()
-		problem_description = self.m_buffer.backendReceiveMessage()
+		print "Got UID"
 		logs = self.m_buffer.backendReceiveMessage()
-			
-		for log in logs:
-			flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, logs[log])
-		# 'expiry' specifies for what period of time the paste should be kept
-		#	"d" - one day
-		#	"m" - one month (this is default on the web interface)
-		#	"f" - forever
-		post_data = { 'format' : "text", 'code2': username + "\n\n" + message + "\n\n" + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
-		# IOErrors are caught by the enclosing block, one shot attempt
-		paste = urlopen(self.module_submit_url, urlencode(post_data))
-		result_url = paste.geturl()
-		# This may not longer be necessary
-		result_xml = paste.read()	
-		print result_url	
-		# TODO: some kind of error checking
-		self.m_buffer.backendSendMessage( (messageframe.DONE, result_url, result_xml) )
-		
-	# Deprecated and unused
-	def execute(self):		
-		print "Executing"
-		username, message, logs = self._fetchSubmitData()		
-		# Put all the elements into one log
+		print "Got Logs"
+		problem_description = self.m_buffer.backendReceiveMessage()
+		print "Got Description"
 		flat_log_type = ""
 		for log in logs:
 			flat_log_type = flat_log_type + "\n%s:\n\n%s" % (log, logs[log])
@@ -73,12 +55,15 @@ class PastebindotcomPlugin(submitmoduleloader.SubmitPlugin):
 		#	"d" - one day
 		#	"m" - one month (this is default on the web interface)
 		#	"f" - forever
-		post_data = { 'format' : "text", 'code2': username + "\n\n" + message + "\n\n" + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
+		post_data = { 'format' : "text", 'code2': uid + "\n\n" + problem_description + "\n\n" + flat_log_type, 'poster': "Upstream", 'paste': "Send", 'expiry': "m" }
 		# IOErrors are caught by the enclosing block, one shot attempt
+		print "Sending"
 		paste = urlopen(self.module_submit_url, urlencode(post_data))
+		print "Done sending"
 		result_url = paste.geturl()
 		# This may not longer be necessary
 		result_xml = paste.read()	
+		print "Done reading"
 		print result_url	
-		# TODO: We need to check that the page we get back actually has the logs
-		self._m_buffer.pushBack(DoneMessage(result_url))
+		# TODO: some kind of error checking
+		self.m_buffer.backendSendMessage( (messageframe.DONE, result_url, result_xml) )

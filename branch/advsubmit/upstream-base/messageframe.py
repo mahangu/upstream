@@ -19,34 +19,37 @@
 
 import Queue
 
-INFORMATION = 1 >> 0
-REQUEST_STRINGS = 1 >> 1
-REQUEST_UID = 1 >> 2
-REQUEST_LOGS = 1 >> 3
-REQUEST_PAW = 1 >> 4
-DONE_ERROR = 1 >> 5
-DONE = 1 >> 6
+INFORMATION = 1
+REQUEST_STRINGS = 2
+REQUEST_UID = 3
+REQUEST_LOGS = 4
+REQUEST_DESCR = 5
+REQUEST_PW = 6
+DONE_ERROR = 7
+DONE = 8
 
 class MessageBuffer:
 	def __init__(self):
 		self._back_to_front = Queue.Queue()
 		self._front_to_back = Queue.Queue()
 			
-	def frontendSendMessage(message):
+	def frontendSendMessage(self, message):
+		print message
 		self._front_to_back.put(message)
 		
-	def frontendMessageWaiting():
+	def frontendMessageWaiting(self):
 		return self._back_to_front.qsize() > 0
 		
-	def frontendReceiveMessage():
-		return self._back_to_front.get(true)
+	def frontendReceiveMessage(self):
+		message = self._back_to_front.get(True)
+		return message
 		
-	def backendSendMessage(message):
+	def backendSendMessage(self, message):
 		self._back_to_front.put(message)
 	
-	def backendMessageWaiting():
+	def backendMessageWaiting(self):
 		return self._front_to_back.qsize() > 0
 		
-	def backendReceiveMessage():
-		return self._front_to_back.get(true)
+	def backendReceiveMessage(self):
+		return self._front_to_back.get(True)
 	

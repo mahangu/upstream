@@ -25,40 +25,39 @@ class SubmitPlugin(threading.Thread):
 	def __init__(self, message_buffer):
 		threading.Thread.__init__(self)
 		self.m_buffer = message_buffer
+		if self.__class__.run != SubmitPlugin.run:
+			self.m_buffer.backendSendMessage((messageframe.DONE_ERROR, "Malformed submit module"))
 	def run(self):
-		pass
+		try:
+			self.execute()
+		except Exception, e:
+			self.m_buffer.backendSendMessage((messageframe.DONE_ERROR, "Unhandled exception in the plugin object:\n%s" % e))
+			
+	def execute(self):
+		abstract()
 
 class SubmitModule(moduleloader.LoadedModule):
 	def __init__(self, module, trust_level, fault_tolerance, debug_level):
 		moduleloader.LoadedModule.__init__(self, module, trust_level, fault_tolerance, debug_level)
 		self.module_submit_url = self.module.module_submit_url
 		self._message_buffer = messageframe.MessageBuffer()
-		try:
-			self.plugin = self.module.createSubmit(self.message_buffer)
-		except AttributeError, e:
-			self.plugin = None			
+		
 		
 	def getBuffer(self):
 		return self._message_buffer
-		
-	def pluginRunning(self):
-		return self.plugin.isAlive()
 	
 	def execute(self):
-		# This is done here so it does not spazz while being loaded
-		if self.plugin:
-			# Make the plugin thread a daemon, so it doesn't
-			# keep the application alive if we try and exit
+		try:
+			self.plugin = self.module.createSubmit(self._message_buffer)
+		except Exception, e:
+			self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, "Could not instantiate plugin object:\n%s" % e))
+		else:
+			self.plugin.setDaemon(True)
 			try:
-				self.plugin.setDaemon()
 				self.plugin.start()
 			except Exception, e:
-				if self.debug_level >= 1:
-					print e
-				self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, "Unhandled exception in the plugin"))
-				
-		else:
-			self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, "Could not instantiate plugin object"))
+				self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, " Unhandled exception in the plugin object:\n%s" % e))
+			
 
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]
