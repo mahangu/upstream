@@ -34,15 +34,14 @@ def show_submit_choices(d, submit_loader):
 	exit_info = None
 	select_module = None
 	submit_loader.join()
-	mod_opts = [(mod.module_name, mod.module_description) for mod in submit_loader]
-	# See line 423 in dialog.py for the relevant codes, 5 is DIALOG_HELP
+	mod_opts = [(mod.module_name, mod.module_description, 0) for mod in submit_loader]
+	# TODO: Load a default module and set it
+	
+	# See line 423 in dialog.py for the relevant codes, 5 is DIALOG_HELP, DIALOG_OK == 0
 	while exit_code == UNSET or exit_code == 5:
-		exit_code, exit_info = d.radiolist(text="Select a submission module", choices=[])
-		if exit_code == DIALOG_OK:
+		exit_code, exit_info = d.radiolist(text="Select a submission module", height=15, list_height=7, choices=mod_opts, title="Submit")
+		if exit_code == 0:
 			select_module = submit_loader[exit_info]
-		elif exit_code == dialog.DIALOG_HELP:
-			# Not yet implemented
-			pass
 	return select_module
 	
 def show_log_choices(d, log_loader):
@@ -65,7 +64,7 @@ def show_multistring(d, request):
 	
 if __name__ == "__main__":
 	d = dialog.Dialog(dialog="dialog")
-	d.add_persistent_args(["--backtitle", "Upstream Log Transfer System"])
+	d.setBackgroundTitle("Upstream Log Transfer System")
 	
 	config = ConfigParser.ConfigParser()
 	config.readfp(open('%s/upstream.conf'%(uconf.base_path_default)))
