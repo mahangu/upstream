@@ -19,6 +19,9 @@
 
 import Queue
 
+# All messages must be tuples, this is based on assumptions that are made by the
+# see upstreamdev.org for documentation on the formatting of messages
+
 INFORMATION = 1
 REQUEST_STRINGS = 2
 REQUEST_UID = 3
@@ -45,6 +48,9 @@ class MessageBuffer:
 		return message
 		
 	def backendSendMessage(self, message):
+		# Handle messages that might have made a mistake
+		if message.__class__ != tuple:
+			message = (message,)
 		self._back_to_front.put(message)
 	
 	def backendMessageWaiting(self):

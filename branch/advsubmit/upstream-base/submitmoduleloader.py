@@ -21,18 +21,22 @@ import moduleloader, sys, messageframe, threading
 
 # This is a class that all submit things should derive from
 class SubmitPlugin(threading.Thread):
-	func_ptr_list = []
 	def __init__(self, message_buffer):
 		threading.Thread.__init__(self)
 		self.m_buffer = message_buffer
+		# This should theoretically prevent subclasses from being able to
+		# override the run method. Its probably still possible to setup
+		# the object, even with this, but to do so would be bordering on
+		# malicious intent. This is only intended to safeguard against
+		# misunderstandings of the system.
 		if self.__class__.run != SubmitPlugin.run:
-			self.m_buffer.backendSendMessage((messageframe.DONE_ERROR, "Malformed submit module"))
+			self.m_buffer.backendSendMessage((messageframe.DONE_ERROR, "Malformed submit module, run method has been overriden"))
 	def run(self):
 		try:
 			self.execute()
 		except Exception, e:
 			self.m_buffer.backendSendMessage((messageframe.DONE_ERROR, "Unhandled exception in the plugin object:\n%s" % e))
-			
+	# Force subclasses to override	
 	def execute(self):
 		abstract()
 
@@ -56,8 +60,7 @@ class SubmitModule(moduleloader.LoadedModule):
 			try:
 				self.plugin.start()
 			except Exception, e:
-				self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, " Unhandled exception in the plugin object:\n%s" % e))
-			
+				self._message_buffer.backendSendMessage((messageframe.DONE_ERROR, " Unhandled exception in the plugin object:\n%s" % e))			
 
 class SubmitValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["module_submit_url"]

@@ -82,7 +82,22 @@ def show_log_choices(d, log_loader):
 		
 	
 def show_password(d, request_tuple):
-	pass
+	# The plugin has requested a username
+	if request_tuple[1]:
+		code, username = d.inputbox("This module requires authentication. Enter a username.")
+		while(not process_exit_code(code)):
+			code, username = d.inputbox("This module requires authentication. Enter a username.")
+			
+		code, password = d.passwordbox(text="This module requires authentication. Enter a password.")
+		while(not process_exit_code(code)):
+			code, password = d.passwordbox(text="This module requires authentication. Enter a password.")
+		return (password, username)
+		
+	else:
+		code, password = d.passwordbox(text="This module requires authentication. Enter a password.")
+		while(not process_exit_code(code)):
+			code, password = d.passwordbox(text="This module requires authentication. Enter a password.")
+		return (password, )
 
 def show_username(d):
 	nickname = getuser()
@@ -101,12 +116,15 @@ def show_description(d):
 	return result
 	
 def show_strings(d, request):
-	print request
-	response =[d.inputbox(r[0], r[1])[1] for r in request[1]]
+	d.msgbox("The submission module has requested additional input. Press OK to continue.")
+	response = []
+	for r in request[1]:
+		code, t_r = d.inputbox(r[0], r[1])
+		if not process_exit_code(code):
+			sys.exit(0)
+		else:
+			response.append(t_r)
 	return response
-	
-def show_multistring(d, request):
-	pass
 
 def show_info(d, request):
 	d.msgbox(request[1])
@@ -131,8 +149,8 @@ if __name__ == "__main__":
 		
 	message_buffer = submitter.getBuffer()
 	submitter.execute()
-	message = None
-	while message != messageframe.DONE and message != messageframe.DONE_ERROR:
+	message = (None, )
+	while message[0] != messageframe.DONE and message[0] != messageframe.DONE_ERROR:
 		#TODO: Add some kind of nice status message informing the user
 		#that we are waiting on signals
 		while not message_buffer.frontendMessageWaiting():
@@ -148,9 +166,12 @@ if __name__ == "__main__":
 			message_buffer.frontendSendMessage(show_description(d))
 		elif message[0] == messageframe.REQUEST_STRINGS:
 			message_buffer.frontendSendMessage(show_strings(d, message))
+		elif message[0] == messageframe.REQUEST_PW:
+			message_buffer.frontendSendMessage(show_password(d, message))
 		elif message[0] == messageframe.DONE or message[0] == messageframe.DONE_ERROR:
 			show_info(d, message)
-			break
+			
+	d.msgbox("You selected submission is finished, goodbye")
 		
 # End alterations for new backend
 
