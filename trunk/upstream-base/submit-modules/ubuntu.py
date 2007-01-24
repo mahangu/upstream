@@ -31,13 +31,14 @@ module_submit_url = "http://paste.ubuntu-nl.org/"
 def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
-	print "Executing"
-
 	contents = submit_name + "\n" + fill(submit_message) + flat_log(log_tuple)
+
+	# bypassing "anti-spam"
+	hashcash = urlopen("http://paste.ubuntu-nl.org/hashcash/").read().rstrip('\n')
 
 	# 'poster' cannot exceed 21 characters for paste.ubuntu-nl.org
 	# wrapping submit_message only at the moment to the default characters
-	post_data = { 'content': contents, 'poster': "Upstream", 'submit': "Paste it" }
+	post_data = {'content': contents, 'poster': "Upstream", 'syntax': "text", 'hashcash_value': hashcash}
 
 	# Send the data
 	try:
