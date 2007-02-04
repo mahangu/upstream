@@ -148,6 +148,7 @@ class SubmitPage(WizardPage):
 		
 		submit_loader.join()
 		self.servers = [mod for mod in submit_loader]
+		submit_module_default_id = 0
 		for server in self.servers:
 			self.serverBox.insertItem(server.module_name)
 			
@@ -317,6 +318,7 @@ if __name__ == "__main__":
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
 	submit_loader = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
+
 	
 	main(sys.argv)
 
