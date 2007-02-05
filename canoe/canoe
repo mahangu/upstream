@@ -22,7 +22,7 @@
 # TODO: Fix spacing between widgets
 # TODO: clean up the imports
 
-import sys, ConfigParser, os, gettext
+import sys, ConfigParser, os, gettext, threading, time
 from getpass import getuser
 
 config = ConfigParser.ConfigParser()
@@ -57,6 +57,20 @@ except:
 gettext.install(locale_app, locale_dir, unicode=1)
 gtk.glade.bindtextdomain(locale_app, locale_dir)
 gtk.glade.textdomain(locale_app)
+
+class PulseMany(threading.Thread):
+	"""Pulse an object over and over"""
+	def __init__(self, object, delay):
+		threading.Thread.__init__(self)
+		self.stopthread = threading.Event()
+		self.object = object
+		self.delay = delay
+	def run(self):
+		while not self.stopthread.isSet():
+			self.object.pulse()
+			time.sleep(self.delay)
+	def stop(self):
+		self.stopthread.set()
 
 # should we use gtk.Dialog.run()?
 class PopUp(gtk.Dialog):
@@ -100,13 +114,6 @@ class PopUp(gtk.Dialog):
 		# destroy all in vbox that are not _the_ action_area or seperator
 		self.vbox.remove(self.progress_bar)
 		self.action_area.foreach(self.action_area.remove)
-
-	def handle_complete(self, result, user_data):
-		if result.bool_success:
-			self.set_url(result.result_url)
-			self.show_success()
-		else:
-			self.show_failure()
 
 	def set_url(self, url):
 		self.url = url
@@ -270,27 +277,41 @@ class Canoe(Wizard):
 		self.nb = self.wTree.get_widget("MainNotebook")
 		# Run the submit code if we are on the last page
 		if self.nb.get_current_page() == self.nb.get_n_pages()-1:
-			popup = PopUp()
+			self.popup = PopUp()
 
 			nickname = self.get_nickname()
-			popup.pulse()
+			self.popup.pulse()
 			support_logs = self.get_support_logs()
-			popup.pulse()
+			self.popup.pulse()
 			support_msg = self.get_support_msg()
-			popup.pulse()
+			self.popup.pulse()
 			module = self.get_module()
-			popup.pulse()
+			self.popup.pulse()
 
 			# TODO: progress bar does not pulsate during submission
 			# Maybe start a new thread here to pulse the progress bar until
 			# the submission is complete?
 
 			# TODO: Handle success == False from submit module execution appropriately
-			result = module.executeThreaded(nickname, support_msg, support_logs, popup.handle_complete)
+
+			# pulse while uploading data
+			self.pulse_many = PulseMany(self.popup, .2)
+			self.pulsing = self.pulse_many.start()
+			result = module.executeThreaded(nickname, support_msg, support_logs, self.handle_complete)
 			print result
 		
 		Wizard.btnNext_clicked(self, widget)
 	
+
+	def handle_complete(self, result, user_data):
+		self.pulse_many.stop()
+
+		if result.bool_success:
+			self.popup.set_url(result.result_url)
+			self.popup.show_success()
+		else:
+			self.popup.show_failure()
+
 	def main(self):
 		gtk.gdk.threads_init()
 		gtk.gdk.threads_enter()
