@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE glade-interface SYSTEM "glade-2.0.dtd">
-<!--Generated with glade3 3.0.2 on Tue Nov 28 23:23:19 2006 by jasonr@luso-->
+<!--Generated with glade3 3.0.2 on Sat Feb 10 07:47:48 2007 by jasonr@luso-->
 <glade-interface>
   <widget class="GtkWindow" id="MainWindow">
     <property name="visible">True</property>
@@ -79,6 +79,7 @@
                         <property name="can_focus">True</property>
                         <property name="activates_default">True</property>
                         <property name="truncate_multiline">True</property>
+                        <signal name="changed" handler="on_entry_nickname_changed"/>
                       </widget>
                       <packing>
                         <property name="position">1</property>
