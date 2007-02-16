@@ -20,15 +20,14 @@
 # TODO some of the __repr__ seem to try to concatenate strings with non-strings
 
 
-import glob, sys, os, threading, time, imp, md5, re, imp, Queue
+import glob, sys, os, threading, time, imp, md5, re, imp
 
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
 MLOAD_HAS_NONSTR = 2
 
 DEBUG_NONE = 0
-DEBUG_CRITICAL = 1
-DEBUG_ALL = 2
+DEBUG_ALL = 1
 
 HASH_TRUSTED = 0
 HASH_UNTRUSTED = 1
@@ -55,38 +54,38 @@ class LoadedModule(threading.Thread):
 		return "<loaded module : %s with trust %d>" % (self.module, self.trust_level)		
 
 class PackageImporter(threading.Thread):
-	def __init__(self, imp_count, imp_lock, package, load_queue, debug_output):
+	def __init__(self, parent, package, debug_output=False):
 		threading.Thread.__init__(self)
-		self.importer_counter = imp_count
-		self.importer_lock = imp_lock
+		self.parent = parent
 		self.package = package
-		self.output_queue = load_queue
-		self.debug_out = debug_output
+		self.debug_output = debug_output
 		
 	def run(self):
-		self.importer_lock.acquire()
-		self.importer_counter = self.importer_counter + 1
-		self.importer_lock.release()
 		try:
 			imp_pack = __import__(self.package)
 			for plugin_name in imp_pack.__all__:
 				# This imports the module into imp_pack
-				if self.debug_out >= DEBUG_ALL:
+				if self.debug_output >= DEBUG_ALL:
 					print "Importing %s" % plugin_name
 				try:
 					__import__(self.package + "." + plugin_name)	
 					# Stick in a tuple with the module and the package
-					self.output_queue.put((getattr(imp_pack, plugin_name), self.package))	
+					self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
+					self.parent.found_lock.acquire()
+					self.parent.total_found_mod = self.parent.total_found_mod + 1
+					self.parent.found_lock.release()				
 				except Exception, e:
-					if self.debug_out >= DEBUG_CRITICAL:
-						print "Exception thrown: %s" % e			
+					print "Exception thrown: %s" % sys.exc_info()[0]					
+					print e			
 		except Exception, e:
-			if self.debug_out >= DEBUG_CRITICAL:
-				print "Exception thrown: %s" % e	
+			# We lost the whole package for some reason
+			print "Exception thrown: %s" % sys.exc_info()[0]
+			print e
 		else:
-			self.importer_lock.acquire()
-			self.importer_counter = self.importer_counter - 1
-			self.importer_lock.release()		
+			# When done, mark ourselves as successfully finished
+			self.parent.valid_lock.acquire()
+			self.parent.pack_running = self.parent.pack_running - 1
+			self.parent.valid_lock.release()		
 
 class ExtraImporter(threading.Thread):
 	def __init__(self, parent, imp_list):
@@ -119,19 +118,23 @@ class ExtraImporter(threading.Thread):
 					module = imp.load_module("additional_" + module_str, file, file.name, descr)
 					
 					self.parent.load_queue.append((getattr(imp_pack, plugin_name), self.package))				
+					self.parent.found_lock.acquire()
+					self.parent.total_found_mod = self.parent.total_found_mod + 1
+					self.parent.found_lock.release()	
 					
 				except ImportError, e:
-					if self.debug_output >= DEBUG_CRITICAL:
+					if self.debug_output:
 						print e
+					return False
 				except SyntaxError, e:
-					if self.debug_output >= DEBUG_CRITICAL:
+					if self.debug_output:
 						print e
 				else:
 					# Ensure we close the file if its open
 					if file != None:
 						file.close()
 		except Exception, e:
-			if self.debug_out >= DEBUG_CRITICAL:
+			if self.debug_out >= DEBUG_ALL:
 				print e
 				
 		else:
@@ -145,45 +148,42 @@ class GenericValidator(threading.Thread):
 	necessary_attributes = ["module_name", "module_description"]
 	necessary_attr_types = [str, str]
 	ModuleWrapper = LoadedModule
-	def __init__(self, validator_run_count, validator_count_lock, importer_count, loader_queue, valid_mods, plugin_config, debug_output):
+	
+	def __init__(self, parent, plugin_config, fault_tolerance, debug_output):
 		threading.Thread.__init__(self)
-		self.validator_run_counter = validator_run_count
-		self.validator_count_lock = validator_count_lock
-		self.importer_count = importer_count
-		self.loader_queue = loader_queue
-		self.valid_modules = valid_mods
+		self.parent = parent
 		self.plugin_config = plugin_config
-		self.debug_output = debug_output	
-		self.fault_tolerance = True
+		self.debug_output = debug_output
+		self.fault_tolerance = fault_tolerance		
 		
 	def run(self):
-		self.validator_count_lock.acquire()
-		self.validator_run_counter = self.validator_run_counter + 1
-		self.validator_count_lock.release()
-		while self.importer_count > 0 or self.loader_queue.qsize() > 0:
-			if self.loader_queue.qsize()> 0:
+		while self.parent.aliveImporter() or len(self.parent.load_queue) > 0:
+			if len(self.parent.load_queue) > 0:
 				try:
 					# Get a module and validate it
-					m_tuple = self.loader_queue.get()
+					m_tuple = self.parent.load_queue.pop(0)
 					module = m_tuple[0]
 					package = m_tuple[1]
 								
-					if self.debug_output >= DEBUG_ALL:
+					if self.debug_output >= 1:
 						print "Validating module: %s" % module
 					if self.validate_module(module):
 						trust_level = self.md5_verify(module, package)
-						self.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))
+						self.parent.valid_modules.append(self.ModuleWrapper(module, trust_level, self.fault_tolerance, self.debug_output))					
+						self.parent.loaded_lock.acquire()
+						# Not really loaded, but processed
+						self.parent.total_loaded_mod = self.parent.total_loaded_mod + 1
+						self.parent.loaded_lock.release()
 				except Exception, e:
-					if self.debug_output >= DEBUG_CRITICAL:
-						# We lost the import for some reason
-						print "Exception thrown: %s" % sys.exc_info()[0]
-						print e
+					# We lost the import for some reason
+					print "Exception thrown: %s" % sys.exc_info()[0]
+					print e
 			else:
 				time.sleep(0.01)
 				
-		self.validator_count_lock.acquire()
-		self.validator_run_counter = self.validator_run_counter - 1 
-		self.validator_count_lock.release()
+		self.parent.valid_lock.acquire()
+		self.parent.valid_running = self.parent.valid_running - 1
+		self.parent.valid_lock.release()				
 		
 	def md5_verify(self, module, package):
 		md5er = md5.new()
@@ -210,7 +210,7 @@ class GenericValidator(threading.Thread):
 		name_split = regex.split(module.__name__)
 		name = name_split[len(name_split) - 1]
 		md5sum = self.plugin_config.get_md5(package, name, end_str)
-		if self.debug_output >= DEBUG_ALL:
+		if self.debug_output >= 1:
 			print "%s md5 expected %s" % (module.__name__, md5sum)
 			print "%s md5 real %s" % (module.__name__, m_hex)
 		if md5sum == m_hex:
@@ -218,7 +218,8 @@ class GenericValidator(threading.Thread):
 		elif md5sum == None:
 			return HASH_UNTRUSTED
 		else:
-			return HASH_DANGEROUS			
+			return HASH_DANGEROUS
+			
 		
 	# This is the bare minimum necessary for one of our		
 	def validate_module(self, module):
@@ -273,28 +274,40 @@ class ModuleLoader:
 		self.fault_tolerance = fault_tolerance
 		self.thread_pool_size = thread_pool_size
 		# Intense weirdness seems to happen if this is static initialized
-				
-		self.importer_running = 0
-		self.validator_running = 0
-		self.importer_pool = []
-		self.validator_pool = []
-		self.importer_count_lock = threading.Lock()
-		self.validator_count_lock = threading.Lock()		
-		
+		self.pack_running = 0
+		self.valid_running = 0
+		self.pack_pool = []
+		self.valid_pool = []
 		#These 2 locks are for locking prior to pool modifications
+		self.pack_lock = threading.Lock()
+		self.valid_lock = threading.Lock()
 		
-		self.load_queue = Queue.Queue()
+		self.load_queue = []
 		self.valid_modules = []
+		self.found_lock = threading.Lock()
+		self.loaded_lock = threading.Lock()
+		self.total_found_mod = 0
+		self.total_loaded_mod = 0
 		
 		# Initialize the loaders	
-		for package_name in self.plugin_config.get_all_packages():
-			pack_thread = PackageImporter(self.importer_running, self.importer_count_lock, package_name, self.load_queue, self.debug_output)
-			self.importer_pool.append(pack_thread)
+		for pack in self.plugin_config.get_all_packages():
+			pack_thread = PackageImporter(self, pack, self.debug_output)
+			
+			self.pack_lock.acquire()
+			self.pack_running = self.pack_running + 1
+			self.pack_pool.append(pack_thread)
+			self.pack_lock.release()
+			
 			pack_thread.start()
 			
 		for x in range(0, self.thread_pool_size):
-			validate_thread = self.ValidatorClass(self.validator_running, self.validator_count_lock, self.importer_running, self.load_queue, self.valid_modules, self.plugin_config, self.debug_output)
-			self.validator_pool.append(validate_thread)			
+			validate_thread = self.ValidatorClass(self, self.plugin_config, self.fault_tolerance, self.debug_output)
+			
+			self.valid_lock.acquire()
+			self.valid_running = self.valid_running + 1
+			self.valid_pool.append(validate_thread)
+			self.valid_lock.release()
+			
 			validate_thread.start()			
 	
 	def __repr__(self):
@@ -340,15 +353,14 @@ class ModuleLoader:
 	def __str__(self):
 		return "Module Loader:\n" + repr(self.valid_modules)
 	
-	# Deprecated: currently being removed
 	def aliveImporter(self):
-		for x in self.importer_pool:
+		for x in self.pack_pool:
 			if x.isAlive():
 				return True
 		return False
-	# Deprecated: currently being removed
+		
 	def aliveValidator(self):
-		for x in self.validator_pool:
+		for x in self.valid_pool:
 			if x.isAlive():
 				return True
 		return False
@@ -399,14 +411,14 @@ class ModuleLoader:
 	# This is a faux join method that will wait until all of the thread pools 
 	# have completed their work
 	def join(self):
-		for x in self.importer_pool:
+		for x in self.pack_pool:
 			x.join()
-		for x in self.validator_pool:
+		for x in self.valid_pool:
 			x.join()
 		if self.debug_output >= DEBUG_ALL:
-			if self.importer_running > 0:
+			if self.pack_running > 0:
 				print "ERROR: one or more package importers crashed!"
-			if self.validator_running > 0:
+			if self.pack_running > 0:
 				print "ERROR: one or more module validators crashed!"
 				
 
