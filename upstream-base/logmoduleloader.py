@@ -74,8 +74,8 @@ class LogValidator(moduleloader.GenericValidator):
 	necessary_attributes = moduleloader.GenericValidator.necessary_attributes + ["log_path", "category"]
 	necessary_attr_types = moduleloader.GenericValidator.necessary_attr_types + [str, list]
 	ModuleWrapper = LogModule
-	def __init__(self, validator_run_count, validator_count_lock, importer_count, loader_queue, valid_mods, plugin_config, debug_output):
-		moduleloader.GenericValidator.__init__(self, validator_run_count, validator_count_lock, importer_count, loader_queue, valid_mods, plugin_config, debug_output)
+	def __init__(self, parent, plugin_conf, fault_tolerance, debug_output):
+		moduleloader.GenericValidator.__init__(self, parent, plugin_conf, fault_tolerance, debug_output)
 			
 	def validate_additional(self, module):
 		return self.validate_execution_hook(module, "execute", 0) and self.validate_category_contains_str(module)
@@ -95,9 +95,9 @@ class LogGrouper(threading.Thread):
 		self.debug_output = debug_output
 				
 	def run(self):			
-		while self.parent.aliveValidator() or self.parent.group_status < len(self.parent.valid_modules):
+		while self.parent.aliveValidator() or self.parent.group_status < self.parent.total_loaded_mod:
 			self.parent.group_pool_lock.acquire()
-			if self.parent.group_status < len(self.parent.valid_modules):
+			if self.parent.group_status < self.parent.total_loaded_mod:
 					
 				mod = self.parent.valid_modules[self.parent.group_status]
 				self.parent.group_status = self.parent.group_status + 1
