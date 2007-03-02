@@ -26,33 +26,36 @@ SUBMIT = 1
 base_path_default = constants.conf_dir
 
 class PluginConfigReader:
-	def __init__(self, p_type, base_path=base_path_default):
-		self._base_path = base_path
-		
-		self._plugins_c = ConfigParser.ConfigParser()
+	def __init__(self, plugin_type, base_path=base_path_default):
+		self.__base_path = base_path
+		self.__plugin_type = plugin_type
+		self.__plugins_c = ConfigParser.ConfigParser()
 		regex = re.compile(".*\.conf$")
-		if p_type == LOG:
+		if plugin_type == LOG:
 			for f_name in os.listdir(self._base_path + "/log-plugins.d/"):
 				if regex.match(f_name, 1):
-					self._plugins_c.read(self._base_path + "/log-plugins.d/" + f_name)
+					self.__plugins_c.read(self._base_path + "/log-plugins.d/" + f_name)
 		else:
 			for f_name in os.listdir(self._base_path + "/submit-plugins.d/"):
 				if regex.match(f_name, 1):
-					self._plugins_c.read(self._base_path + "/submit-plugins.d/" + f_name)
+					self.__plugins_c.read(self._base_path + "/submit-plugins.d/" + f_name)
 	
 	def get_all_packages(self):
-		return self._plugins_c.sections()
+		return self.__plugins_c.sections()
 			
 	def get_md5(self, package, name, extension):
-		if self._plugins_c.has_section(package):
-			if self._plugins_c.has_option(package, name + "_" + extension):
-				md5 = self._plugins_c.get(package, name + "_" + extension)
+		if self.__plugins_c.has_section(package):
+			if self.__plugins_c.has_option(package, name + "_" + extension):
+				md5 = self.__plugins_c.get(package, name + "_" + extension)
 				return md5		
 		# We get through all the if's so we should return None
-		return None
-	
-	
+		return None	
 		
-	def getbase_path(self): return self._base_path
-
-	def is_default(self): return self._base_path == base_path_default
+	def get_base_path(self):
+		return self.__base_path
+	
+	def get_plugin_type():
+		return self.__plugin_type
+	
+	def getbase_path(self):
+		return self.__base_path
