@@ -1,3 +1,3 @@
 #!/usr/bin/python
-# Simple shim for output modules
+# Simple shim for submit modules
 from outputpluginloader import *
