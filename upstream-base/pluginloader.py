@@ -22,6 +22,21 @@
 
 import glob, sys, os, threading, time, imp, md5, re, imp
 
+# Serve to represent debugging levels
+SILENT = 0
+CRITICAL = 1
+NONCRITICAL = 2
+DIAGNOSTIC = 3
+
+class Plugin:
+	pass
+	
+class PluginLoader(threading.Thread):
+	def __init__(self, plugin_config, debug_output = SILENT, msg_handler = None):
+		threading.Thread.__init__(self)
+		self.__plugin_config = plugin_config
+		self.__debug
+
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
 MLOAD_HAS_NONSTR = 2
