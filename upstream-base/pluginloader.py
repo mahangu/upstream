@@ -17,10 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# TODO some of the __repr__ seem to try to concatenate strings with non-strings
+# TODO figure out which modules we don't actually need to import so startup is
+# increased
 
 
-import glob, sys, os, threading, time, imp, md5, re, imp
+import glob, sys, os, threading, time, imp, md5, re, imp, Queue
 
 # Serve to represent debugging levels
 SILENT = 0
@@ -28,14 +29,82 @@ CRITICAL = 1
 NONCRITICAL = 2
 DIAGNOSTIC = 3
 
+MAX_THREAD = 3
+
+class PluginError(Exception):
+	pass
+
+class MessageStreamSyncerError(PluginError):
+	pass
+		
+class MessageStreamSyncer:
+	"""A class for synchronizing threaded output to an arbitrary file-like
+	object. The purpose of this is to prevent unreadable output from multiple
+	threads running at the same time, as well as to allow redirection to files"""
+	__internal = threading.RLock()
+	__store = dict()
+	def __init__(self, output_stream = None):
+		"""Create a new MessageStreamSyncer that will write to the file-like
+		object output_stream when flush() is called. An exception will be thrown
+		if output_stream is not a file-like object."""
+		if not isinstance(output_stream, file):
+			raise MessageStreamSyncerError, "Output stream was not a file-like object"
+		self.__output_stream = output_stream
+		self.__out_id = 0
+		
+	def new_stream(self, title):
+		"""Create a new "stream" to write to. Note, this isn't a real stream, just
+		an internal buffer to delimit from other calls. The returned stream should be
+		referenced by the unique ID that is returned.
+		
+		Returns an ID for use with writing to a stream"""
+		__internal.acquire()
+		using_id = self.__out_id
+		self.__out_id = self.__out_id + 1
+		__store[using_id] = (title, threading.RLock(), [])
+		__internal.release()
+		return using_id
+		
+	def write_stream(self, stream_id, msg):
+		if self.__output_stream:
+			try:
+				dict_elem = self.__store[stream_id]
+				s_lock = dict_elem[1]
+				s_list = dict_elem[2]
+				s_lock.acquire()
+				s_list.append(msg)
+				s_lock.release()
+			except KeyError e:
+				raise MessageStreamSyncerError, "Bad stream ID"
+		
+	def flush(self):
+	"""Write all accumulated data to the given output stream"""
+		if self.__output_stream:
+			for d_elem_id in self.__store:
+				d_elem = self.__store[d_elem_id]
+				d_title = d_elem[1]
+				d_list = d_elem[2]
+				self.__output_stream.write(str(d_title))
+				for d_list_elem in d_list:
+					self.__output_stream.write("\t%s" % str(d_list_elem))
+			
+
 class Plugin:
 	pass
 	
 class PluginLoader(threading.Thread):
-	def __init__(self, plugin_config, debug_output = SILENT, msg_handler = None):
+	load_end = threading.Event()
+	queue_push = threading.Event()
+	queue_lock = threading.RLock()
+	
+	valid = []
+	invalid = []
+	def __init__(self, plugin_config, msg_file = None):
 		threading.Thread.__init__(self)
 		self.__plugin_config = plugin_config
-		self.__debug
+		self.__msg_file = msg_file
+		
+	
 
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1

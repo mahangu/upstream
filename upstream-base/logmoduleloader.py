@@ -1,3 +1,3 @@
 #!/usr/bin/python
-# Simple shim for logmoduleloader
+# Simple shim for log modules
 from inputpluginloader import *
