@@ -52,7 +52,7 @@ class MessageStreamSyncer:
 		self.__output_stream = output_stream
 		self.__out_id = 0
 		
-	def new_stream(self, title):
+	def new_stream(self, title, lvl):
 		"""Create a new "stream" to write to. Note, this isn't a real stream, just
 		an internal buffer to delimit from other calls. The returned stream should be
 		referenced by the unique ID that is returned.
@@ -61,7 +61,7 @@ class MessageStreamSyncer:
 		__internal.acquire()
 		using_id = self.__out_id
 		self.__out_id = self.__out_id + 1
-		__store[using_id] = (title, threading.RLock(), [])
+		__store[using_id] = (title +, threading.RLock(), [])
 		__internal.release()
 		return using_id
 		
@@ -91,21 +91,53 @@ class MessageStreamSyncer:
 
 class Plugin:
 	pass
-	
+
 class PluginLoader(threading.Thread):
-	load_end = threading.Event()
-	queue_push = threading.Event()
-	queue_lock = threading.RLock()
+	"""Class that is a manager for loading various plugins. It is also responsible for
+	synchronizing a number of worker threads"""
+	__import_queue = Queue.Queue()
+	__import_termination = threading.Event()
+	__import_queue_complete = threading.Event()
+	__validation_queue = Queue.Queue()
+	__validation_pushed = threading.Event()
+	__validation_termination = threading.Event()
+	__validation_queue_complete = threading.Event()
+	__child_validation_thread = []
+	__child_import_thread = []
 	
-	valid = []
-	invalid = []
+	__valid_plugins = []
+	__vpl_lock = threading.RLock()
+	__invalid_plugins = []
+	__ivpl_lock = threading.RLock()
+	
+	# Vars for general accounting/numbers
 	def __init__(self, plugin_config, msg_file = None):
 		threading.Thread.__init__(self)
 		self.__plugin_config = plugin_config
-		self.__msg_file = msg_file
-		
+		self.__message_sync = MessageStreamSyncer(msg_file)
 	
-
+	def run(self):
+		self.__find_packages()
+		self.__initialize_import_threads()
+		self.__initialize_validation_threads()
+		
+		# Idle and set __import_queue_complete to true when done
+		while self.__alive_importers():
+			self.__import_termination.wait()
+			self.__import_termination.clear()
+		self.__import_queue_complete.set()
+		
+		while self.__alive_validators():
+			self.__validation_termination.wait()
+			self.__validation_termination.clear()
+		self.__validation_queue_complete.set()
+		
+	def __initialize_import_threads(self):
+		pass
+	 
+	def __initialize_validation_threads(self):
+		pass
+	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
 MLOAD_HAS_NONSTR = 2
