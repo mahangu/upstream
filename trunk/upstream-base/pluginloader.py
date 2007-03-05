@@ -52,58 +52,113 @@ class MessageStreamSyncer:
 		self.__output_stream = output_stream
 		self.__out_id = 0
 		
-	def new_stream(self, title, lvl):
+	def new_stream(self, title):
 		"""Create a new "stream" to write to. Note, this isn't a real stream, just
 		an internal buffer to delimit from other calls. The returned stream should be
 		referenced by the unique ID that is returned.
-		
 		Returns an ID for use with writing to a stream"""
-		__internal.acquire()
+		
+		self.__internal.acquire()
 		using_id = self.__out_id
 		self.__out_id = self.__out_id + 1
-		__store[using_id] = (title +, threading.RLock(), [])
-		__internal.release()
+		self.__store[using_id] = (title, threading.RLock(), [])
+		self.__internal.release()
 		return using_id
 		
-	def write_stream(self, stream_id, msg):
+	def write(self, stream_id, msg):
 		if self.__output_stream:
 			try:
 				dict_elem = self.__store[stream_id]
 				s_lock = dict_elem[1]
 				s_list = dict_elem[2]
+				# Acquire a lock so multiple thread can write to one stream
 				s_lock.acquire()
 				s_list.append(msg)
 				s_lock.release()
-			except KeyError e:
+			except KeyError, e:
 				raise MessageStreamSyncerError, "Bad stream ID"
 		
-	def flush(self):
-	"""Write all accumulated data to the given output stream"""
+	def dump_available(self, clear=True):
+		"""Write all accumulated data to the given output stream. If clear is true
+		all previous data is deleted"""
 		if self.__output_stream:
 			for d_elem_id in self.__store:
 				d_elem = self.__store[d_elem_id]
 				d_title = d_elem[1]
 				d_list = d_elem[2]
-				self.__output_stream.write(str(d_title))
+				self.__output_stream.write(str(d_title)+'\n')
 				for d_list_elem in d_list:
 					self.__output_stream.write("\t%s" % str(d_list_elem))
+			if clear:
+				for d_elem_id in self.__store:
+					d_elem = self.__store[d_elem_id]
+					self.__store[d_elem_id] = (d_elem[0], d_elem[1], [])
 			
 
 class Plugin:
 	pass
 
+class ImportHelper(threading.Thread):
+	def __init__(self, in_queue, out_queue, oqueue_push_ev, terminate_event, msg_buffer):
+		threading.Thread.__init__(self)
+		self.__input_queue = in_queue
+		self.__output_queue = out_queue
+		# An event to set when pushing to the output queue
+		self.__output_queue_push_event = oqueue_push_ev
+		self.__termination_event = terminate_event
+		self.__message_buffer = msg_buffer
+		self.__general_id = self.__message_buffer.new_stream(self.getName())
+		
+	def run(self):
+		self.__initialize()
+		self.__cleanup()
+		
+	def __initialize(self):
+		self.__message_buffer.write(self.__general_id, "Starting up\n")
+	def __cleanup(self):
+		self.__message_buffer.write(self.__general_id, "Completing\n")
+		self.__termination_event.set()
+		
+class GenericValidationHelper(threading.Thread):
+	def __init__(self, input_queue, vout_list, ivout_list, voutl_lock, ivoutl_lock, imp_done_ev, queue_push_ev, termination_ev, msg_buffer):
+		threading.Thread.__init__(self)
+		self.__input_queue = input_queue
+		self.__vout_list = vout_list
+		self.__ivout_list = ivout_list
+		self.__voutl_lock = voutl_lock
+		self.__ivoutl_lock = ivoutl_lock
+		# Event to check and see if available things
+		self.__import_done_event = imp_done_ev
+		# Event to wait on for new information
+		self.__queue_push_event = queue_push_ev
+		# Event to set on finished
+		self.__termination_event = termination_ev
+		self.__message_buffer = msg_buffer
+		self.__general_id = self.__message_buffer.new_stream(self.getName())
+		
+	def run(self):
+		self.__initialize()
+		self.__cleanup()
+		
+	def __initialize(self):
+		self.__message_buffer.write(self.__general_id, "Starting up\n")
+	def __cleanup(self):
+		self.__message_buffer.write(self.__general_id, "Completing\n")
+		self.__termination_event.set()
+	
 class PluginLoader(threading.Thread):
 	"""Class that is a manager for loading various plugins. It is also responsible for
 	synchronizing a number of worker threads"""
 	__import_queue = Queue.Queue()
 	__import_termination = threading.Event()
-	__import_queue_complete = threading.Event()
+	__import_complete = threading.Event()
 	__validation_queue = Queue.Queue()
 	__validation_pushed = threading.Event()
 	__validation_termination = threading.Event()
-	__validation_queue_complete = threading.Event()
-	__child_validation_thread = []
-	__child_import_thread = []
+	__validation_complete = threading.Event()
+	
+	__child_import_helpers = []	
+	__child_validation_helpers = []
 	
 	__valid_plugins = []
 	__vpl_lock = threading.RLock()
@@ -125,18 +180,46 @@ class PluginLoader(threading.Thread):
 		while self.__alive_importers():
 			self.__import_termination.wait()
 			self.__import_termination.clear()
-		self.__import_queue_complete.set()
+		self.__import_complete.set()
 		
 		while self.__alive_validators():
 			self.__validation_termination.wait()
 			self.__validation_termination.clear()
-		self.__validation_queue_complete.set()
+		self.__validation_complete.set()
+		self.__message_sync.dump_available()
+		
+	def __find_packages(self):
+		for package_name in self.__plugin_config.get_packages():
+			self.__import_queue.put(package_name)
 		
 	def __initialize_import_threads(self):
-		pass
+		for x in range(0, MAX_THREAD):
+			n_thread = ImportHelper(self.__import_queue, self.__validation_queue, self.__validation_pushed, self.__import_termination, self.__message_sync)
+			n_thread.start()
+			self.__child_import_helpers.append(n_thread)
+			
 	 
 	def __initialize_validation_threads(self):
-		pass
+		for x in range(0, MAX_THREAD):
+			n_thread = GenericValidationHelper(self.__validation_queue, self.__valid_plugins, self.__invalid_plugins, self.__vpl_lock, self.__ivpl_lock, self.__import_complete, self.__validation_pushed, self.__validation_termination, self.__message_sync)
+			n_thread.start()
+			self.__child_validation_helpers.append(n_thread)
+			
+	def __alive_importers(self):
+		for importer in self.__child_import_helpers:
+			# Remove dead ones, to decrease run time
+			if not importer.isAlive():
+				self.__child_import_helpers.remove(importer)
+			else:
+				return True
+			
+	def __alive_validators(self):
+		for importer in self.__child_validation_helpers:
+			# Remove dead ones, to decrease run time
+			if not importer.isAlive():
+				self.__child_validation_helpers.remove(importer)
+			else:
+				return True
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1

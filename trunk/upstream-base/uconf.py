@@ -20,8 +20,12 @@
 import ConfigParser, os, re
 import constants
 
+# Deprecated
 LOG = 0
 SUBMIT = 1
+# Replacements
+INPUT = 0
+OUTPUT = 1
 
 base_path_default = constants.conf_dir
 
@@ -32,15 +36,18 @@ class PluginConfigReader:
 		self.__plugins_c = ConfigParser.ConfigParser()
 		regex = re.compile(".*\.conf$")
 		if plugin_type == LOG:
-			for f_name in os.listdir(self._base_path + "/log-plugins.d/"):
+			for f_name in os.listdir(self.__base_path + "/log-plugins.d/"):
 				if regex.match(f_name, 1):
-					self.__plugins_c.read(self._base_path + "/log-plugins.d/" + f_name)
+					self.__plugins_c.read(self.__base_path + "/log-plugins.d/" + f_name)
 		else:
-			for f_name in os.listdir(self._base_path + "/submit-plugins.d/"):
+			for f_name in os.listdir(self.__base_path + "/submit-plugins.d/"):
 				if regex.match(f_name, 1):
-					self.__plugins_c.read(self._base_path + "/submit-plugins.d/" + f_name)
-	
+					self.__plugins_c.read(self.__base_path + "/submit-plugins.d/" + f_name)
+	# Deprecated
 	def get_all_packages(self):
+		return self.__plugins_c.sections()
+	
+	def get_packages(self):
 		return self.__plugins_c.sections()
 			
 	def get_md5(self, package, name, extension):
@@ -54,8 +61,15 @@ class PluginConfigReader:
 	def get_base_path(self):
 		return self.__base_path
 	
-	def get_plugin_type():
+	def get_plugin_type(self):
 		return self.__plugin_type
 	
+	def get_plugin_type_str(self):
+		if self.__plugin_type == LOG:
+			return "input"
+		else:
+			return "outpu"
+	
+	# Deprecated
 	def getbase_path(self):
 		return self.__base_path
