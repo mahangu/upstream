@@ -99,10 +99,12 @@ class Plugin:
 	pass
 
 class ImportHelper(threading.Thread):
-	def __init__(self, in_queue, out_queue, oqueue_push_ev, terminate_event, msg_buffer):
+	def __init__(self, in_queue, out_queue, ic_lock, oqueue_push_ev, terminate_event, imp_count, msg_buffer):
 		threading.Thread.__init__(self)
 		self.__input_queue = in_queue
 		self.__output_queue = out_queue
+		self.__import_count = imp_count
+		self.__ic_lock = ic_lock
 		# An event to set when pushing to the output queue
 		self.__output_queue_push_event = oqueue_push_ev
 		self.__termination_event = terminate_event
@@ -120,19 +122,23 @@ class ImportHelper(threading.Thread):
 		self.__termination_event.set()
 		
 class GenericValidationHelper(threading.Thread):
-	def __init__(self, input_queue, vout_list, ivout_list, voutl_lock, ivoutl_lock, imp_done_ev, queue_push_ev, termination_ev, msg_buffer):
+	def __init__(self, input_queue, vout_list, ivout_list, voutl_lock, ivoutl_lock, vc_lock, imp_done_ev, queue_push_ev, output_event, termination_ev, valid_count, msg_buffer):
 		threading.Thread.__init__(self)
 		self.__input_queue = input_queue
 		self.__vout_list = vout_list
 		self.__ivout_list = ivout_list
 		self.__voutl_lock = voutl_lock
 		self.__ivoutl_lock = ivoutl_lock
+		self.__vc_lock = vc_lock
 		# Event to check and see if available things
 		self.__import_done_event = imp_done_ev
 		# Event to wait on for new information
 		self.__queue_push_event = queue_push_ev
+		# We have validated another object
+		self.__validated_object_event = output_event
 		# Event to set on finished
 		self.__termination_event = termination_ev
+		self.__valid_count = valid_count
 		self.__message_buffer = msg_buffer
 		self.__general_id = self.__message_buffer.new_stream(self.getName())
 		
@@ -149,21 +155,31 @@ class GenericValidationHelper(threading.Thread):
 class PluginLoader(threading.Thread):
 	"""Class that is a manager for loading various plugins. It is also responsible for
 	synchronizing a number of worker threads"""
+	# These really should all be private, but I couldn't figure out how to properly
+	# extend the class if that were the case. So, when extending the class, please,
+	# leave them alone
 	__import_queue = Queue.Queue()
 	__import_termination = threading.Event()
 	__import_complete = threading.Event()
 	__validation_queue = Queue.Queue()
-	__validation_pushed = threading.Event()
+	__validation_pushed = threading.Event()	
 	__validation_termination = threading.Event()
-	__validation_complete = threading.Event()
+	
+	__validation_complete__ = threading.Event()
+	__validation_output_event__ = threading.Event()
 	
 	__child_import_helpers = []	
 	__child_validation_helpers = []
 	
-	__valid_plugins = []
-	__vpl_lock = threading.RLock()
-	__invalid_plugins = []
-	__ivpl_lock = threading.RLock()
+	__valid_plugins__ = []
+	__vpl_lock__ = threading.RLock()
+	__invalid_plugins__ = []
+	__ivpl_lock__ = threading.RLock()
+	
+	__import_count__ = 0
+	__ic_lock = threading.RLock()
+	__validation_count__ = 0
+	__vc_lock = threading.RLock()
 	
 	# Vars for general accounting/numbers
 	def __init__(self, plugin_config, msg_file = None):
@@ -172,40 +188,46 @@ class PluginLoader(threading.Thread):
 		self.__message_sync = MessageStreamSyncer(msg_file)
 	
 	def run(self):
-		self.__find_packages()
-		self.__initialize_import_threads()
-		self.__initialize_validation_threads()
+		self.__find_packages__()
+		self.__initialize_import_threads__()
+		self.__initialize_validation_threads__(GenericValidationHelper)
+		# Idle and set complete events when done
+		self.__wait_for_import__()
+		self.__wait_for_validation__()
+		self.__cleanup__()
+	# This doesn't lock anything, so its probably unreliable	
+	def calculate_progress():
+		return self.__import_count__/self.__validation_count__
 		
-		# Idle and set __import_queue_complete to true when done
-		while self.__alive_importers():
+	def __wait_for_import__(self):	
+		while self.__alive_importers__():
 			self.__import_termination.wait()
 			self.__import_termination.clear()
 		self.__import_complete.set()
 		
-		while self.__alive_validators():
+	def __wait_for_validation__(self):
+		while self.__alive_validators__():
 			self.__validation_termination.wait()
 			self.__validation_termination.clear()
-		self.__validation_complete.set()
-		self.__message_sync.dump_available()
+		self.__validation_complete__.set()
 		
-	def __find_packages(self):
+	def __find_packages__(self):
 		for package_name in self.__plugin_config.get_packages():
 			self.__import_queue.put(package_name)
 		
-	def __initialize_import_threads(self):
+	def __initialize_import_threads__(self):
 		for x in range(0, MAX_THREAD):
-			n_thread = ImportHelper(self.__import_queue, self.__validation_queue, self.__validation_pushed, self.__import_termination, self.__message_sync)
+			n_thread = ImportHelper(self.__import_queue, self.__validation_queue, self.__ic_lock, self.__validation_pushed, self.__import_termination, self.__import_count__, self.__message_sync)
 			n_thread.start()
-			self.__child_import_helpers.append(n_thread)
-			
+			self.__child_import_helpers.append(n_thread)			
 	 
-	def __initialize_validation_threads(self):
+	def __initialize_validation_threads__(self, ValidationHelperClass):
 		for x in range(0, MAX_THREAD):
-			n_thread = GenericValidationHelper(self.__validation_queue, self.__valid_plugins, self.__invalid_plugins, self.__vpl_lock, self.__ivpl_lock, self.__import_complete, self.__validation_pushed, self.__validation_termination, self.__message_sync)
+			n_thread = ValidationHelperClass(self.__validation_queue, self.__valid_plugins__, self.__invalid_plugins__, self.__vpl_lock__, self.__ivpl_lock__, self.__vc_lock, self.__import_complete, self.__validation_pushed, self.__validation_output_event__, self.__validation_termination, self.__validation_count__, self.__message_sync)
 			n_thread.start()
 			self.__child_validation_helpers.append(n_thread)
 			
-	def __alive_importers(self):
+	def __alive_importers__(self):
 		for importer in self.__child_import_helpers:
 			# Remove dead ones, to decrease run time
 			if not importer.isAlive():
@@ -213,13 +235,16 @@ class PluginLoader(threading.Thread):
 			else:
 				return True
 			
-	def __alive_validators(self):
+	def __alive_validators__(self):
 		for importer in self.__child_validation_helpers:
 			# Remove dead ones, to decrease run time
 			if not importer.isAlive():
 				self.__child_validation_helpers.remove(importer)
 			else:
 				return True
+			
+	def __cleanup__(self):
+		self.__message_sync.dump_available()
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
