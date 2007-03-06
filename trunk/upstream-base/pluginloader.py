@@ -23,21 +23,24 @@
 
 import glob, sys, os, threading, time, imp, md5, re, imp, Queue
 
-class OutputSyncerError(PluginError):
+MAX_THREADS = 3
+
+class OutputSynchronizerError(Exception):
 	pass
 		
-class OutputSyncer:
+class OutputSynchronizer:
 	"""A class for synchronizing threaded output to an arbitrary file-like
 	object. The purpose of this is to prevent unreadable output from multiple
 	threads running at the same time, as well as to allow redirection to files"""
 	__internal = threading.RLock()
 	__store = dict()
+	delimiter_string = "----------------------------------------\n"
 	def __init__(self, output_stream = None):
 		"""Create a new MessageStreamSyncer that will write to the file-like
 		object output_stream when flush() is called. An exception will be thrown
 		if output_stream is not a file-like object."""
 		if not isinstance(output_stream, file):
-			raise OutputSyncerError, "Output stream was not a file-like object"
+			raise OutputSynchronizerError, "Output stream was not a file-like object"
 		self.__output_stream = output_stream
 		self.__out_id = 0
 		
@@ -65,9 +68,17 @@ class OutputSyncer:
 				s_list.append(msg)
 				s_lock.release()
 			except KeyError, e:
-				raise OutputSyncerError, "Bad stream ID"
+				raise OutputSynchronizerError, "Bad stream ID"
+			
+	def get_output_stream(self):
+		return self.__output_stream
+	
+	def set_output_stream(self, ostream):
+		if not isinstance(output_stream, file):
+			raise OutputSynchronizerError, "Output stream was not a file-like object"
+		self.__output_stream = ostream
 		
-	def dump_available(self, clear=True):
+	def dump(self, clear=True):
 		"""Write all accumulated data to the given output stream. If clear is true
 		all previous data is deleted"""
 		if self.__output_stream:
@@ -75,9 +86,11 @@ class OutputSyncer:
 				d_elem = self.__store[d_elem_id]
 				d_title = d_elem[0]
 				d_list = d_elem[2]
-				self.__output_stream.write(str(d_title)+'\n')
+				self.__output_stream.write('[' + str(d_title)+ ']\n')
+				self.__output_stream.write(self.delimiter_string)
 				for d_list_elem in d_list:
-					self.__output_stream.write("\t%s" % str(d_list_elem))
+					self.__output_stream.write("%s" % str(d_list_elem))
+				self.__output_stream.write(self.delimiter_string)
 			if clear:
 				for d_elem_id in self.__store:
 					d_elem = self.__store[d_elem_id]
@@ -87,7 +100,170 @@ class OutputSyncer:
 class Plugin:
 	pass
 
+class Import(threading.Thread):
+	def __init__(self, parent):
+		threading.Thread.__init__(self)
+		self.__parent = parent
 
+	def run(self):
+		self.__cleanup__()
+		
+	def __get_parent__(self):
+		return self.__parent
+		
+	def __cleanup__(self):
+		self.__parent.__ithread_end__()
+	
+class Validate(threading.Thread):
+	def __init__(self, parent):
+		threading.Thread.__init__(self)
+		self.__parent = parent
+		
+	def run(self):
+		self.__cleanup__()
+		
+	def __get_parent__(self):
+		return self.__parent
+	
+	def __cleanup__(self):
+		self.__parent.__vthread_end__()
+	
+class PluginLoader(threading.Thread):
+	"""This class functions as a thread synchronizer for a bunch of children worker
+	threads, as well as a storage area for the resources they require to function.
+	It utilizes the producer/consumer model"""
+	__package_import_queue = Queue.Queue()
+	__validation_queue = Queue.Queue()
+	__valid_plugins = []
+	
+	__imported_plugin_count = 0
+	__validated_plugin_count = 0
+	
+	# An object was pushed onto the validation queue or the valid plugin_list
+	__vq_push_ev = threading.Event()
+	__vp_push_ev = threading.Event()
+	# An importer or validator finished
+	__ithread_end_ev = threading.Event()
+	__vthread_end_ev = threading.Event()
+	
+	# Importers and Validators are done respectively
+	__idone_ev = threading.Event()
+	__vdone_ev = threading.Event()
+	
+	__vp_lock = threading.RLock()
+	# Locks for the imported and validated plugin counts
+	__ipc_lock = threading.RLock()
+	__vpc_lock = threading.RLock()
+	# Locks for events
+	__ithread_end_lock = threading.RLock()
+	__vthread_end_lock = threading.RLock()
+	
+	__import_helpers = []
+	__validation_helpers = []
+	
+	def __init__(self, plugin_config, output_file=None):
+		threading.Thread.__init__(self)
+		self.__plugin_config = plugin_config
+		self.__output_syncer = OutputSynchronizer(output_file)
+		self.__general_diagnostic_id = self.__output_syncer.new_stream("Internal Diagnostics")
+		
+	def run(self):
+		self.__find_packages__()
+		self.__initialize_import_helpers__()
+		self.__initialize_validation_helpers__()
+		self.__import_wait__()
+		print "Done waiting for importer"
+		self.__validation_wait__()
+		print "Done waiting for validator"
+		
+	def get_output_sync(self):
+		return self.__output_syncer
+	
+	def get_plugin_config(self):
+		return self.__plugin_config
+	
+	def dump_log(self):
+		self.__output_syncer.dump()
+		
+	def __find_packages__(self):
+		fpkg_id = self.__output_syncer.new_stream("Finding Packages")
+		for name in self.__plugin_config.get_packages():
+			self.__output_syncer.write(fpkg_id, "Found package: %s\n" % name)
+			self.__package_import_queue.put(name)
+	
+	def __initialize_import_helpers__(self):
+		self.__alive_importers = MAX_THREADS
+		for x in range(0, MAX_THREADS):
+			new_thread = Import(self)
+			new_thread.start()
+			self.__import_helpers.append(new_thread)	
+	
+	def __initialize_validation_helpers__(self):
+		self.__alive_validators = MAX_THREADS
+		for x in range(0, MAX_THREADS):
+			new_thread = Validate(self)
+			new_thread.start()
+			self.__validation_helpers.append(new_thread)	
+	
+	def __import_wait__(self):
+		self.__ithread_end_lock.acquire()
+		while self.__alive_importers__():
+			self.__ithread_end_lock.release()
+			self.__output_syncer.write(self.__general_diagnostic_id, "Waiting for IThread end\n")
+			self.__ithread_end_ev.wait()
+			self.__ithread_end_lock.acquire()
+			self.__output_syncer.write(self.__general_diagnostic_id, "Acquired IThread event lock\n")
+			self.__ithread_end_ev.clear()
+		self.__idone_ev.set()
+		self.__ithread_end_lock.release()		
+	
+	def __validation_wait__(self):
+		self.__vthread_end_lock.acquire()
+		while self.__alive_validators__():
+			self.__vthread_end_lock.release()
+			self.__output_syncer.write(self.__general_diagnostic_id, "Waiting for VThread end\n")
+			self.__vthread_end_ev.wait()
+			self.__vthread_end_lock.acquire()
+			self.__output_syncer.write(self.__general_diagnostic_id, "Acquired VThread event lock\n")
+			self.__vthread_end_ev.clear()
+		self.__vdone_ev.set()
+		self.__vthread_end_lock.release()
+		
+	
+	def __alive_importers__(self):
+		return self.__alive_importers == 0
+			
+	def __alive_validators__(self):
+		return self.__alive_validators == 0
+		
+	def __importers_complete__(self):
+		return self.__idone_ev.isSet()
+	
+	def __validators_complete__(self):
+		return self.__vdone_ev.isSet()
+	
+	def __put_to_validate__(self):
+		pass
+	
+	def __put_validated__(self):
+		pass
+	
+	# These too methods run through a critical section with the thread synchronization
+	# code in the waiting code
+	def __ithread_end__(self):
+		self.__ithread_end_lock.acquire()
+		self.__output_syncer.write(self.__general_diagnostic_id, "Ending IThread\n")
+		self.__alive_importers = self.__alive_importers - 1
+		self.__ithread_end_ev.set()
+		self.__ithread_end_lock.release()
+		
+	def __vthread_end__(self):
+		self.__vthread_end_lock.acquire()
+		self.__output_syncer.write(self.__general_diagnostic_id, "Ending VThread\n")
+		self.__alive_validators = self.__alive_validators - 1
+		self.__vthread_end_ev.set()
+		self.__vthread_end_lock.release()
+	
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
