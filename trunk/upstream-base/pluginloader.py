@@ -104,20 +104,38 @@ class Plugin:
 	pass
 
 class PluginLoader(threading.Thread):
+	__progress_change_ev = threading.Event()
+	__find_complete_ev = threading.Event()
+	__import_complete_ev = threading.Event()
+	__validation_complete_ev = threading.Event()
 	def __init__(self, config, output_sync):
 		self.__config = config
 		self.__output_sync = output_sync
 		
 	def run(self):
+		self.__find_package__()
 		self.__import_packages__()
 		self.__validate_packages__()
 		
-	def __set_imported(self, plugin):
+	def wait_progress_change(self):
+		self.__progress_change_ev.wait()
+		self.__progress_change_ev.clear()
+		
+	# These events can only happen once, so no need to clear
+	def wait_find_complete(self):
+		self.__find_complete_ev.wait()
+		
+	def wait_import_complete(self):
+		self.__import_complete_ev.wait()
+		
+	def wait_validation_complete(self):
+		self.__validation_complete_ev.wait()
+		
+	def __set_imported__(self, plugin):
 		pass
 	
-	def __set_validated(self, plugin):
+	def __set_validated__(self, plugin):
 		pass
-	
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
