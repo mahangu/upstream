@@ -17,6 +17,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import threading
+
 class LogSynchronizerError(Exception):
 	pass
 		
@@ -26,7 +28,7 @@ class LogSynchronizer:
 	threads running at the same time, as well as to allow redirection to files"""
 	__internal = threading.Lock()
 	__store = dict()
-	delimiter_string = "\n----------------------------------------\n"
+	delimiter_string = "----------------------------------------"
 	def __init__(self, output_stream = None):
 		"""Create a new MessageStreamSyncer that will write to the file-like
 		object output_stream when flush() is called. An exception will be thrown
@@ -92,12 +94,12 @@ class LogSynchronizer:
 		d_lock = d_elem[1]
 		d_list = d_elem[2]
 		self.__output_stream.write('[' + str(d_title)+ ']\n')
-		self.__output_stream.write(self.delimiter_string)
+		self.__output_stream.write(self.delimiter_string+'\n')
 		d_lock.acquire()
 		for d_list_elem in d_list:
 			self.__output_stream.write("%s" % str(d_list_elem))
 		d_lock.release()
-		self.__output_stream.write(self.delimiter_string)
+		self.__output_stream.write(self.delimiter_string+'\n')
 		
 	def __reset(self):
 		for d_elem_id in self.__store:
