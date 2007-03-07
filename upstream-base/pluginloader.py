@@ -84,20 +84,41 @@ class OutputSynchronizer:
 		"""Write all accumulated data to the given output stream. If clear is true
 		all previous data is deleted"""
 		if self.__output_stream:
-			for d_elem_id in self.__store:
+			self.__write_all_to_stream()
+				
+	def __write_all_to_stream(self, reset = True):
+		for d_elem_id in self.__store:
 				self.__internal.acquire()
 				d_elem = self.__store[d_elem_id]
 				self.__internal.release()
-				d_title = d_elem[0]
-				d_lock = d_elem[1]
-				d_list = d_elem[2]
-				self.__output_stream.write('[' + str(d_title)+ ']\n')
-				self.__output_stream.write(self.delimiter_string)
-				d_lock.acquire()
-				for d_list_elem in d_list:
-					self.__output_stream.write("%s" % str(d_list_elem))
-				d_lock.release()
-				self.__output_stream.write(self.delimiter_string)
+				self.__write_element(d_elem)
+		if reset:
+			self.__reset()
+				
+	def __write_element(self, d_elem):
+		d_title = d_elem[0]
+		d_lock = d_elem[1]
+		d_list = d_elem[2]
+		self.__output_stream.write('[' + str(d_title)+ ']\n')
+		self.__output_stream.write(self.delimiter_string)
+		d_lock.acquire()
+		for d_list_elem in d_list:
+			self.__output_stream.write("%s" % str(d_list_elem))
+		d_lock.release()
+		self.__output_stream.write(self.delimiter_string)
+		
+	def __reset(self):
+		for d_elem_id in self.__store:
+			self.__internal.acquire()
+			d_elem = self.__store[d_elem_id]
+			self.__internal.release()
+			self.__reset_elem(d_elem)
+	
+	def __reset_elem(self, d_elem):
+		d_lock = d_elem[1]
+		d_lock.acquire()
+		d_elem = (d_elem[0], d_elem[1], [])
+		d_lock.release()
 			
 
 class Plugin:
@@ -108,14 +129,18 @@ class PluginLoader(threading.Thread):
 	__find_complete_ev = threading.Event()
 	__import_complete_ev = threading.Event()
 	__validation_complete_ev = threading.Event()
+	__import_queue = Queue.Queue()
+	__validation_queue = Queue.Queue()
+	__valid_modules = []
 	def __init__(self, config, output_sync):
+		threading.Thread.__init__(self)
 		self.__config = config
 		self.__output_sync = output_sync
 		
 	def run(self):
-		self.__find_package__()
+		self.__find_packages__()
 		self.__import_packages__()
-		self.__validate_packages__()
+		self.__validate__()
 		
 	def wait_progress_change(self):
 		self.__progress_change_ev.wait()
@@ -131,11 +156,88 @@ class PluginLoader(threading.Thread):
 	def wait_validation_complete(self):
 		self.__validation_complete_ev.wait()
 		
+	def __new_ostream__(self, title):
+		return self.__output_sync.new_stream(title)
+	
+	def __write_ostream__(self, os_id, msg):
+		self.__output_sync.write(os_id, msg)
+		
+	def __find_packages__(self):
+		pfs_id = self.__new_ostream__("Find Package Log")
+		for package in self.__get_config__().get_packages():
+			self.__write_ostream__(pfs_id, "Found: %s\n" % package)
+			self.__set_found__(package)
+			self.__set_progress_changed__()
+		self.__find_complete_ev.set()
+		
+	def __set_progress_changed__(self):
+		self.__progress_change_ev.set()
+		
+	def __import_packages__(self):
+		print self.__has_next_to_import__()
+		while self.__has_next_to_import__():
+			self.__import_package__(self.__get_next_to_import__())
+		self.__set_import_complete__()
+		
+	def __import_package__(self, package):
+		pis_id = self.__new_ostream__("Package Import Log: %s" % package)
+		try:
+			# Import the package here
+			package_obj = __import__(package)
+			self.__write_ostream__(pis_id, "Package %s loaded successfully\n" % package)
+			for module in package_obj.__all__:
+				try:
+					# Most of the actual functional code is in this tiny little block
+					__import__("%s.%s" % (package, module))
+					module_obj = getattr(package_obj, module)
+					self.__write_ostream__(pis_id, "Module %s imported successfully\n" % module_obj)
+					module_obj.package = package
+					self.__set_imported__(module_obj)
+				except ImportError, e:
+					self.__write_ostream__(pis_id, "Module %s could not be imported due to Import Error\n%s\n" % (module, e))
+				except SyntaxError, e:
+					self.__write_ostream__(pis_id, "Module %s could not be imported due to Syntax Error\n%s\n" % (module, e))
+				except Exception, e:
+					self.__write_ostream__(pis_id, "Module %s could not be imported due to Exception\n%s\n" % (module, e))
+		except ImportError, e:
+			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Import Error\n%s\n" % (package, e))
+		except SyntaxError, e:
+			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Syntax Error\n%s\n" % (package, e))
+		except Exception, e:
+			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Exception\n%s\n" % (package, e))
+		
+	def __set_import_complete__(self):
+		self.__import_complete_ev.set()
+		
+	def __validate__(self):
+		self.__set_validation_complete__()
+		
+	def __set_validation_complete__(self):
+		self.__validation_complete_ev.set()
+		
+	def __set_found__(self, package):
+		self.__import_queue.put(package)
+			
+	def __has_next_to_import__(self):
+		return not self.__import_queue.empty()
+	
+	def __get_next_to_import__(self):
+		return self.__import_queue.get_nowait()
+		
 	def __set_imported__(self, plugin):
-		pass
+		self.__validation_queue.put(plugin)
+		
+	def __has_next_to_validate__(self):
+		return not self.__validation_queue.empty()
+	
+	def __get_next_to_validate__(self):
+		return self.__validation_queue.get_nowait()
 	
 	def __set_validated__(self, plugin):
-		pass
+		self.__valid_modules.append(plugin)
+		
+	def __get_config__(self):
+		return self.__config
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
