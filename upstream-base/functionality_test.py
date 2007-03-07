@@ -10,7 +10,8 @@ config.readfp(open('../conf/upstream.conf'))
 import pluginloader, uconf, logsynchronizer
 
 confdir = config.get("paths","confdir")
-osync = logsynchronizer.LogSynchronizer(sys.stdout)
+fp = open("./dump.txt", "w+")
+osync = logsynchronizer.LogSynchronizer(fp)
 config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
 modules = pluginloader.PluginLoader(config, osync )
 
@@ -36,3 +37,8 @@ while not modules.validation_is_complete():
 	sys.stdout.write("%s %s %s\n" % (import_c, valid_c, valid))
 print "\nDone"
 modules.wait_validation_complete()
+
+for x in modules:
+	print x
+osync.dump()
+fp.close()	

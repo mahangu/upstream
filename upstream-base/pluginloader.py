@@ -37,6 +37,9 @@ class Plugin:
 	def __init__(self, plugin, trust_lvl):
 		self.__plugin = plugin
 		self.__trust_lvl = trust_lvl
+		
+	def __str__(self):
+		return "Plugin: %s\n%s\nTrust: %s" % (self.__plugin.module_name, self.__plugin.module_description, self.__trust_lvl)
 
 class PluginLoader(threading.Thread):
 	__progress_change_ev = threading.Event()
@@ -244,10 +247,68 @@ class PluginLoader(threading.Thread):
 	def __set_validated__(self, plugin, pvl_id):
 		plugin_obj = Plugin(plugin, self.__md5_verify__(plugin, pvl_id))
 		self.__valid_plugin_count = self.__valid_plugin_count + 1
-		self.__valid_plugins.append(plugin)
+		self.__valid_plugins.append(plugin_obj)
 		
 	def __get_config__(self):
 		return self.__config
+	
+	def __str__(self):
+		return "Module Loader:\n" + repr(self.valid_modules)
+	
+	def __getitem__(self, modid):
+		if type(modid) is not str and type(modid) is not int:
+			raise TypeError, "Index was not an int or str"
+		# Find at index
+		if type(modid) is int:
+			if modid >= len(self.valid_modules) or modid < 0:
+				raise IndexError
+			else:
+				return self.valid_modules[modid]
+		# Find at id
+		if type(modid) is str:		
+			for mod in self.valid_modules:
+				if mod.module_name == modid:
+					return mod
+			raise KeyError
+		
+	def __delitem__(self, modid):
+		if type(modid) is not str and type(modid) is not int:
+			raise TypeError, "Index was not an int or str"
+		# Find at index
+		if type(modid) is int:
+			if modid >= len(self.valid_modules) or modid < 0:
+				raise IndexError
+			else:
+				self.valid_modules.remove(self.valid_modules[modid])
+		# Find at id
+		if type(modid) is str:		
+			# This will already raise an exception if necessary
+			mod = self.__getitem__(modid)
+			self.valid_modules.remove(mod)
+					
+	def __len__(self):
+		return len(self.__valid_plugins)
+			
+	def __iter__(self):
+		return ModuleLoaderIterator(self)
+	
+	def __get_plugins__(self):
+		return self.__valid_plugins
+	
+class ModuleLoaderIterator:
+	def __init__(self, parent):
+		self.parent = parent
+		self.ind = -1
+		
+	def next(self):
+		self.ind = self.ind + 1
+		if self.ind == len(self.parent.__get_plugins__()):
+			raise StopIteration
+		else:
+			return self.parent.__get_plugins__()[self.ind]
+
+	# Provide a string method
+	
 	
 MLOAD_NOT_LIST = 0
 MLOAD_EMPTY_LIST = 1
@@ -649,16 +710,5 @@ class ModuleLoader:
 				print "ERROR: one or more module validators crashed!"
 				
 
-class ModuleLoaderIterator:
-	def __init__(self, parent):
-		self.parent = parent
-		self.ind = -1
-		
-	def next(self):
-		self.ind = self.ind + 1
-		if self.ind == len(self.parent.valid_modules):
-			raise StopIteration
-		else:
-			return self.parent.valid_modules[self.ind]
 
 
