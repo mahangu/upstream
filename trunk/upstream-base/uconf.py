@@ -48,8 +48,15 @@ class PluginConfigReader:
 		return self.__plugins_c.sections()
 	
 	def get_packages(self):
-		return self.__plugins_c.sections()
+		return self.__plugins_c.sections()			
 			
+	def get_plugin_md5(self, package, name):
+		if self.__plugins_c.has_section(package):
+			if self.__plugins_c.has_option(package, name):
+				md5 = self.__plugins_c.get(package, name)
+				return md5
+		return None
+		
 	def get_md5(self, package, name, extension):
 		if self.__plugins_c.has_section(package):
 			if self.__plugins_c.has_option(package, name + "_" + extension):

@@ -25,7 +25,7 @@ import glob, sys, os, threading, time, imp, md5, re, imp, Queue, logsynchronizer
 
 MAX_THREADS = 3
 
-BADHASH = -1
+UNTRUSTED = -1
 UNKNOWN = 0
 TRUSTED = 1
 
@@ -35,7 +35,8 @@ REQUIRED_FIELDS = [("module_name", str), ("module_description", str)]
 
 class Plugin:
 	def __init__(self, plugin, trust_lvl):
-		pass
+		self.__plugin = plugin
+		self.__trust_lvl = trust_lvl
 
 class PluginLoader(threading.Thread):
 	__progress_change_ev = threading.Event()
@@ -118,8 +119,6 @@ class PluginLoader(threading.Thread):
 			self.__import_one_package__(self.__get_next_to_import__())
 		self.__set_import_complete__()
 		
-
-		
 	def __import_one_package__(self, package):
 		pis_id = self.__new_ostream__("Package Import Log: %s" % package)
 		try:
@@ -154,19 +153,19 @@ class PluginLoader(threading.Thread):
 		self.__import_complete_ev.set()
 		self.__set_progress_changed__()
 		
-	def __validate_all__(self):
+	def __validate_all__(self):		
 		while self.__has_next_to_validate__():
 			plugin = self.__get_next_to_validate__()
-			if self.__valid_plugin__(plugin):
-				self.__set_validated__(plugin)
+			pvl_id = self.__new_ostream__("Validation Log: %s" % plugin.__name__)
+			if self.__valid_plugin__(plugin, pvl_id):
+				self.__set_validated__(plugin, pvl_id)
 			self.__validation_count = self.__validation_count + 1
 			self.__set_progress_change__()
 		self.__set_validation_complete__()
 		self.__set_progress_change__()
 		
 	
-	def __valid_plugin__(self, plugin):
-		pvl_id = self.__new_ostream__("Validation Log: %s" % plugin.__name__)		
+	def __valid_plugin__(self, plugin, pvl_id):
 		try:
 			if self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id):
 				return True
@@ -188,6 +187,37 @@ class PluginLoader(threading.Thread):
 				if not full_scan and not valid:
 					return Valid
 		return valid
+	
+	def __md5_verify__(self, module, log_id):
+		md5er = md5.new()		
+		fp = open(module.__file__)
+		d = fp.read(1024)
+		while d:
+			md5er.update(d)
+			d = fp.read(1024)
+		fp.close()
+		m_hex = md5er.hexdigest()
+		name = self.__construct_fname(module)
+		md5sum = self.__config.get_plugin_md5(module.package, name)
+		self.__write_ostream__(log_id, "%s\n\tmd5 expected %s\n\tmd5 real %s\n" % (module.__name__, md5sum, m_hex))
+		if md5sum == m_hex:
+			return TRUSTED
+		elif md5sum == None:
+			return UNKNOWN
+		else:
+			return UNTRUSTED
+		
+	def __construct_fname(self, module):
+		regex = re.compile("\.")
+		name_split = regex.split(module.__name__)
+		name = name_split[len(name_split) - 1]
+		if module.__file__.rfind(".pyc") != -1:
+			end_str = "pyc"
+		elif module.__file__.rfind(".py") != -1:
+			end_str = "py"		
+		else:
+			end_str = "pyo"
+		return name + '_' + end_str
 	
 	def __set_validation_complete__(self):
 		self.__validation_complete_ev.set()
@@ -211,7 +241,8 @@ class PluginLoader(threading.Thread):
 	def __get_next_to_validate__(self):
 		return self.__validation_queue.get_nowait()
 	
-	def __set_validated__(self, plugin):
+	def __set_validated__(self, plugin, pvl_id):
+		plugin_obj = Plugin(plugin, self.__md5_verify__(plugin, pvl_id))
 		self.__valid_plugin_count = self.__valid_plugin_count + 1
 		self.__valid_plugins.append(plugin)
 		
