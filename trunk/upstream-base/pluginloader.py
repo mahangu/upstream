@@ -38,8 +38,11 @@ class Plugin:
 		self.__plugin = plugin
 		self.__trust_lvl = trust_lvl
 		
+	def get_plugin(self):
+		return self.__plugin
+		
 	def __str__(self):
-		return "Plugin: %s\n%s\nTrust: %s" % (self.__plugin.module_name, self.__plugin.module_description, self.__trust_lvl)
+		return "Plugin: %s with trust: %s" % (self.__plugin.module_name, self.__trust_lvl)
 
 class PluginLoader(threading.Thread):
 	__progress_change_ev = threading.Event()
@@ -86,6 +89,12 @@ class PluginLoader(threading.Thread):
 		
 	def validation_is_complete(self):
 		return self.__validation_complete_ev.isSet()
+	
+	def get_complete_frac(self):
+		if self.__import_count == 0:
+			return -1
+		else:
+			return (self.__validation_count + 0.0)/self.__import_count
 		
 	def get_import_count(self):
 		return self.__import_count
@@ -183,7 +192,7 @@ class PluginLoader(threading.Thread):
 				if not hasattr(plugin, property[0]):					
 					valid = False
 				else:
-					self.__write_ostream__(pvl_id, "Field %s is of type %s\n" % (property[1], isinstance(getattr(plugin, property[0]), property[1])))
+					self.__write_ostream__(pvl_id, "Field %s is of type %s: %s\n" % (property[0], property[1], isinstance(getattr(plugin, property[0]), property[1])))
 					if not isinstance(getattr(plugin, property[0]), property[1]):
 						valid = False
 				# Return immediately if we don't want a full scan
@@ -246,8 +255,12 @@ class PluginLoader(threading.Thread):
 	
 	def __set_validated__(self, plugin, pvl_id):
 		plugin_obj = Plugin(plugin, self.__md5_verify__(plugin, pvl_id))
+		self.__add_valid_plugin__(plugin_obj)		
+		
+	def __add_valid_plugin__(self, plugin_obj):
 		self.__valid_plugin_count = self.__valid_plugin_count + 1
 		self.__valid_plugins.append(plugin_obj)
+		self.__set_progress_change__()
 		
 	def __get_config__(self):
 		return self.__config

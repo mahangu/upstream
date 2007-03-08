@@ -17,10 +17,69 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import moduleloader, sys, threading, time
+import pluginloader, moduleloader, sys, threading, time, Queue
 
 # Log modules should do whatever they feel like and return a string
 # containing the log contents
+
+class InputPlugin(pluginloader.Plugin):
+	def __init__(self, plugin, trust_lvl):
+		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
+		
+	def get_category(self):
+		return self.get_plugin().category
+
+class InputPluginLoader(pluginloader.PluginLoader):
+	__plugin_groups = dict()
+	__grouping_complete = threading.Event()
+	__group_queue = Queue.Queue()
+	__grouped_plugin_count = 0
+	def __init__(self, config, output_sync):
+		pluginloader.PluginLoader.__init__(self, config, output_sync)
+	
+	def run(self):
+		pluginloader.PluginLoader.run(self)
+		self.__group_all__()
+		
+	def wait_grouping_complete(self):
+		self.__grouping_complete.wait()
+		
+	def __set_grouping_complete__(self):
+		self.__grouping_complete.set()
+		
+	def __set_validated__(self, plugin, pvl_id):
+		plugin_obj = InputPlugin(plugin, self.__md5_verify__(plugin, pvl_id))
+		self.__add_valid_plugin__(plugin_obj)
+		self.__set_to_group__(plugin_obj)
+		
+	def __set_to_group__(self, plugin):
+		self.__group_queue.put(plugin)
+		
+	def __has_next_to_group__(self):
+		return not self.__group_queue.empty()
+	
+	def __get_next_to_group__(self):
+		return self.__group_queue.get_nowait()
+	
+	def __group_all__(self):
+		gl_id = self.__new_ostream__("Grouping Log")
+		while self.__has_next_to_group__():
+			plugin_obj = self.__get_next_to_group__()
+			self.__group__(plugin_obj, gl_id)
+		self.__set_grouping_complete__()
+		
+	def __group__(self, plugin_obj, s_id):
+		for cat in plugin_obj.get_category():
+			if cat in self.__plugin_groups:
+				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
+				self.__plugin_groups[cat].append(plugin_obj)
+			else:
+				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
+				self.__plugin_groups[cat] = [plugin_obj]
+		self.__grouped_plugin_count = self.__grouped_plugin_count + 1
+		self.__set_progress_changed__()
+		
+	
 
 class LogModule(moduleloader.LoadedModule):
 	def __init__(self, module, trust_level, fault_tolerance=True, debug_output=moduleloader.DEBUG_NONE):
