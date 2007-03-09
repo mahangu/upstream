@@ -22,19 +22,26 @@ import pluginloader, moduleloader, sys, threading, time, Queue
 # Log modules should do whatever they feel like and return a string
 # containing the log contents
 
-REQUIRED_FIELDS = [("category", list)]
+REQUIRED_FIELDS = [("category", list), ("log_path", str)]
 
 class InputPlugin(pluginloader.Plugin):
 	def __init__(self, plugin, trust_lvl):
 		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
-		
+		self.log_path = self.get_plugin().log_path
 	def get_category(self):
 		return self.get_plugin().category
 	
+	def execute(self):
+		return self.execute_plugin()
+	
 	def execute_plugin(self):
-		return self.get_plugin().execute()
+		try:
+			return self.get_plugin().execute()
+		except Exception, e:
+			return "Invokation terminated with exception:\n\t%s\n" % e
 
 class InputPluginLoader(pluginloader.PluginLoader):
+	# Initialize an area with ungrouped things
 	__plugin_groups = dict()
 	__grouping_complete = threading.Event()
 	__group_queue = Queue.Queue()
@@ -65,15 +72,28 @@ class InputPluginLoader(pluginloader.PluginLoader):
 			except Exception, e:
 				pass
 		return plugins
-					
-	def dump_dict(self):
-		print self.__plugin_groups
 				
 	def wait_grouping_complete(self):
 		self.__grouping_complete.wait()
 		
+	def grouping_is_complete(self):
+		return self.__grouping_complete.isSet()
+	
+	def get_complete_frac(self):
+		p_frac = pluginloader.PluginLoader.get_complete_frac(self)
+		valid_pc = self.get_valid_plugin_count()
+		if valid_pc == 0:
+			valid_pc = 1
+		gplugin_c = self.__grouped_plugin_count
+		return (p_frac + (gplugin_c + 0.0)/valid_pc)/2
+		
+	def get_grouping_count(self):
+		return self.__grouped_plugin_count
+		
 	def __set_grouping_complete__(self):
+		# Set the progress changed as well.
 		self.__grouping_complete.set()
+		self.__set_progress_changed__()
 		
 	def __set_validated__(self, plugin, pvl_id):
 		plugin_obj = InputPlugin(plugin, self.__md5_verify__(plugin, pvl_id))
@@ -104,12 +124,14 @@ class InputPluginLoader(pluginloader.PluginLoader):
 		
 	def __group__(self, plugin_obj, s_id):
 		for cat in plugin_obj.get_category():
-			if cat in self.__plugin_groups:
-				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, repr(cat)))
+			if cat in self.__plugin_groups and type(cat) == str:
+				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
 				self.__plugin_groups[cat].append(plugin_obj)
-			else:
-				self.__write_ostream__(s_id, "Adding plugin %s to new category %s.\n" % (plugin_obj, repr(cat)))
+			elif type(cat) == str:
+				self.__write_ostream__(s_id, "Adding plugin %s to new category %s.\n" % (plugin_obj, cat))
 				self.__plugin_groups[cat] = [plugin_obj]
+			else:
+				self.__write_ostream__(s_id, "Plugin %s had a non-string category.\n" % plugin_obj)
 		self.__grouped_plugin_count = self.__grouped_plugin_count + 1
 		self.__set_progress_changed__()
 		
