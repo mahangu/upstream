@@ -17,6 +17,44 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+
+
+import pluginloader
+
+REQUIRED_FIELDS = [("module_submit_url", str)]
+
+class OutputPlugin(pluginloader.Plugin):
+	def __init__(self, plugin, trust_lvl):
+		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
+		self.module_submit_url = self.get_plugin().module_submit_url
+		
+	def execute_plugin(self, s_name, s_message, log):	
+		try:
+			return self.get_plugin().execute(s_name, s_message, log)
+		except Exception, e:
+			formatted_str = exception_template % (sys.exc_info()[0], self.module_name)
+			self.result = SubmitModuleResult(False, False, formatted_str)
+			
+	def execute(self, s_name, s_message, log):
+		self.execute_plugin(s_name, s_message, log)
+
+class OutputPluginLoader(pluginloader.PluginLoader):
+	def __init__(self, config, output_sync):
+		pluginloader.PluginLoader.__init__(self, config, output_sync)
+		
+	def __valid_plugin__(self, plugin, pvl_id):
+		try:
+			if pluginloader.PluginLoader.__valid_plugin__(self, plugin, pvl_id) and self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id) and self.__validate_function__(plugin, "execute", 3, pvl_id):
+				return True
+		except Exception, e:
+			self.__write_ostream__(pvl_id, "Validation failed with Exception:\n\t%s\n" % e)
+		return False
+		
+	def __set_validated__(self, plugin, pvl_id):
+		plugin_obj = OutputPlugin(plugin, self.__md5_verify__(plugin, pvl_id))
+		self.__add_valid_plugin__(plugin_obj)
+
+
 import moduleloader, sys
 
 unknown_response = """<html>

@@ -38,6 +38,9 @@ class Plugin:
 		self.__plugin = plugin
 		self.__trust_lvl = trust_lvl
 		
+		self.module_name = self.__plugin.module_name
+		self.module_description = self.__plugin.module_description
+		
 	def get_plugin(self):
 		return self.__plugin
 		
@@ -47,21 +50,20 @@ class Plugin:
 	def __str__(self):
 		return "Plugin: %s with trust: %s" % (self.__plugin.module_name, self.__trust_lvl)
 
-class PluginLoader(threading.Thread):
-	__progress_change_ev = threading.Event()
-	__find_complete_ev = threading.Event()
-	__import_complete_ev = threading.Event()
-	__validation_complete_ev = threading.Event()
-	__import_queue = Queue.Queue()
-	__validation_queue = Queue.Queue()
-	__valid_plugins = []
-	
-	__import_count = 0
-	__validation_count = 0	
-	__valid_plugin_count = 0
-	
+class PluginLoader(threading.Thread):	
 	def __init__(self, config, output_sync):
 		threading.Thread.__init__(self)
+		# Not sure why these can't be stuff
+		self.__progress_change_ev = threading.Event()
+		self.__find_complete_ev = threading.Event()
+		self.__import_complete_ev = threading.Event()
+		self.__validation_complete_ev = threading.Event()
+		self.__import_queue = Queue.Queue()
+		self.__validation_queue = Queue.Queue()
+		self.__valid_plugins = []
+		self.__import_count = 0
+		self.__validation_count = 0	
+		self.__valid_plugin_count = 0
 		self.__config = config
 		self.__output_sync = output_sync
 		
@@ -70,25 +72,25 @@ class PluginLoader(threading.Thread):
 		self.__import_packages__()
 		self.__validate_all__()
 		
-	def wait_progress_change(self):
-		self.__progress_change_ev.wait()
+	def wait_progress_change(self, timeout = 0):
+		self.__progress_change_ev.wait(timeout)
 		self.__progress_change_ev.clear()
 		
 	# These events can only happen once, so no need to clear
-	def wait_find_complete(self):
-		self.__find_complete_ev.wait()
+	def wait_find_complete(self, timeout = 0):
+		self.__find_complete_ev.wait(timeout)
 		
 	def find_is_complete(self):
 		return self.__find_complete_ev.isSet()
 		
-	def wait_import_complete(self):
-		self.__import_complete_ev.wait()
+	def wait_import_complete(self, timeout = 0):
+		self.__import_complete_ev.wait(timeout)
 		
 	def import_is_complete(self):
 		return self.__import_complete_ev.isSet()
 		
-	def wait_validation_complete(self):
-		self.__validation_complete_ev.wait()
+	def wait_validation_complete(self, timeout = 0):
+		self.__validation_complete_ev.wait(timeout)
 		
 	def validation_is_complete(self):
 		return self.__validation_complete_ev.isSet()
@@ -119,7 +121,6 @@ class PluginLoader(threading.Thread):
 		for package in self.__get_config__().get_packages():
 			self.__write_ostream__(pfs_id, "Found: %s\n" % package)
 			self.__set_found__(package)
-			self.__set_progress_changed__()
 		self.__find_complete_ev.set()
 		
 	# Er, who wants to find when one was used and not the other?
@@ -258,12 +259,14 @@ class PluginLoader(threading.Thread):
 		
 	def __set_found__(self, package):
 		self.__import_queue.put(package)
+		self.__set_progress_changed__()
+
 			
 	def __has_next_to_import__(self):
 		return not self.__import_queue.empty()
 	
 	def __get_next_to_import__(self):
-		return self.__import_queue.get_nowait()
+		return self.__import_queue.get()
 		
 	def __set_imported__(self, plugin):
 		self.__validation_queue.put(plugin)
@@ -272,7 +275,7 @@ class PluginLoader(threading.Thread):
 		return not self.__validation_queue.empty()
 	
 	def __get_next_to_validate__(self):
-		return self.__validation_queue.get_nowait()
+		return self.__validation_queue.get()
 	
 	def __set_validated__(self, plugin, pvl_id):
 		plugin_obj = Plugin(plugin, self.__md5_verify__(plugin, pvl_id))
@@ -287,20 +290,20 @@ class PluginLoader(threading.Thread):
 		return self.__config
 	
 	def __str__(self):
-		return "Module Loader:\n" + repr(self.valid_modules)
+		return "Module Loader:\n" + repr(self.__valid_plugins)
 	
 	def __getitem__(self, modid):
 		if type(modid) is not str and type(modid) is not int:
 			raise TypeError, "Index was not an int or str"
 		# Find at index
 		if type(modid) is int:
-			if modid >= len(self.valid_modules) or modid < 0:
+			if modid >= len(self.__valid_plugins) or modid < 0:
 				raise IndexError
 			else:
-				return self.valid_modules[modid]
+				return self.__valid_plugins[modid]
 		# Find at id
 		if type(modid) is str:		
-			for mod in self.valid_modules:
+			for mod in self.__valid_plugins:
 				if mod.module_name == modid:
 					return mod
 			raise KeyError
@@ -310,15 +313,15 @@ class PluginLoader(threading.Thread):
 			raise TypeError, "Index was not an int or str"
 		# Find at index
 		if type(modid) is int:
-			if modid >= len(self.valid_modules) or modid < 0:
+			if modid >= len(self.__valid_plugins) or modid < 0:
 				raise IndexError
 			else:
-				self.valid_modules.remove(self.valid_modules[modid])
+				self.__valid_plugins.remove(self.valid_modules[modid])
 		# Find at id
 		if type(modid) is str:		
 			# This will already raise an exception if necessary
 			mod = self.__getitem__(modid)
-			self.valid_modules.remove(mod)
+			self.__valid_plugins.remove(mod)
 					
 	def __len__(self):
 		return len(self.__valid_plugins)

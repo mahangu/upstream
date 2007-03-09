@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import dialog, sys, os, optparse, ConfigParser, gettext, locale
+import dialog, sys, os, optparse, ConfigParser, gettext, locale, logsynchronizer, inputpluginloader, outputpluginloader
 from getpass import getuser
 
 config = ConfigParser.ConfigParser()
@@ -62,7 +62,7 @@ def main():
 	log_modules.join()
 	catchoices = []
 	
-	for cat in log_modules.getCategories():	
+	for cat in log_modules.get_categories():	
 		catentry = (cat, "", 0)
 		catchoices.append(catentry)
 	
@@ -79,7 +79,7 @@ def main():
 		if code == 1 or code == 2:
 			sys.exit(0)
 		
-		mods = log_modules.getUniqueModulesInCategories(categories)
+		mods = log_modules.get_unique_in_categories(categories)
 		nt_logmods = []
 		t_logmods = []
 					
@@ -161,7 +161,7 @@ def cli(options,args):
 				
 				print option
 				
-				category = log_modules.getModulesInCategory(option)
+				category = log_modules.get_in_category(option)
 				
 				for log_module in category:
 					log_tuple = make_log_tuple(category)
@@ -169,7 +169,7 @@ def cli(options,args):
 				optnumber = optnumber + 1
 			
 			elif options.log:
-				category = log_modules.getModulesInCategory(option)
+				category = log_modules.get_in_category(option)
 				log_tuple = make_log_tuple(category)
 			
 				optnumber = optnumber + 1
@@ -203,25 +203,36 @@ def cli(options,args):
 	
 	#user_logs = functions.get_final()
 	
-	submit_module.execute(user_email, user_message, log_tuple)
+	submit_module.execute-plugin(user_email, user_message, log_tuple)
 	
 	
 		
 		
 if __name__ == "__main__": 
 	
-	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
-	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 2)
+	#l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
+	#log_modules = logmoduleloader.LogModuleLoader(l_config, True, 2)
 
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 2)
+	#s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
+	#submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 2)
+	
+	#parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))
+	
+	#log_modules.join()
+	logsync = logsynchronizer.LogSynchronizer(sys.stdout)
+	l_config = uconf.PluginConfigReader(uconf.INPUT, confdir)
+	log_modules = inputpluginloader.InputPluginLoader(l_config, logsync)
+
+	s_config = uconf.PluginConfigReader(uconf.OUTPUT, confdir)
+	submit_modules = outputpluginloader.OutputPluginLoader(s_config, logsync)
 	
 	parser = optparse.OptionParser(_("%prog yourname \"Your support message\" [options]. If no arguments are supplied, Upstream will go in to wizard mode."))
-	
+	log_modules.start()
+	submit_modules.start()
 	log_modules.join()
-	
-	categories = log_modules.getCategories()
-	
+	submit_modules.join()
+	categories = log_modules.get_categories()
+	print categories
 	for category in categories:
 		lflag = "--%s"%(category)
 		# debug print
@@ -240,5 +251,7 @@ if __name__ == "__main__":
 		main()
 	else:
 		cli(options,args)
+		
+	logsync.dump()
 	
 

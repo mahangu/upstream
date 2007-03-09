@@ -27,7 +27,8 @@ def flat_log(log_tuple):
 	print flat_log
 	return flat_log
 
-# front-ends
+	
+# Deprecated
 def make_log_tuple(mod_list):
 	log_list = []
 	for module in mod_list:

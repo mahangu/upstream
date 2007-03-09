@@ -7,42 +7,20 @@ config = ConfigParser.ConfigParser()
 config.readfp(open('../conf/upstream.conf'))
 
 
-import inputpluginloader, pluginloader, uconf, logsynchronizer
+import inputpluginloader, pluginloader, outputpluginloader, uconf, logsynchronizer
 
 confdir = config.get("paths","confdir")
 fp = open("./dump.txt", "w+")
-osync = logsynchronizer.LogSynchronizer(fp)
-config = uconf.PluginConfigReader(uconf.INPUT, confdir)
-modules = inputpluginloader.InputPluginLoader(config, osync )
+logsync = logsynchronizer.LogSynchronizer(fp)
+l_config = uconf.PluginConfigReader(uconf.INPUT, confdir)
+log_modules = inputpluginloader.InputPluginLoader(l_config, logsync)
 
-modules.start()
+s_config = uconf.PluginConfigReader(uconf.OUTPUT, confdir)
+submit_modules = outputpluginloader.OutputPluginLoader(s_config, logsync)
+log_modules.start()
+submit_modules.start()
+log_modules.join()
+submit_modules.join()
 
-while not modules.validation_is_complete():
-	sys.stdout.write('\r')
-	modules.wait_progress_change()
-	import_c = modules.get_import_count()
-	valid_c = modules.get_validation_count()
-	valid =  modules.get_valid_plugin_count()
-	if import_c == 0:
-		import_c = 1
-	percent = ((valid_c + 0.0)/import_c) * 100
-	sys.stdout.write('[')
-	for x in range(0, 100, 10):
-		if x < percent:
-			sys.stdout.write('-')
-		else:
-			sys.stdout.write(' ')
-	sys.stdout.write(']')
-	sys.stdout.write("    ")
-	sys.stdout.write("%s %s %s\n" % (import_c, valid_c, valid))
-print "\nDone"
-
-modules.join()
-
-print modules.get_categories()
-modules.dump_dict()
-oId = osync.new_stream("Testing Output")
-for x in modules.get_unique_in_categories(["network", "pci"]):
-	osync.write(oId, x.execute_plugin())
-osync.dump()
+logsync.dump()
 fp.close()	
