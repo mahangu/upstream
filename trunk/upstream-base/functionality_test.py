@@ -39,7 +39,10 @@ print "\nDone"
 
 modules.join()
 
-for x in modules:
-	print x
+print modules.get_categories()
+modules.dump_dict()
+oId = osync.new_stream("Testing Output")
+for x in modules.get_unique_in_categories(["network", "pci"]):
+	osync.write(oId, x.execute_plugin())
 osync.dump()
 fp.close()	

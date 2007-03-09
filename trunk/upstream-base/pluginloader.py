@@ -41,6 +41,9 @@ class Plugin:
 	def get_plugin(self):
 		return self.__plugin
 		
+	def __repr__(self):
+		return self.__str__()
+	
 	def __str__(self):
 		return "Plugin: %s with trust: %s" % (self.__plugin.module_name, self.__trust_lvl)
 
@@ -193,12 +196,30 @@ class PluginLoader(threading.Thread):
 					valid = False
 				else:
 					self.__write_ostream__(pvl_id, "Field %s is of type %s: %s\n" % (property[0], property[1], isinstance(getattr(plugin, property[0]), property[1])))
-					if not isinstance(getattr(plugin, property[0]), property[1]):
+					# This also ignores Nonetypes
+					if not isinstance(getattr(plugin, property[0]), property[1]) and property[1] != None:
 						valid = False
 				# Return immediately if we don't want a full scan
 				if not full_scan and not valid:
-					return Valid
+					return valid
 		return valid
+	
+	def __validate_function__(self, plugin, func_name, param, pvl_id):
+			has_attr =  hasattr(plugin, func_name)
+			if has_attr:
+				is_func_code = hasattr(plugin.__dict__[func_name], "func_code")
+			else:
+				is_func_code = False
+			if has_attr and is_func_code:
+				has_args = plugin.__dict__[func_name].func_code.co_argcount == param
+			else:
+				has_args = 0
+				
+			self.__write_ostream__(pvl_id, "Module %s has attribute %s: %s\n" % (plugin, func_name, has_attr))
+			self.__write_ostream__(pvl_id, "Module attribute %s is of type 'func_code': %s\n" % (func_name, is_func_code))
+			self.__write_ostream__(pvl_id, "Module function %s has %d args: %s\n" % (func_name, param, has_args))
+			return has_attr and is_func_code and has_args
+		
 	
 	def __md5_verify__(self, module, log_id):
 		md5er = md5.new()		

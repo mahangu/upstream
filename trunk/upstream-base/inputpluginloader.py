@@ -22,12 +22,17 @@ import pluginloader, moduleloader, sys, threading, time, Queue
 # Log modules should do whatever they feel like and return a string
 # containing the log contents
 
+REQUIRED_FIELDS = [("category", list)]
+
 class InputPlugin(pluginloader.Plugin):
 	def __init__(self, plugin, trust_lvl):
 		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
 		
 	def get_category(self):
 		return self.get_plugin().category
+	
+	def execute_plugin(self):
+		return self.get_plugin().execute()
 
 class InputPluginLoader(pluginloader.PluginLoader):
 	__plugin_groups = dict()
@@ -41,6 +46,29 @@ class InputPluginLoader(pluginloader.PluginLoader):
 		pluginloader.PluginLoader.run(self)
 		self.__group_all__()
 		
+	def get_categories(self):
+		return [category for category in self.__plugin_groups]
+	
+	def get_in_category(self, cat_name):
+		try:
+			return self.__plugin_groups[cat_name]
+		except Exception, e:
+			return None
+	
+	def get_unique_in_categories(self, category_list):
+		plugins = []
+		for category in category_list:
+			try:
+				for obj in self.__plugin_groups[category]:
+					if obj not in plugins:
+						plugins.append(obj)
+			except Exception, e:
+				pass
+		return plugins
+					
+	def dump_dict(self):
+		print self.__plugin_groups
+				
 	def wait_grouping_complete(self):
 		self.__grouping_complete.wait()
 		
@@ -61,6 +89,12 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def __get_next_to_group__(self):
 		return self.__group_queue.get_nowait()
 	
+	def __valid_plugin__(self, plugin, pvl_id):
+		super = pluginloader.PluginLoader.__valid_plugin__(self, plugin, pvl_id)
+		has_categories = self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id)
+		has_func = self.__validate_function__(plugin, "execute", 0, pvl_id)
+		return super and has_categories and has_func
+	
 	def __group_all__(self):
 		gl_id = self.__new_ostream__("Grouping Log")
 		while self.__has_next_to_group__():
@@ -71,10 +105,10 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def __group__(self, plugin_obj, s_id):
 		for cat in plugin_obj.get_category():
 			if cat in self.__plugin_groups:
-				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
+				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, repr(cat)))
 				self.__plugin_groups[cat].append(plugin_obj)
 			else:
-				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
+				self.__write_ostream__(s_id, "Adding plugin %s to new category %s.\n" % (plugin_obj, repr(cat)))
 				self.__plugin_groups[cat] = [plugin_obj]
 		self.__grouped_plugin_count = self.__grouped_plugin_count + 1
 		self.__set_progress_changed__()
