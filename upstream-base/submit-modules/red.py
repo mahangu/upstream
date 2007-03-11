@@ -30,9 +30,6 @@ module_submit_url = "http://pastebin.redkrieg.com?page=submit"
 def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
-	
-	print "Executing"
-	
 	flat_log_type = flat_log(log_tuple)
 	flat_log_type = flat_log_type.replace("\"","")
 	contents = submit_message + flat_log_type
@@ -66,8 +63,6 @@ def execute(submit_name, submit_message, log_tuple):
 	#End question --RedKrieg
 	
 	response_url = "http://pastebin.redkrieg.com/?page=view&id="+foo[foo.find("&id=")+4:foo.find("&id=")+14]	#get url of paste
-	
-	print response_url	#simple debug print
 	
 	# print clog.getvalue()
 	

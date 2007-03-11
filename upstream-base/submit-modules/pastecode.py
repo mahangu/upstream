@@ -29,8 +29,6 @@ module_submit_url = "http://pastecode.com"
 
 def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
-	
-	print "Executing"
 
 	contents = submit_name + "\n\n" + submit_message + "\n\n" + flat_log(log_tuple)
 
@@ -48,9 +46,6 @@ def execute(submit_name, submit_message, log_tuple):
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
-
-	print result_url
-
 	# TODO: We need to check that the page we get back actually has the logs
 
 	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)

@@ -50,8 +50,6 @@ def execute(submit_name, submit_message, log_tuple):
 	result_url = paste.geturl()
 	result_xml = paste.read()
 
-	print result_url
-
 	# TODO implement some error checking before reporting success.
 	# Now partially implemented, see above.  We still have to do more
 	# parsing to see if we actually got a paste in
