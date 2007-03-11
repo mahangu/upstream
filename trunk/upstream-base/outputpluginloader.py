@@ -48,6 +48,9 @@ class OutputPlugin(pluginloader.Plugin):
 	def threaded_execute_is_running(self):
 		return not self.__pluginThread.plugin_complete.isSet()
 	
+	def threaded_result(self):
+		return self.__pluginThread.get_result()
+	
 class OutputPluginThreadWrapper(threading.Thread):
 	plugin_complete = threading.Event()
 	def __init__(self, plugin, s_name, s_message, log, complete_handler, user_data):
@@ -64,6 +67,9 @@ class OutputPluginThreadWrapper(threading.Thread):
 		if self.__complete_handler:
 			self.__complete_handler(self.__result, self.__user_data)
 		self.plugin_complete.set()
+		
+	def get_result(self):
+		return self.__result
 
 class OutputPluginLoader(pluginloader.PluginLoader):
 	def __init__(self, config, output_sync):

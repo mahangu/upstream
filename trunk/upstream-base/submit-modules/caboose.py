@@ -31,8 +31,6 @@ module_submit_url = "http://pastie.caboo.se/pastes/create"
 def execute(submit_name, submit_message, log_tuple):
 	global module_submit_url
 	
-	print "Executing"
-
 	contents = submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log(log_tuple)
 
 	# TODO Are there any limits on these fields?
@@ -51,8 +49,6 @@ def execute(submit_name, submit_message, log_tuple):
 	result_xml = paste.read()
 	
 	result_url = paste.geturl()
-	
-	print result_url
 
 	# TODO: We need to check that the page we get back actually has the logs
 

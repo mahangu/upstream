@@ -30,8 +30,6 @@ module_submit_url = "http://www.rafb.net/paste/paste.php"
 
 def execute(nickname, submit_message, log_tuple):
 	global module_submit_url
-	
-	print "Executing"
 
 	contents = fill(submit_message) + flat_log(log_tuple)
 
@@ -50,8 +48,6 @@ def execute(nickname, submit_message, log_tuple):
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
-
-	print result_url
 
 	# TODO implement some error checking before reporting success.
 	# Now partially implemented, see above.  We still have to do more
