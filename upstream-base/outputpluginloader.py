@@ -19,7 +19,7 @@
 
 
 
-import pluginloader
+import pluginloader, threading
 
 REQUIRED_FIELDS = [("module_submit_url", str)]
 
@@ -37,6 +37,33 @@ class OutputPlugin(pluginloader.Plugin):
 			
 	def execute(self, s_name, s_message, log):
 		self.execute_plugin(s_name, s_message, log)
+		
+	def execute_threaded(self, s_name, s_message, log, complete_handler=None, user_data=None):
+		self.__pluginThread = OutputPluginThreadWrapper(self.get_plugin(), s_name, s_message, log, complete_handler, user_data)
+		self.__pluginThread.start()
+		
+	def wait_for_threaded_execute(self, timeout = 0):
+		self.__pluginThread.plugin_complete.wait(timeout)
+		
+	def threaded_execute_is_running(self):
+		return not self.__pluginThread.plugin_complete.isSet()
+	
+class OutputPluginThreadWrapper(threading.Thread):
+	plugin_complete = threading.Event()
+	def __init__(self, plugin, s_name, s_message, log, complete_handler, user_data):
+		threading.Thread.__init__(self)
+		self.__plugin = plugin
+		self.__s_name_arg = s_name
+		self.__s_message_arg = s_message
+		self.__log_arg = log
+		self.__complete_handler = complete_handler
+		self.__user_data = None	
+		
+	def run(self):
+		self.__result = self.__plugin.execute(self.__s_name_arg, self.__s_message_arg, self.__log_arg)
+		if self.__complete_handler:
+			self.__complete_handler(self.__result, self.__user_data)
+		self.plugin_complete.set()
 
 class OutputPluginLoader(pluginloader.PluginLoader):
 	def __init__(self, config, output_sync):

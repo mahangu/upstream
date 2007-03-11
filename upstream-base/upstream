@@ -133,7 +133,7 @@ def main():
 	
 	print submit_module
 	
-	submit_module.execute(nickname, description, log_tuple)
+	execute_plugin(submit_module, nickname, description, log_tuple)
 	
 def cli(options,args):
 	
@@ -144,7 +144,6 @@ def cli(options,args):
 	
 	if os.isatty(sys.stdin.fileno()) == False:
 		stdinput = sys.stdin.read()
-		print stdinput
 		log_tuple = (("stdin","stdin",stdinput), )
 	
 	else:
@@ -198,15 +197,55 @@ def cli(options,args):
 	user_email = args[0]
 	user_message = args[1]
 	
-	print user_message
-	print user_email
-	
 	#user_logs = functions.get_final()
-	
-	submit_module.execute-plugin(user_email, user_message, log_tuple)
-	
+	execute_plugin(submit_module, user_email, user_message, log_tuple)
 	
 		
+	
+		
+def execute_plugin(submit_module, user_email, user_message, log_tuple):
+	submit_module.execute_threaded(user_email, user_message, log_tuple)
+	start = 0
+	sys.stdout.flush()
+	sys.stdout.write(_("Your submission is being sent\n"))
+	while submit_module.threaded_execute_is_running():
+		print_pulser(start, 20)
+		start = (start + 1)%20
+		submit_module.wait_for_threaded_execute(0.05)
+	sys.stdout.write('\n')
+		
+		
+def print_pulser(start, size):
+	mid = (start + 1)%size
+	end = (start + 2)%size
+	sys.stdout.write('\r')	
+	index = 0
+	sys.stdout.write('[')
+	if mid < start:
+		sys.stdout.write("**")
+		index = 2
+		while index < start:
+			sys.stdout.write(' ')
+			index = index + 1
+		sys.stdout.write("*]")
+	elif end < start:
+		sys.stdout.write('*')
+		index = 1
+		while index < start:
+			sys.stdout.write(' ')
+			index = index + 1
+		sys.stdout.write("**]")
+	else:
+		while index < start:
+			sys.stdout.write(' ')
+			index = index + 1
+		sys.stdout.write("***")
+		index = index + 3
+		while index < size:
+			sys.stdout.write(' ')
+			index = index + 1
+		sys.stdout.write(']')
+	sys.stdout.flush()
 		
 if __name__ == "__main__": 
 	
@@ -251,7 +290,5 @@ if __name__ == "__main__":
 		main()
 	else:
 		cli(options,args)
-		
-	logsync.dump()
 	
 

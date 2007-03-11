@@ -109,6 +109,9 @@ class PluginLoader(threading.Thread):
 	
 	def get_valid_plugin_count(self):
 		return self.__valid_plugin_count
+	
+	def get_valid_plugins(self):
+		return self.__valid_plugins
 		
 	def __new_ostream__(self, title):
 		return self.__output_sync.new_stream(title)
