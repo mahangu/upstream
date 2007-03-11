@@ -22,7 +22,7 @@
 # TODO: Fix spacing between widgets
 # TODO: clean up the imports
 
-import sys, ConfigParser, os, gettext, threading, time
+import sys, ConfigParser, os, gettext, threading, time, inputpluginloader, outputpluginloader, logsynchronizer
 from getpass import getuser
 
 config = ConfigParser.ConfigParser()
@@ -47,11 +47,20 @@ try:
 	import pygtk
 	pygtk.require("2.0")
 except:
+	print "There is a problem with the pygtk module"
 	pass
+
+
 try:
 	import gtk
+except:
+	print "This system does not have the gtk python module"
+	sys.exit(1)
+	
+try:
 	import gtk.glade
 except:
+	print "This system does not have the gtk-glade python module"
 	sys.exit(1)
 
 gettext.install(locale_app, locale_dir, unicode=1)
@@ -176,7 +185,7 @@ class Wizard:
 
 		vbox = self.wTree.get_widget("vbox_problems")
 		self.log_modules.join()
-		categories = self.log_modules.getCategories()
+		categories = self.log_modules.get_categories()
 		cat_dict = dict([(cat, gtk.CheckButton(cat, False)) for cat in categories])
 		for checkbtn in cat_dict.values():
 			checkbtn.connect("toggled", self.verify)
@@ -197,7 +206,7 @@ class Wizard:
 		for module in self.submit_modules:
 			combobox.append_text(module.module_name)
 			if module.module_name == submit_module_default:
-				combobox.set_active(self.submit_modules.valid_modules.index(module))
+				combobox.set_active(self.submit_modules.get_valid_plugins().index(module))
 				
 		vbox.reorder_child(combobox, 1)
 		
@@ -276,7 +285,7 @@ class Wizard:
 
 	def get_support_logs(self):
 		cats = self.get_selected_cats()
-		mods = self.log_modules.getUniqueModulesInCategories(cats)
+		mods = self.log_modules.get_unique_in_categories(cats)
 		log_tuple = make_log_tuple(mods)
 		return log_tuple 
 
@@ -327,7 +336,7 @@ class Canoe(Wizard):
 			# pulse while uploading data
 			self.pulse_many = PulseMany(self.popup, .2)
 			self.pulsing = self.pulse_many.start()
-			result = module.executeThreaded(nickname, support_msg, support_logs, self.handle_complete)
+			result = module.execute_threaded(nickname, support_msg, support_logs, self.handle_complete)
 			print result
 		
 		Wizard.btnNext_clicked(self, widget)
@@ -355,13 +364,15 @@ class Canoe(Wizard):
 if __name__ == "__main__":
 	# Initialize
 	# Fault Tolerance should be on for releases
-	
-	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
-	log_modules = logmoduleloader.LogModuleLoader(l_config, True, 1)
+	osync = logsynchronizer.LogSynchronizer(sys.stdout)
+	l_config = uconf.PluginConfigReader(uconf.INPUT, confdir)
+	log_modules = inputpluginloader.InputPluginLoader(l_config, osync)
+	log_modules.start()
 
 	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
-	submit_modules = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
-
+	submit_modules = outputpluginloader.OutputPluginLoader(s_config, osync)
+	submit_modules.start()
+	
 	# Load the GUI
 	canoe = Canoe(locale_app, log_modules, submit_modules)
 	canoe.main()
