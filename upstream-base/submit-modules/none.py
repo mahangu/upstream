@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
-import submitmoduleloader, time
+import outputpluginloader, time
 from util import flat_log
 
-module_name = "None"
+module_name = "none"
 module_description = "Module to use in the event we want to test that the base works but don't want to spam a pastebin site."
 module_submit_url = "http://nothing/here/now/move/along.html"
 
 
 def execute(submit_name, submit_message, log_tuple):
-	time.sleep(5)
-	return submitmoduleloader.SubmitModuleResult(True, True, "<html><body>This is a test of the emergency broadcast system.</body></html>", "http://nothing/here/now/move/along.html")
+	time.sleep(10)
+	return outputpluginloader.SubmitModuleResult(True, True, "<html><body>This is a test of the emergency broadcast system.</body></html>", "http://nothing/here/now/move/along.html")
