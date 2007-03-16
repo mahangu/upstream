@@ -306,6 +306,7 @@ if __name__ == "__main__":
 	except Exception, e:
 		logsync.dump()
 		print _("An exception occured at some point during execution. Above is the complete log of all that occured while running the Plugin Loaders")
+		print e
 		
 
 		

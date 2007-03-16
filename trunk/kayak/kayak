@@ -34,7 +34,7 @@ sys.path.append(libsdir)
 locale_app = config.get("main","locale_app")
 locale_dir = config.get("paths","localedir")
 
-import submitmoduleloader, logmoduleloader, uconf
+import outputpluginloader, inputpluginloader, uconf, logsynchronizer
 from util import make_log_tuple
 
 submit_module_default = config.get("main", "submit_module_default")
@@ -112,7 +112,7 @@ class SupportPage(WizardPage):
 
 		
 		log_loader.join()
-		for cat in log_loader.getCategories():
+		for cat in log_loader.get_categories():
 			typeBox = QCheckBox(cat, self.group)
 			self.connect(typeBox, SIGNAL("toggled(bool)"), self.typeChecked)
 
@@ -153,7 +153,7 @@ class SubmitPage(WizardPage):
 			self.serverBox.insertItem(server.module_name)
 			
 			if server.module_name == submit_module_default:
-				submit_module_default_id = submit_loader.valid_modules.index(server)
+				submit_module_default_id = submit_loader.get_valid_plugins().index(server)
 				self.serverBox.setCurrentItem(submit_module_default_id)
 				
 		
@@ -212,7 +212,7 @@ class UpstreamWizard(QWizard):
 		self.categories = categories
 
 	def categoryLogs(self):
-		mods = log_loader.getUniqueModulesInCategories(self.categories)
+		mods = log_loader.get_unique_in_categories(self.categories)
 		logs = make_log_tuple(mods)
 		return logs
 			
@@ -249,7 +249,7 @@ class UpstreamWizard(QWizard):
 		self.setEnabled(False)
 
 
-		self.module.executeThreaded(self.email, self.message, self.categoryLogs(), threadCompleteHandler, None)
+		self.module.execute_threaded(self.email, self.message, self.categoryLogs(), threadCompleteHandler, None)
 		#request = self.makeRequest()
 
 		#if request:
@@ -312,14 +312,13 @@ def main(args):
 if __name__ == "__main__":
 	# Actual code
 	# Initialize threading
-	
-	l_config = uconf.PluginConfigReader(uconf.LOG, confdir)
-	log_loader = logmoduleloader.LogModuleLoader(l_config, True, 1)
-
-	s_config = uconf.PluginConfigReader(uconf.SUBMIT, confdir)
-	submit_loader = submitmoduleloader.SubmitModuleLoader(s_config, True, 1)
-
-	
+	output = logsynchronizer.LogSynchronizer(open("./upstream-run.dump", "w"))
+	l_config = uconf.PluginConfigReader(uconf.INPUT, confdir)
+	log_loader = inputpluginloader.InputPluginLoader(l_config, output)
+	log_loader.start()
+	s_config = uconf.PluginConfigReader(uconf.OUTPUT, confdir)
+	submit_loader = outputpluginloader.OutputPluginLoader(s_config, output)
+	submit_loader.start()
 	main(sys.argv)
 
 # vim: set noet sw=4 ts=4 tw=0:
