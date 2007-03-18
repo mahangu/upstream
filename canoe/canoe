@@ -336,8 +336,7 @@ class Canoe(Wizard):
 			# pulse while uploading data
 			self.pulse_many = PulseMany(self.popup, .2)
 			self.pulsing = self.pulse_many.start()
-			result = module.execute_threaded(nickname, support_msg, support_logs, self.handle_complete)
-			print result
+			module.execute_threaded(nickname, support_msg, support_logs, self.handle_complete)
 		
 		Wizard.btnNext_clicked(self, widget)
 	
@@ -345,8 +344,8 @@ class Canoe(Wizard):
 	def handle_complete(self, result, user_data):
 		self.pulse_many.stop()
 
-		if result.bool_success:
-			self.popup.set_url(result.result_url)
+		if result[0]:
+			self.popup.set_url(result[1])
 			self.popup.show_success()
 		else:
 			self.popup.show_failure()

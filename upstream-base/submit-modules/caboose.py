@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
 
-import submitmoduleloader
 from util import flat_log
 from urllib import urlopen, urlencode
 import re
