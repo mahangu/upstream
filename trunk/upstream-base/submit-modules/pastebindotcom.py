@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
 
-import submitmoduleloader
 from util import flat_log
 from urllib import urlopen, urlencode
 
@@ -42,11 +41,11 @@ def execute(submit_name, submit_message, log_tuple):
 	try:
 		paste = urlopen(module_submit_url, urlencode(post_data))
 	except IOError:
-		return submitmoduleloader.SubmitModuleResult(True, False)
+		return (False, "I/O Error"
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
 
 	# TODO: We need to check that the page we get back actually has the logs
 
-	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
+	return (True, result_url)

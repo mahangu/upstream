@@ -17,8 +17,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
-
-import submitmoduleloader
 from util import flat_log
 from urllib import urlopen, urlencode
 import re
@@ -53,8 +51,8 @@ def execute(submit_name, submit_message, log_tuple):
 	if match:
 		result_url = match.group(1)
 	else:
-		return submitmoduleloader.SubmitModuleResult(True, False)
+		return (False, "I/O error")
 
 	# TODO: We need to check that the page we get back actually has the logs
 
-	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
+	return (True, result_url)

@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
 
-import submitmoduleloader
 from util import flat_log
 import webbrowser, os
 
@@ -67,4 +66,4 @@ def execute(submit_name, submit_message, log_tuple):
 	# print clog.getvalue()
 	
 	# no, no error checking yet.
-	return submitmoduleloader.SubmitModuleResult(True, True, foo, response_url)
+	return (True, response_url)

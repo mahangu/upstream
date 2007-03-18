@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.	
 
 
-import submitmoduleloader
+
 from util import flat_log
 from urllib import urlopen, urlencode
 from textwrap import fill
@@ -43,8 +43,7 @@ def execute(nickname, submit_message, log_tuple):
 	try:
 		paste = urlopen(module_submit_url, urlencode(post_data))
 	except IOError:
-		return submitmoduleloader.SubmitModuleResult(True, False)
-	
+		return (False, "I/O Error"
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
@@ -53,4 +52,4 @@ def execute(nickname, submit_message, log_tuple):
 	# Now partially implemented, see above.  We still have to do more
 	# parsing to see if we actually got a paste in
 
-	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
+	return (True, result_url)

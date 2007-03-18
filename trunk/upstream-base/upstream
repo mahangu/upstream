@@ -29,12 +29,14 @@ sys.path.append(libsdir)
 locale_app = config.get("main","locale_app")
 locale_dir = config.get("paths","localedir")
 
-import submitmoduleloader, logmoduleloader, moduleloader, uconf
 from util import make_log_tuple
 
 submit_module_default = config.get("main", "submit_module_default")
 
 confdir = config.get("paths","confdir")
+# Thismust occur here, so gettext is initialized
+import submitmoduleloader, logmoduleloader, moduleloader, uconf
+
 
 gettext.install(locale_app, locale_dir, unicode=1)
 
@@ -189,28 +191,28 @@ def cli(options,args):
 
 
 def ioctl_GWINSZ(fd):                  #### TABULATION FUNCTIONS
-    try:                                ### Discover terminal width
-        import fcntl, termios, struct, os
-        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-    except:
-        return None
-    return cr
+	try:                                ### Discover terminal width
+		import fcntl, termios, struct, os
+		cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+	except:
+		return None
+	return cr
 
 def terminal_size():  ### decide on *some* terminal size
-    cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)  # try open fds
-    if not cr:     # ...then ctty
-        try:
-            fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = ioctl_GWINSZ(fd)
-            os.close(fd)
-        except:
-            pass
-    if not cr:                            # env vars or finally defaults
-        try:
-            cr = (env['LINES'], env['COLUMNS'])
-        except:
-            cr = (25, 80)
-    return int(cr[1]), int(cr[0])  
+	cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)  # try open fds
+	if not cr:     # ...then ctty
+		try:
+			fd = os.open(os.ctermid(), os.O_RDONLY)
+			cr = ioctl_GWINSZ(fd)
+			os.close(fd)
+		except:
+			pass
+	if not cr:                            # env vars or finally defaults
+		try:
+			cr = (env['LINES'], env['COLUMNS'])
+		except:
+			cr = (25, 80)
+	return int(cr[1]), int(cr[0])  
 		
 def update_terminal_size(signum, frame):
 	global col
@@ -230,10 +232,11 @@ def execute_plugin(submit_module, user_email, user_message, log_tuple):
 	for x in range(0, col):
 		sys.stdout.write(' ')
 	sys.stdout.write('\r')
-	if result.bool_success:
-		print _("Your submission was successful and can be found at:\n%s") % result.result_url
+	if result[0]:
+		print _("Your submission was successful and can be found at:\n%s") % result[1]
+	
 	else:
-		print _("Your submission failed.")
+		print _("Your submission failed. Probable reason: %s") % result[1]
 	
 		
 # TODO: make this look nicer, its just a proof ofconceptnow

@@ -217,9 +217,9 @@ class UpstreamWizard(QWizard):
 		return logs
 			
 	def submitDone(self):
-		if self.result and self.result.bool_success:
+		if self.result and self.result[0]:
 			
-			infobox = CompleteDialog(self, self.result.bool_success, self.result.result_url)
+			infobox = CompleteDialog(self, self.result[1], self.result[1])
 			infobox.exec_loop()			
 			
 		else:
