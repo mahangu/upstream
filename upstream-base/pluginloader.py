@@ -41,7 +41,7 @@ class Plugin:
 		self.module_name = self.__plugin.module_name
 		self.module_description = self.__plugin.module_description
 		
-	def get_plugin(self):
+	def getPlugin(self):
 		return self.__plugin
 		
 	def __repr__(self):
@@ -68,119 +68,119 @@ class PluginLoader(threading.Thread):
 		self.__output_sync = output_sync
 		
 	def run(self):
-		self.__find_packages__()
-		self.__import_packages__()
-		self.__validate_all__()
+		self.__findPackages__()
+		self.__importPackages__()
+		self.__validateAll__()
 		
-	def wait_progress_change(self, timeout = 0):
+	def waitProgressChange(self, timeout = 0):
 		self.__progress_change_ev.wait(timeout)
 		self.__progress_change_ev.clear()
 		
 	# These events can only happen once, so no need to clear
-	def wait_find_complete(self, timeout = 0):
+	def waitFindComplete(self, timeout = 0):
 		self.__find_complete_ev.wait(timeout)
 		
-	def find_is_complete(self):
+	def findIsComplete(self):
 		return self.__find_complete_ev.isSet()
 		
-	def wait_import_complete(self, timeout = 0):
+	def waitImportComplete(self, timeout = 0):
 		self.__import_complete_ev.wait(timeout)
 		
-	def import_is_complete(self):
+	def importIsComplete(self):
 		return self.__import_complete_ev.isSet()
 		
-	def wait_validation_complete(self, timeout = 0):
+	def waitValidationComplete(self, timeout = 0):
 		self.__validation_complete_ev.wait(timeout)
 		
-	def validation_is_complete(self):
+	def validationIsComplete(self):
 		return self.__validation_complete_ev.isSet()
 	
-	def get_complete_frac(self):
+	def getCompleteFrac(self):
 		if self.__import_count == 0:
 			return -1
 		else:
 			return (self.__validation_count + 0.0)/self.__import_count
 		
-	def get_import_count(self):
+	def getImportCount(self):
 		return self.__import_count
 	
-	def get_validation_count(self):
+	def getValidationCount(self):
 		return self.__validation_count
 	
-	def get_valid_plugin_count(self):
+	def getValidPluginCount(self):
 		return self.__valid_plugin_count
 	
-	def get_valid_plugins(self):
+	def getValidPlugins(self):
 		return self.__valid_plugins
 		
-	def __new_ostream__(self, title):
+	def __newOstream__(self, title):
 		return self.__output_sync.new_stream(title)
 	
-	def __write_ostream__(self, os_id, msg):
+	def __writeOstream__(self, os_id, msg):
 		self.__output_sync.write(os_id, msg)\
 		
-	def __find_packages__(self):
-		pfs_id = self.__new_ostream__("Find Package Log")
-		for package in self.__get_config__().get_packages():
-			self.__write_ostream__(pfs_id, "Found: %s\n" % package)
-			self.__set_found__(package)
+	def __findPackages__(self):
+		pfs_id = self.__newOstream__("Find Package Log")
+		for package in self.__getConfig__().getPackages():
+			self.__writeOstream__(pfs_id, "Found: %s\n" % package)
+			self.__setFound__(package)
 		self.__find_complete_ev.set()
 		
 	# Er, who wants to find when one was used and not the other?
-	def __set_progress_changed__(self):
+	def __setProgressChanged__(self):
 		self.__progress_change_ev.set()
 		
 	def __set_progress_change__(self):
 		self.__progress_change_ev.set()
 		
-	def __import_packages__(self):
-		while self.__has_next_to_import__():
-			self.__import_one_package__(self.__get_next_to_import__())
+	def __importPackages__(self):
+		while self.__hasNextToImport__():
+			self.__import_one_package__(self.__getNextToImport__())
 		self.__set_import_complete__()
 		
 	def __import_one_package__(self, package):
-		pis_id = self.__new_ostream__("Package Import Log: %s" % package)
+		pis_id = self.__newOstream__("Package Import Log: %s" % package)
 		try:
 			# Import the package here
 			package_obj = __import__(package)
-			self.__write_ostream__(pis_id, "Package %s loaded successfully\n" % package)
+			self.__writeOstream__(pis_id, "Package %s loaded successfully\n" % package)
 			for module in package_obj.__all__:
 				try:
 					# Most of the actual functional code is in this tiny little block
 					__import__("%s.%s" % (package, module))
 					module_obj = getattr(package_obj, module)
-					self.__write_ostream__(pis_id, "Module %s imported successfully\n" % module_obj)
+					self.__writeOstream__(pis_id, "Module %s imported successfully\n" % module_obj)
 					module_obj.package = package
-					self.__set_imported__(module_obj)
+					self.__setImported__(module_obj)
 					# Set as imported
 					self.__import_count = self.__import_count + 1
 					self.__set_progress_change__()
 				except ImportError, e:
-					self.__write_ostream__(pis_id, "Module %s could not be imported due to Import Error\n\t%s\n" % (module, e))
+					self.__writeOstream__(pis_id, "Module %s could not be imported due to Import Error\n\t%s\n" % (module, e))
 				except SyntaxError, e:
-					self.__write_ostream__(pis_id, "Module %s could not be imported due to Syntax Error\n\t%s\n" % (module, e))
+					self.__writeOstream__(pis_id, "Module %s could not be imported due to Syntax Error\n\t%s\n" % (module, e))
 				except Exception, e:
-					self.__write_ostream__(pis_id, "Module %s could not be imported due to Exception\n\t%s\n" % (module, e))
+					self.__writeOstream__(pis_id, "Module %s could not be imported due to Exception\n\t%s\n" % (module, e))
 		except ImportError, e:
-			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Import Error\n\t%s\n" % (package, e))
+			self.__writeOstream__(pis_id, "Package %s could not be loaded due to Import Error\n\t%s\n" % (package, e))
 		except SyntaxError, e:
-			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Syntax Error\n\t%s\n" % (package, e))
+			self.__writeOstream__(pis_id, "Package %s could not be loaded due to Syntax Error\n\t%s\n" % (package, e))
 		except Exception, e:
-			self.__write_ostream__(pis_id, "Package %s could not be loaded due to Exception\n\t%s\n" % (package, e))
+			self.__writeOstream__(pis_id, "Package %s could not be loaded due to Exception\n\t%s\n" % (package, e))
 		
 	def __set_import_complete__(self):
 		self.__import_complete_ev.set()
-		self.__set_progress_changed__()
+		self.__setProgressChanged__()
 		
-	def __validate_all__(self):		
-		while self.__has_next_to_validate__():
-			plugin = self.__get_next_to_validate__()
-			pvl_id = self.__new_ostream__("Validation Log: %s" % plugin.__name__)
+	def __validateAll__(self):		
+		while self.__hasNextToValidate__():
+			plugin = self.__getNextToValidate__()
+			pvl_id = self.__newOstream__("Validation Log: %s" % plugin.__name__)
 			if self.__valid_plugin__(plugin, pvl_id):
-				self.__set_validated__(plugin, pvl_id)
+				self.__isValidated__(plugin, pvl_id)
 			self.__validation_count = self.__validation_count + 1
 			self.__set_progress_change__()
-		self.__set_validation_complete__()
+		self.__setValidationComplete__()
 		self.__set_progress_change__()
 		
 	
@@ -189,17 +189,17 @@ class PluginLoader(threading.Thread):
 			if self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id):
 				return True
 		except Exception, e:
-			self.__write_ostream__(pvl_id, "Validation failed with Exception:\n\t%s" % e)
+			self.__writeOstream__(pvl_id, "Validation failed with Exception:\n\t%s" % e)
 		return False
 	
 	def __validate_fields__(self, plugin, fields, full_scan, pvl_id):
 		valid = True
 		for property in fields:
-				self.__write_ostream__(pvl_id, "Has field %s: %s\n" % (property[0], hasattr(plugin, property[0])))
+				self.__writeOstream__(pvl_id, "Has field %s: %s\n" % (property[0], hasattr(plugin, property[0])))
 				if not hasattr(plugin, property[0]):					
 					valid = False
 				else:
-					self.__write_ostream__(pvl_id, "Field %s is of type %s: %s\n" % (property[0], property[1], isinstance(getattr(plugin, property[0]), property[1])))
+					self.__writeOstream__(pvl_id, "Field %s is of type %s: %s\n" % (property[0], property[1], isinstance(getattr(plugin, property[0]), property[1])))
 					# This also ignores Nonetypes
 					if not isinstance(getattr(plugin, property[0]), property[1]) and property[1] != None:
 						valid = False
@@ -219,13 +219,13 @@ class PluginLoader(threading.Thread):
 			else:
 				has_args = 0
 				
-			self.__write_ostream__(pvl_id, "Module %s has attribute %s: %s\n" % (plugin, func_name, has_attr))
-			self.__write_ostream__(pvl_id, "Module attribute %s is of type 'func_code': %s\n" % (func_name, is_func_code))
-			self.__write_ostream__(pvl_id, "Module function %s has %d args: %s\n" % (func_name, param, has_args))
+			self.__writeOstream__(pvl_id, "Module %s has attribute %s: %s\n" % (plugin, func_name, has_attr))
+			self.__writeOstream__(pvl_id, "Module attribute %s is of type 'func_code': %s\n" % (func_name, is_func_code))
+			self.__writeOstream__(pvl_id, "Module function %s has %d args: %s\n" % (func_name, param, has_args))
 			return has_attr and is_func_code and has_args
 		
 	
-	def __md5_verify__(self, module, log_id):
+	def __md5Verify__(self, module, log_id):
 		md5er = md5.new()		
 		fp = open(module.__file__)
 		d = fp.read(1024)
@@ -234,9 +234,9 @@ class PluginLoader(threading.Thread):
 			d = fp.read(1024)
 		fp.close()
 		m_hex = md5er.hexdigest()
-		name = self.__construct_fname(module)
-		md5sum = self.__config.get_plugin_md5(module.package, name)
-		self.__write_ostream__(log_id, "%s\n\tmd5 expected %s\n\tmd5 real %s\n" % (module.__name__, md5sum, m_hex))
+		name = self.__constructFileName__(module)
+		md5sum = self.__config.getPluginMD5(module.package, name)
+		self.__writeOstream__(log_id, "%s\n\tmd5 expected %s\n\tmd5 real %s\n" % (module.__name__, md5sum, m_hex))
 		if md5sum == m_hex:
 			return TRUSTED
 		elif md5sum == None:
@@ -244,7 +244,7 @@ class PluginLoader(threading.Thread):
 		else:
 			return UNTRUSTED
 		
-	def __construct_fname(self, module):
+	def __constructFileName__(self, module):
 		regex = re.compile("\.")
 		name_split = regex.split(module.__name__)
 		name = name_split[len(name_split) - 1]
@@ -256,40 +256,40 @@ class PluginLoader(threading.Thread):
 			end_str = "pyo"
 		return name + '_' + end_str
 	
-	def __set_validation_complete__(self):
+	def __setValidationComplete__(self):
 		self.__validation_complete_ev.set()
-		self.__set_progress_changed__()
+		self.__setProgressChanged__()
 		
-	def __set_found__(self, package):
+	def __setFound__(self, package):
 		self.__import_queue.put(package)
-		self.__set_progress_changed__()
+		self.__setProgressChanged__()
 
 			
-	def __has_next_to_import__(self):
+	def __hasNextToImport__(self):
 		return not self.__import_queue.empty()
 	
-	def __get_next_to_import__(self):
+	def __getNextToImport__(self):
 		return self.__import_queue.get()
 		
-	def __set_imported__(self, plugin):
+	def __setImported__(self, plugin):
 		self.__validation_queue.put(plugin)
 		
-	def __has_next_to_validate__(self):
+	def __hasNextToValidate__(self):
 		return not self.__validation_queue.empty()
 	
-	def __get_next_to_validate__(self):
+	def __getNextToValidate__(self):
 		return self.__validation_queue.get()
 	
-	def __set_validated__(self, plugin, pvl_id):
-		plugin_obj = Plugin(plugin, self.__md5_verify__(plugin, pvl_id))
-		self.__add_valid_plugin__(plugin_obj)		
+	def __isValidated__(self, plugin, pvl_id):
+		plugin_obj = Plugin(plugin, self.__md5Verify__(plugin, pvl_id))
+		self.__addValidPlugin__(plugin_obj)		
 		
-	def __add_valid_plugin__(self, plugin_obj):
+	def __addValidPlugin__(self, plugin_obj):
 		self.__valid_plugin_count = self.__valid_plugin_count + 1
 		self.__valid_plugins.append(plugin_obj)
 		self.__set_progress_change__()
 		
-	def __get_config__(self):
+	def __getConfig__(self):
 		return self.__config
 	
 	def __str__(self):
@@ -332,5 +332,5 @@ class PluginLoader(threading.Thread):
 	def __iter__(self):
 		return self.__valid_plugins.__iter__()
 	
-	def __get_plugins__(self):
+	def __getPlugins__(self):
 		return self.__valid_plugins
