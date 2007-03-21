@@ -47,35 +47,27 @@ class PluginConfigReader:
 	def get_all_packages(self):
 		return self.__plugins_c.sections()
 	
-	def get_packages(self):
+	def getPackages(self):
 		return self.__plugins_c.sections()			
 			
-	def get_plugin_md5(self, package, name):
+	def getPluginMD5(self, package, name):
 		if self.__plugins_c.has_section(package):
 			if self.__plugins_c.has_option(package, name):
 				md5 = self.__plugins_c.get(package, name)
 				return md5
 		return None
 		
-	def get_md5(self, package, name, extension):
-		if self.__plugins_c.has_section(package):
-			if self.__plugins_c.has_option(package, name + "_" + extension):
-				md5 = self.__plugins_c.get(package, name + "_" + extension)
-				return md5		
-		# We get through all the if's so we should return None
-		return None	
-		
-	def get_base_path(self):
+	def getBasePath(self):
 		return self.__base_path
 	
-	def get_plugin_type(self):
+	def getPluginType(self):
 		return self.__plugin_type
 	
-	def get_plugin_type_str(self):
+	def getPluginTypeStr(self):
 		if self.__plugin_type == LOG:
 			return "input"
 		else:
-			return "outpu"
+			return "output"
 	
 	# Deprecated
 	def getbase_path(self):

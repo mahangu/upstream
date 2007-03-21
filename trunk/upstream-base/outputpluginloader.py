@@ -28,7 +28,7 @@ REQUIRED_FIELDS = [("module_submit_url", str)]
 class OutputPlugin(pluginloader.Plugin):
 	def __init__(self, plugin, trust_lvl):
 		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
-		self.module_submit_url = self.get_plugin().module_submit_url
+		self.module_submit_url = self.getPlugin().module_submit_url
 		
 	def __process_result(self, result):
 		if len(result) == 2 and type(result[1]) == str:
@@ -38,7 +38,7 @@ class OutputPlugin(pluginloader.Plugin):
 		
 	def execute_plugin(self, s_name, s_message, log):	
 		try:
-			result = self.get_plugin().execute(s_name, s_message, log)
+			result = self.getPlugin().execute(s_name, s_message, log)
 			return self.__process_result(result)
 		except Exception, e:
 			formatted_str = exception_template % (sys.exc_info()[0])
@@ -48,7 +48,7 @@ class OutputPlugin(pluginloader.Plugin):
 		self.execute_plugin(s_name, s_message, log)
 		
 	def execute_threaded(self, s_name, s_message, log, complete_handler=None, user_data=None):
-		self.__pluginThread = OutputPluginThreadWrapper(self.get_plugin(), s_name, s_message, log, complete_handler, user_data)
+		self.__pluginThread = OutputPluginThreadWrapper(self.getPlugin(), s_name, s_message, log, complete_handler, user_data)
 		self.__pluginThread.start()
 		
 	def wait_for_threaded_execute(self, timeout = 0):
@@ -90,9 +90,9 @@ class OutputPluginLoader(pluginloader.PluginLoader):
 			if pluginloader.PluginLoader.__valid_plugin__(self, plugin, pvl_id) and self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id) and self.__validate_function__(plugin, "execute", 3, pvl_id):
 				return True
 		except Exception, e:
-			self.__write_ostream__(pvl_id, "Validation failed with Exception:\n\t%s\n" % e)
+			self.__writeOstream__(pvl_id, "Validation failed with Exception:\n\t%s\n" % e)
 		return False
 		
-	def __set_validated__(self, plugin, pvl_id):
-		plugin_obj = OutputPlugin(plugin, self.__md5_verify__(plugin, pvl_id))
-		self.__add_valid_plugin__(plugin_obj)
+	def __isValidated__(self, plugin, pvl_id):
+		plugin_obj = OutputPlugin(plugin, self.__md5Verify__(plugin, pvl_id))
+		self.__addValidPlugin__(plugin_obj)

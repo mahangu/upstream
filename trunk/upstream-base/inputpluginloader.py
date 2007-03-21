@@ -27,16 +27,16 @@ REQUIRED_FIELDS = [("category", list), ("log_path", str)]
 class InputPlugin(pluginloader.Plugin):
 	def __init__(self, plugin, trust_lvl):
 		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
-		self.log_path = self.get_plugin().log_path
+		self.log_path = self.getPlugin().log_path
 	def get_category(self):
-		return self.get_plugin().category
+		return self.getPlugin().category
 	
 	def execute(self):
 		return self.execute_plugin()
 	
 	def execute_plugin(self):
 		try:
-			return self.get_plugin().execute()
+			return self.getPlugin().execute()
 		except Exception, e:
 			return "Invokation terminated with exception:\n\t%s\n" % e
 
@@ -81,9 +81,9 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def grouping_is_complete(self):
 		return self.__grouping_complete.isSet()
 	
-	def get_complete_frac(self):
-		p_frac = pluginloader.PluginLoader.get_complete_frac(self)
-		valid_pc = self.get_valid_plugin_count()
+	def getCompleteFrac(self):
+		p_frac = pluginloader.PluginLoader.getCompleteFrac(self)
+		valid_pc = self.getValidPluginCount()
 		if valid_pc == 0:
 			valid_pc = 1
 		gplugin_c = self.__grouped_plugin_count
@@ -95,11 +95,11 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def __set_grouping_complete__(self):
 		# Set the progress changed as well.
 		self.__grouping_complete.set()
-		self.__set_progress_changed__()
+		self.__setProgressChanged__()
 		
-	def __set_validated__(self, plugin, pvl_id):
-		plugin_obj = InputPlugin(plugin, self.__md5_verify__(plugin, pvl_id))
-		self.__add_valid_plugin__(plugin_obj)
+	def __isValidated__(self, plugin, pvl_id):
+		plugin_obj = InputPlugin(plugin, self.__md5Verify__(plugin, pvl_id))
+		self.__addValidPlugin__(plugin_obj)
 		self.__set_to_group__(plugin_obj)
 		self.__prior_used_paths.append(plugin.log_path)
 		
@@ -123,7 +123,7 @@ class InputPluginLoader(pluginloader.PluginLoader):
 		return plugin.log_path in self.__prior_used_paths
 	
 	def __group_all__(self):
-		gl_id = self.__new_ostream__("Grouping Log")
+		gl_id = self.__newOstream__("Grouping Log")
 		while self.__has_next_to_group__():
 			plugin_obj = self.__get_next_to_group__()
 			self.__group__(plugin_obj, gl_id)
@@ -132,12 +132,12 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def __group__(self, plugin_obj, s_id):
 		for cat in plugin_obj.get_category():
 			if cat in self.__plugin_groups and type(cat) == str:
-				self.__write_ostream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
+				self.__writeOstream__(s_id, "Adding plugin %s to category %s.\n" % (plugin_obj, cat))
 				self.__plugin_groups[cat].append(plugin_obj)
 			elif type(cat) == str:
-				self.__write_ostream__(s_id, "Adding plugin %s to new category %s.\n" % (plugin_obj, cat))
+				self.__writeOstream__(s_id, "Adding plugin %s to new category %s.\n" % (plugin_obj, cat))
 				self.__plugin_groups[cat] = [plugin_obj]
 			else:
-				self.__write_ostream__(s_id, "Plugin %s had a non-string category.\n" % plugin_obj)
+				self.__writeOstream__(s_id, "Plugin %s had a non-string category.\n" % plugin_obj)
 		self.__grouped_plugin_count = self.__grouped_plugin_count + 1
-		self.__set_progress_changed__()
+		self.__setProgressChanged__()
