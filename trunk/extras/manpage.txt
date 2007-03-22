@@ -1,0 +1,91 @@
+NAME
+Upstream - A tool to send in logs and troubleshooting data to support personnel.
+
+SYNOPSIS
+upstream your-name "Your problem description" [options]
+
+your-name - who the output is from
+Your problem description - a short text identifying whats wrong (EG "apt failing to update"). Your problem description must be inside double quotes.
+options - which area to collect data for
+
+If no arguments are supplied, Upstream will go in to wizard mode.
+
+OPTIONS
+
+-h, --help Show this help message and exit
+
+One of the following is required.
+--network Send all log modules in the network category.
+--apt Send all log modules in the apt category.
+--pci Send all log modules in the pci category.
+--memory Send all log modules in the memory category.
+--disk Send all log modules in the disk category.
+--cpu Send all log modules in the cpu category.
+--kernel Send all log modules in the kernel category.
+--video Send all log modules in the video category.
+--log=LOG Choose a specific log module to use
+Only one --log= may be used per run of Upstream
+
+Optional.
+--pastebin=PASTEBIN Specify a pastebin module to use.
+
+PASTEBIN
+This is the list of supported pastebin's.
+caboose
+pastebindotca
+pastebindotcom
+pastecode
+pastesite
+rafb
+red
+ubuntu
+
+LOADABLE MODULES
+These are the modules that can be loaded using --log= . Not all these modules may be available on your system.
+cpuinfo
+daemon
+df
+dmesg
+free
+ifconfig
+iwconfig
+lsmod
+lspci
+netInterfaces
+netstat
+pci
+ps
+sourcelist
+uname
+vmstat
+xorgConf
+xorgLog
+
+INBUILT MODULES
+stdin - allows Upstream to read from the standard in rather then a specific module
+lspci | ./upstream --pastebin=ubuntu
+
+
+DESCRIPTION
+Upstream is a collection of tools that allow users to send in system specific log and troubleshooting data to support personnel.
+If you prefer, you can acquire a front-end for Upstream, Canoe (GTK) or Kayak (QT).
+
+Upstream aims to simplify the support cycle and make it more efficient. One of the main problems that support staff face when helping people via IRC or mailing lists is getting user log files across. Often this process is time consuming, and many new users may even be unable to find these logs. Occasionally, users may accidentally paste an entire log file in to an IRC channel, earning them a ban, and confusing them in the process.
+
+EXAMPLES
+upstream kgoez "A cat keeps eating my mouse" --video --log=
+lspci | ./upstream kgoetz "my computer doesnt work" --pastebin=ubuntu
+diff upstream.py upstream.py.fixed |./upstream kgoetz "Patch for upstream bug" --pastebin=pastebindotcom
+
+AUTHOR
+This manual page was written by Karl Goetz, with the assistance of others.
+Upstream is written by Mahangu Weerasinghe, Ryan Zeigler and Jason Ribeiro with contributions from others.
+
+BUGS
+If a module is missing, try filing a bug report with your distribution to include the module or remove its mention from this man page.
+If you experience bugs, contact us on IRC at #upstream-dev on irc.freenode.net
+
+COPYRIGHT
+Upstream is Free Software. It is released under the terms of the GNU GPL 2.0 or any later version.
+
+More information about Upstream can be found at http://upstreamdev.org 
