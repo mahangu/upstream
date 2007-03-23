@@ -1,17 +1,20 @@
 Upstream Log Transfer System
 ----------------------------
-Release : 0.2.0 (Marlowe) - ALPHA RELEASE
-Date    : 3rd December 2006
+Release : 0.3.0 (Marlowe) - ALPHA RELEASE
+Date    : xxth March 2007
 
 Web     : http://upstreamdev.org
 SVN     : https://svn.sf.net/svnroot/upstream/
 
 Upstream is a collection of tools that allow users to send in system specific log and troubleshooting data to support personnel. It can be easily modified to output data to any pastebin or support tracker.
 
-This Alpha Release release is named after the Elizabethan dramatist Christopher Marlowe (1564 - 1593). With this version we are overreaching, and attempting to accomplish a lot in a very short period of time. Although we don't plan on dying early like Marlowe, he embodies exactly what this release is - a daring thrust at greatness.
+This Alpha Release release is named after the English romantic poet William Wordsworth (April 7, 1770 – April 23, 1850). In coding this version of Upstream we've been like Wordsworth, and have let ourselves be influenced heavily by what is around us. In particular, we've listened to our packagers and written Lodge, a new build system in the hope that it will make Upstream a little easier to bundle up and ship. We're proud of this version, and we hope it will serve you well.
 
-"Come, let us march against the powers of heaven,
- And set black streamers in the firmament,
- To signify the slaughter of the gods. "
-Tamburlaine the Great, Part 2 - Act V, Scene III
+"This City now doth, like a garment, wear
+The beauty of the morning; silent, bare,
+Ships, towers, domes, theatres, and temples lie
+Open unto the fields, and to the sky;
+All bright and glittering in the smokeless air."
+
+(Composed upon Westminster Bridge, September 3, 1802)
 
