@@ -47,9 +47,10 @@ def execute(nickname, submit_message, log_tuple):
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
-
-	# TODO implement some error checking before reporting success.
-	# Now partially implemented, see above.  We still have to do more
-	# parsing to see if we actually got a paste in
+	
+	if not (result_url.startswith("http://rafb.net/p/") and 
+			'/' not in result_url[18:] and
+			result_url.endswith(".html")):
+		return (False, "Did not return a proper url.")
 
 	return (True, result_url)

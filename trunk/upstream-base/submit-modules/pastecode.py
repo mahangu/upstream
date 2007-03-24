@@ -45,6 +45,8 @@ def execute(submit_name, submit_message, log_tuple):
 
 	result_url = paste.geturl()
 	result_xml = paste.read()
-	# TODO: We need to check that the page we get back actually has the logs
+
+	if not (result_url.startswith("http://pastecode.com/") and result_url[21:].isdigit()):
+		return (False, "Did not return a proper url.")
 
 	return (True, result_url)

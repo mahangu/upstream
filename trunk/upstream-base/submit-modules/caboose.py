@@ -33,8 +33,6 @@ def execute(submit_name, submit_message, log_tuple):
 	contents = submit_name + "\n\n\n" + submit_message + "\n\n\n" + flat_log(log_tuple)
 
 	# TODO Are there any limits on these fields?
-	# 'expiry' specifies for what period of time the paste should be kept:  No value means forever.
-	# 'type': 1 means raw text
 	post_data = { 'paste[parser]': "diff", 'paste[body]': contents, 'paste[authorization]': "burger", 'key': "" }
 
 	# Send the data
@@ -49,6 +47,7 @@ def execute(submit_name, submit_message, log_tuple):
 	
 	result_url = paste.geturl()
 
-	# TODO: We need to check that the page we get back actually has the logs
+	if not (result_url.startswith("http://pastie.caboo.se/") && result_url[23:].isdigit()):
+		return (False, "Did not return a proper url.")
 
-	return submitmoduleloader.SubmitModuleResult(True, True, result_xml, result_url)
+	return (True, result_url)

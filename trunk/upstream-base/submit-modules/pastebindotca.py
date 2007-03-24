@@ -43,7 +43,6 @@ def execute(submit_name, submit_message, log_tuple):
 		return submitmoduleloader.SubmitModuleResult(True, False)
 
 	# This is not the xml for the actual paste.
-	# TODO See what we need to pass to SubmitModuleResult
 	result_xml = paste.read()
 
 	# Use regex to find the url
@@ -52,7 +51,5 @@ def execute(submit_name, submit_message, log_tuple):
 		result_url = match.group(1)
 	else:
 		return (False, "I/O error")
-
-	# TODO: We need to check that the page we get back actually has the logs
 
 	return (True, result_url)
