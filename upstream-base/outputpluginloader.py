@@ -96,3 +96,6 @@ class OutputPluginLoader(pluginloader.PluginLoader):
 	def __isValidated__(self, plugin, pvl_id):
 		plugin_obj = OutputPlugin(plugin, self.__md5Verify__(plugin, pvl_id))
 		self.__addValidPlugin__(plugin_obj)
+
+
+# vim:set noexpandtab: 
