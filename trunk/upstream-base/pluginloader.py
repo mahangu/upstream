@@ -334,3 +334,5 @@ class PluginLoader(threading.Thread):
 	
 	def __getPlugins__(self):
 		return self.__valid_plugins
+
+# vim:set noexpandtab: 

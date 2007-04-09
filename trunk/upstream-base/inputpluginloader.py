@@ -141,3 +141,5 @@ class InputPluginLoader(pluginloader.PluginLoader):
 				self.__writeOstream__(s_id, "Plugin %s had a non-string category.\n" % plugin_obj)
 		self.__grouped_plugin_count = self.__grouped_plugin_count + 1
 		self.__setProgressChanged__()
+
+# vim:set noexpandtab: 
