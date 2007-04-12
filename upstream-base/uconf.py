@@ -72,3 +72,5 @@ class PluginConfigReader:
 	# Deprecated
 	def getbase_path(self):
 		return self.__base_path
+
+# vim:set noexpandtab: 

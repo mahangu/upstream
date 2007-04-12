@@ -130,15 +130,15 @@ class PluginLoader(threading.Thread):
 	def __setProgressChanged__(self):
 		self.__progress_change_ev.set()
 		
-	def __set_progress_change__(self):
+	def __setProgressChange__(self):
 		self.__progress_change_ev.set()
 		
 	def __importPackages__(self):
 		while self.__hasNextToImport__():
-			self.__import_one_package__(self.__getNextToImport__())
-		self.__set_import_complete__()
+			self.__importOnePackage__(self.__getNextToImport__())
+		self.__setImportComplete__()
 		
-	def __import_one_package__(self, package):
+	def __importOnePackage__(self, package):
 		pis_id = self.__newOstream__("Package Import Log: %s" % package)
 		try:
 			# Import the package here
@@ -154,7 +154,7 @@ class PluginLoader(threading.Thread):
 					self.__setImported__(module_obj)
 					# Set as imported
 					self.__import_count = self.__import_count + 1
-					self.__set_progress_change__()
+					self.__setProgressChange__()
 				except ImportError, e:
 					self.__writeOstream__(pis_id, "Module %s could not be imported due to Import Error\n\t%s\n" % (module, e))
 				except SyntaxError, e:
@@ -168,7 +168,7 @@ class PluginLoader(threading.Thread):
 		except Exception, e:
 			self.__writeOstream__(pis_id, "Package %s could not be loaded due to Exception\n\t%s\n" % (package, e))
 		
-	def __set_import_complete__(self):
+	def __setImportComplete__(self):
 		self.__import_complete_ev.set()
 		self.__setProgressChanged__()
 		
@@ -176,15 +176,15 @@ class PluginLoader(threading.Thread):
 		while self.__hasNextToValidate__():
 			plugin = self.__getNextToValidate__()
 			pvl_id = self.__newOstream__("Validation Log: %s" % plugin.__name__)
-			if self.__valid_plugin__(plugin, pvl_id):
+			if self.__validPlugin__(plugin, pvl_id):
 				self.__isValidated__(plugin, pvl_id)
 			self.__validation_count = self.__validation_count + 1
-			self.__set_progress_change__()
+			self.__setProgressChange__()
 		self.__setValidationComplete__()
-		self.__set_progress_change__()
+		self.__setProgressChange__()
 		
 	
-	def __valid_plugin__(self, plugin, pvl_id):
+	def __validPlugin__(self, plugin, pvl_id):
 		try:
 			if self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id):
 				return True
@@ -287,7 +287,7 @@ class PluginLoader(threading.Thread):
 	def __addValidPlugin__(self, plugin_obj):
 		self.__valid_plugin_count = self.__valid_plugin_count + 1
 		self.__valid_plugins.append(plugin_obj)
-		self.__set_progress_change__()
+		self.__setProgressChange__()
 		
 	def __getConfig__(self):
 		return self.__config

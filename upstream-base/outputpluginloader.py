@@ -30,7 +30,7 @@ class OutputPlugin(pluginloader.Plugin):
 		pluginloader.Plugin.__init__(self, plugin, trust_lvl)
 		self.module_submit_url = self.getPlugin().module_submit_url
 		
-	def __process_result(self, result):
+	def __processResult(self, result):
 		if len(result) == 2 and type(result[1]) == str:
 			return result
 		else:
@@ -39,7 +39,7 @@ class OutputPlugin(pluginloader.Plugin):
 	def execute_plugin(self, s_name, s_message, log):	
 		try:
 			result = self.getPlugin().execute(s_name, s_message, log)
-			return self.__process_result(result)
+			return self.__processResult(result)
 		except Exception, e:
 			formatted_str = exception_template % (sys.exc_info()[0])
 			self.result = (False, formatted_str)
@@ -47,19 +47,19 @@ class OutputPlugin(pluginloader.Plugin):
 	def execute(self, s_name, s_message, log):
 		self.execute_plugin(s_name, s_message, log)
 		
-	def execute_threaded(self, s_name, s_message, log, complete_handler=None, user_data=None):
+	def executeThreaded(self, s_name, s_message, log, complete_handler=None, user_data=None):
 		self.__pluginThread = OutputPluginThreadWrapper(self.getPlugin(), s_name, s_message, log, complete_handler, user_data)
 		self.__pluginThread.start()
 		
-	def wait_for_threaded_execute(self, timeout = 0):
+	def waitForThreadedExecute(self, timeout = 0):
 		self.__pluginThread.plugin_complete.wait(timeout)
 		
-	def threaded_execute_is_running(self):
+	def threadedExecuteIsRunning(self):
 		return not self.__pluginThread.plugin_complete.isSet()
 	
-	def threaded_result(self):
-		result = self.__pluginThread.get_result()
-		return self.__process_result(result)
+	def threadedResult(self):
+		result = self.__pluginThread.getResult()
+		return self.__processResult(result)
 	
 class OutputPluginThreadWrapper(threading.Thread):
 	plugin_complete = threading.Event()
@@ -78,16 +78,16 @@ class OutputPluginThreadWrapper(threading.Thread):
 			self.__complete_handler(self.__result, self.__user_data)
 		self.plugin_complete.set()
 		
-	def get_result(self):
+	def getResult(self):
 		return self.__result
 
 class OutputPluginLoader(pluginloader.PluginLoader):
 	def __init__(self, config, output_sync):
 		pluginloader.PluginLoader.__init__(self, config, output_sync)
 		
-	def __valid_plugin__(self, plugin, pvl_id):
+	def __validPlugin__(self, plugin, pvl_id):
 		try:
-			if pluginloader.PluginLoader.__valid_plugin__(self, plugin, pvl_id) and self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id) and self.__validate_function__(plugin, "execute", 3, pvl_id):
+			if pluginloader.PluginLoader.__validPlugin__(self, plugin, pvl_id) and self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id) and self.__validate_function__(plugin, "execute", 3, pvl_id):
 				return True
 		except Exception, e:
 			self.__writeOstream__(pvl_id, "Validation failed with Exception:\n\t%s\n" % e)

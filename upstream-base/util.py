@@ -37,3 +37,5 @@ def make_log_tuple(mod_list):
 		contents = module.execute()
 		log_list.append((name, path, contents))
 	return tuple(log_list)
+
+# vim:set noexpandtab: 
