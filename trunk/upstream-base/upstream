@@ -64,7 +64,7 @@ def main():
 	log_modules.join()
 	catchoices = []
 	
-	for cat in log_modules.get_categories():	
+	for cat in log_modules.getCategories():	
 		catentry = (cat, "", 0)
 		catchoices.append(catentry)
 	
@@ -79,7 +79,7 @@ def main():
 		
 		# Codes from dialog.py, see dialog.py 423
 		if code == 1 or code == 2:
-			sys.exit(0)
+			sys.exit(-1)
 		
 		mods = log_modules.get_unique_in_categories(categories)
 		nt_logmods = []
@@ -95,7 +95,7 @@ def main():
 	(code, description) = d.inputbox(_("Please enter a short description of the problem."), init="")
 	# Codes from dialog.py, see dialog.py 423
 	if code == 1 or code == 2:
-		sys.exit(0)
+		sys.exit(-1)
 
 
 	#Step 4
@@ -121,7 +121,7 @@ def main():
 									  
 		# Codes from dialog.py, see dialog.py 423
 		if code == 1 or code == 2:
-			sys.exit(0)
+			sys.exit(-1)
 			
 		if pastebin == "":
 			d.msgbox(_("Sorry, but you didn't specify a server to submit to. Please try again, or hit CTRL+C to exit this program."))	
@@ -148,7 +148,7 @@ def cli(options,args):
 						
 			# Is there a nicer way to do this?
 			if on and option != "pastebin" and option != "log":
-				category = log_modules.get_in_category(option)
+				category = log_modules.getInCategory(option)
 				
 				for log_module in category:
 					log_tuple = make_log_tuple(category)
@@ -156,7 +156,7 @@ def cli(options,args):
 				optnumber = optnumber + 1
 			
 			elif options.log:
-				category = log_modules.get_in_category(option)
+				category = log_modules.getInCategory(option)
 				log_tuple = make_log_tuple(category)
 			
 				optnumber = optnumber + 1
@@ -168,7 +168,7 @@ def cli(options,args):
 				
 				if optnumber < 1:
 					print _("Please specify a log option. You haven't asked me to send anything. See help (-h) for more information.")
-					sys.exit(1)
+					sys.exit(-1)
 					
 	submit_modules.join()			
 	if options.pastebin:
@@ -178,7 +178,7 @@ def cli(options,args):
 	
 	if len(args) != 2:
 		print _("Please specify the required options. See help (-h) for more information.")
-		sys.exit(1)
+		sys.exit(-1)
 	
 	
 	#  Populating final variables.
@@ -220,14 +220,14 @@ def update_terminal_size(signum, frame):
 	col, row = terminal_size()
 		 		
 def execute_plugin(submit_module, user_email, user_message, log_tuple):
-	submit_module.execute_threaded(user_email, user_message, log_tuple)
+	submit_module.executeThreaded(user_email, user_message, log_tuple)
 	start = 0
-	while submit_module.threaded_execute_is_running():
+	while submit_module.threadedExecuteIsRunning():
 		print_pulser(start, col)
 		start = (start + 1)%col
-		submit_module.wait_for_threaded_execute(0.05)
+		submit_module.waitForThreadedExecute(0.05)
 		
-	result = submit_module.threaded_result()
+	result = submit_module.threadedResult()
 	sys.stdout.write('\r')
 	for x in range(0, col):
 		sys.stdout.write(' ')
@@ -286,7 +286,7 @@ if __name__ == "__main__":
 	submit_modules.start()
 	log_modules.join()
 	submit_modules.join()
-	categories = log_modules.get_categories()
+	categories = log_modules.getCategories()
 	for category in categories:
 		lflag = "--%s"%(category)
 		# debug print
@@ -314,3 +314,4 @@ if __name__ == "__main__":
 
 		
 
+# vim:set noexpandtab: 

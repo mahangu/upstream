@@ -53,18 +53,18 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	
 	def run(self):
 		pluginloader.PluginLoader.run(self)
-		self.__group_all__()
+		self.__groupAll__()
 		
-	def get_categories(self):
+	def getCategories(self):
 		return [category for category in self.__plugin_groups]
 	
-	def get_in_category(self, cat_name):
+	def getInCategory(self, cat_name):
 		try:
 			return self.__plugin_groups[cat_name]
 		except Exception, e:
 			return None
 	
-	def get_unique_in_categories(self, category_list):
+	def getUniqueInCategories(self, category_list):
 		plugins = []
 		for category in category_list:
 			try:
@@ -75,10 +75,10 @@ class InputPluginLoader(pluginloader.PluginLoader):
 				pass
 		return plugins
 				
-	def wait_grouping_complete(self):
+	def waitGroupingComplete(self):
 		self.__grouping_complete.wait()
 		
-	def grouping_is_complete(self):
+	def groupingIsComplete(self):
 		return self.__grouping_complete.isSet()
 	
 	def getCompleteFrac(self):
@@ -89,10 +89,10 @@ class InputPluginLoader(pluginloader.PluginLoader):
 		gplugin_c = self.__grouped_plugin_count
 		return (p_frac + (gplugin_c + 0.0)/valid_pc)/2
 		
-	def get_grouping_count(self):
+	def getGroupingCount(self):
 		return self.__grouped_plugin_count
 		
-	def __set_grouping_complete__(self):
+	def __setGroupingComplete__(self):
 		# Set the progress changed as well.
 		self.__grouping_complete.set()
 		self.__setProgressChanged__()
@@ -100,34 +100,34 @@ class InputPluginLoader(pluginloader.PluginLoader):
 	def __isValidated__(self, plugin, pvl_id):
 		plugin_obj = InputPlugin(plugin, self.__md5Verify__(plugin, pvl_id))
 		self.__addValidPlugin__(plugin_obj)
-		self.__set_to_group__(plugin_obj)
+		self.__setToGroup__(plugin_obj)
 		self.__prior_used_paths.append(plugin.log_path)
 		
-	def __set_to_group__(self, plugin):
+	def __setToGroup__(self, plugin):
 		self.__group_queue.put(plugin)
 		
-	def __has_next_to_group__(self):
+	def __hasNextToGroup__(self):
 		return not self.__group_queue.empty()
 	
-	def __get_next_to_group__(self):
+	def __getNextToGroup__(self):
 		return self.__group_queue.get_nowait()
 	
-	def __valid_plugin__(self, plugin, pvl_id):
-		super = pluginloader.PluginLoader.__valid_plugin__(self, plugin, pvl_id)
+	def __validPlugin__(self, plugin, pvl_id):
+		super = pluginloader.PluginLoader.__validPlugin__(self, plugin, pvl_id)
 		has_categories = self.__validate_fields__(plugin, REQUIRED_FIELDS, True, pvl_id)
 		has_func = self.__validate_function__(plugin, "execute", 0, pvl_id)
-		collision = self.__log_path_collision(plugin)		
+		collision = self.__logPathCollision(plugin)		
 		return super and has_categories and has_func and not collision
 	
-	def __log_path_collision(self, plugin):
+	def __logPathCollision(self, plugin):
 		return plugin.log_path in self.__prior_used_paths
 	
-	def __group_all__(self):
+	def __groupAll__(self):
 		gl_id = self.__newOstream__("Grouping Log")
-		while self.__has_next_to_group__():
-			plugin_obj = self.__get_next_to_group__()
+		while self.__hasNextToGroup__():
+			plugin_obj = self.__getNextToGroup__()
 			self.__group__(plugin_obj, gl_id)
-		self.__set_grouping_complete__()
+		self.__setGroupingComplete__()
 		
 	def __group__(self, plugin_obj, s_id):
 		for cat in plugin_obj.get_category():

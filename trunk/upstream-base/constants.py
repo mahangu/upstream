@@ -29,3 +29,5 @@ else:
 	image_dir = '../extras' # is this sensible?
 
 locale_app = 'upstream'
+
+# vim:set noexpandtab: 
